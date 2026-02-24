@@ -8,14 +8,14 @@ def render_sidebar():
     - Client: limited pages
     - Admin: client pages + admin tools
     - Owner: everything
-    Renders only once per page load even if called multiple times.
+    Always renders logout button at the bottom.
     """
-    # ── Double-render protection ────────────────────────────────────────────
+    # Double-render protection (safe & reliable)
     if st.session_state.get("_sidebar_rendered", False):
         return
     st.session_state["_sidebar_rendered"] = True
 
-    # ── Get user info safely ────────────────────────────────────────────────
+    # Get user info safely with fallback
     role = st.session_state.get("role", "guest").lower().strip()
     full_name = st.session_state.get("full_name", "User")
 
@@ -26,13 +26,12 @@ def render_sidebar():
     st.sidebar.markdown("---")
 
     # ── COMMON / CLIENT PAGES ───────────────────────────────────────────────
-    # Visible to guest, client, admin, owner
     st.sidebar.page_link("pages/🏠_Dashboard.py", label="Dashboard", icon="🏠")
     st.sidebar.page_link("pages/👤_My_Profile.py", label="My Profile", icon="👤")
     st.sidebar.page_link("pages/💰_Profit_Sharing.py", label="Profit Sharing", icon="💰")
     st.sidebar.page_link("pages/💳_Withdrawals.py", label="Withdrawals", icon="💳")
 
-    # ── EXTENDED PAGES (client + admin + owner) ─────────────────────────────
+    # ── EXTENDED PAGES ──────────────────────────────────────────────────────
     if role in ["client", "admin", "owner"]:
         st.sidebar.page_link("pages/🌱_Growth_Fund.py", label="Growth Fund", icon="🌱")
         st.sidebar.page_link("pages/🤖_EA_Versions.py", label="EA Versions", icon="🤖")
@@ -54,20 +53,27 @@ def render_sidebar():
         st.sidebar.page_link("pages/👤_Admin_Management.py", label="Admin Management", icon="👤")
         st.sidebar.page_link("pages/🔮_Simulator.py", label="Simulator", icon="🔮")
 
-    # ── LOGOUT SECTION ──────────────────────────────────────────────────────
+    # ── LOGOUT SECTION – Guaranteed visible at bottom ───────────────────────
     st.sidebar.markdown("---")
-    if st.sidebar.button("🚪 Logout", 
-                        type="primary", 
-                        use_container_width=True,
-                        key="sidebar_logout_button"):   # key para walang conflict
-        # Clear authentication & sidebar-related session state
+    st.sidebar.markdown("### Account")
+
+    # Big, clear logout button with unique key & help text
+    if st.sidebar.button(
+        "🚪 Logout",
+        type="primary",
+        use_container_width=True,
+        key="kmfx_logout_btn",  # unique key across all pages
+        help="End your session and return to login page"
+    ):
+        # Clear session state safely
         keys_to_clear = [
             "authenticated", "username", "full_name", "role",
             "just_logged_in", "theme", "_sidebar_rendered"
         ]
         for key in keys_to_clear:
-            st.session_state.pop(key, None)
+            if key in st.session_state:
+                del st.session_state[key]
 
         st.success("Logged out successfully! Redirecting...")
-        time.sleep(1.0)
-        st.switch_page("main.py")
+        time.sleep(1.2)  # give time to see success message
+        st.switch_page("main.py")  # reliable redirect
