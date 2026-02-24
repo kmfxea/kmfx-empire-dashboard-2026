@@ -16,7 +16,6 @@ from dotenv import load_dotenv
 import uuid
 from PIL import Image
 import os
-
 from utils.supabase_client import supabase
 from utils.auth import login_user, is_authenticated
 from utils.helpers import (
@@ -45,8 +44,8 @@ if not is_authenticated():
         section[data-testid="stSidebar"] {
             display: none !important;
         }
-        .st-emotion-cache-1cpxqw2 {  /* main content area */
-            max-width: 1100px !important;  /* centered with max-width */
+        .st-emotion-cache-1cpxqw2 { /* main content area */
+            max-width: 1100px !important; /* centered with max-width */
             margin: 0 auto !important;
             padding: 1rem 2rem !important;
         }
@@ -74,7 +73,6 @@ accent_hover = "#00ffcc"
 
 if "theme" not in st.session_state:
     st.session_state.theme = "dark"
-
 theme = st.session_state.theme
 
 # Auto theme + redirect if authenticated
@@ -126,7 +124,7 @@ st.markdown(f"""
         box-shadow: {card_shadow};
         transition: all 0.3s ease;
         margin: 2rem auto;
-        max-width: 1100px;  /* centered content width */
+        max-width: 1100px; /* centered content width */
     }}
     .glass-card:hover {{
         box-shadow: 0 15px 40px {accent_glow if theme=='dark' else 'rgba(0,0,0,0.2)'};
@@ -227,7 +225,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# QR AUTO-LOGIN
+# QR AUTO-LOGIN (fixed path)
 # ────────────────────────────────────────────────
 params = st.query_params
 qr_token = params.get("qr", [None])[0]
@@ -244,7 +242,7 @@ if qr_token and not is_authenticated():
             st.session_state.just_logged_in = True
             log_action("QR Login Success", f"User: {user['full_name']} | Role: {user['role']}")
             st.query_params.clear()
-            st.switch_page("pages/01_🏠_Dashboard.py")
+            st.switch_page("pages/🏠_Dashboard.py")  # ← FIXED HERE
         else:
             st.error("Invalid or revoked QR code")
             st.query_params.clear()
@@ -751,7 +749,7 @@ for q, a in faqs:
 st.markdown("</div>", unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# SECURE MEMBER LOGIN – ROLE-AWARE + BETTER REDIRECTS
+# SECURE MEMBER LOGIN – ROLE-AWARE + FIXED REDIRECTS
 # ────────────────────────────────────────────────
 st.markdown("<div class='glass-card' style='text-align:center; margin:5rem auto; padding:4rem; max-width:800px;'>", unsafe_allow_html=True)
 st.markdown("<h2 class='gold-text'>Already a Pioneer or Member?</h2>", unsafe_allow_html=True)
@@ -765,16 +763,15 @@ with tab_owner:
         st.markdown("<p style='text-align:center; opacity:0.8;'>Owner-only access</p>", unsafe_allow_html=True)
         owner_username = st.text_input("Username", placeholder="e.g. kingminted", key="owner_username")
         owner_password = st.text_input("Password", type="password", key="owner_password")
-        submit_owner  = st.form_submit_button("Login as Owner →", type="primary", use_container_width=True)
+        submit_owner = st.form_submit_button("Login as Owner →", type="primary", use_container_width=True)
 
     if submit_owner:
         success = login_user(owner_username.strip().lower(), owner_password, expected_role="owner")
         if success:
-            st.success("Owner login successful! Redirecting to control center...")
-            st.session_state.role = "owner"  # ensure it's set
-            # Optional: tiny delay so user sees the success message
-            # import time; time.sleep(0.8)
-            st.switch_page("pages/👤_Admin_Management.py")   # ← Owner starts here (or your preferred owner page)
+            st.success("Owner login successful! Redirecting...")
+            st.session_state.role = "owner"
+            # time.sleep(0.8)  # uncomment if you want a small delay to see message
+            st.switch_page("pages/👤_Admin_Management.py")  # Owner starts here
         else:
             st.error("Login failed – check credentials or role")
 
@@ -784,14 +781,15 @@ with tab_admin:
         st.markdown("<p style='text-align:center; opacity:0.8;'>Admin access</p>", unsafe_allow_html=True)
         admin_username = st.text_input("Username", placeholder="Your admin username", key="admin_username")
         admin_password = st.text_input("Password", type="password", key="admin_password")
-        submit_admin  = st.form_submit_button("Login as Admin →", type="primary", use_container_width=True)
+        submit_admin = st.form_submit_button("Login as Admin →", type="primary", use_container_width=True)
 
     if submit_admin:
         success = login_user(admin_username.strip().lower(), admin_password, expected_role="admin")
         if success:
-            st.success("Admin login successful! Redirecting to management...")
+            st.success("Admin login successful! Redirecting...")
             st.session_state.role = "admin"
-            st.switch_page("pages/👤_Admin_Management.py")   # ← Most admins start here
+            # time.sleep(0.8)
+            st.switch_page("pages/👤_Admin_Management.py")  # Admin starts here
         else:
             st.error("Login failed – check credentials or role")
 
@@ -801,21 +799,22 @@ with tab_client:
         st.markdown("<p style='text-align:center; opacity:0.8;'>Client / Pioneer access</p>", unsafe_allow_html=True)
         client_username = st.text_input("Username", placeholder="Your username", key="client_username")
         client_password = st.text_input("Password", type="password", key="client_password")
-        submit_client  = st.form_submit_button("Login as Client →", type="primary", use_container_width=True)
+        submit_client = st.form_submit_button("Login as Client →", type="primary", use_container_width=True)
 
     if submit_client:
         success = login_user(client_username.strip().lower(), client_password, expected_role="client")
         if success:
             st.success("Welcome back! Redirecting to your dashboard...")
             st.session_state.role = "client"
-            st.switch_page("pages/🏠_Dashboard.py")          # ← Clients go to personal dashboard
+            # time.sleep(0.8)
+            st.switch_page("pages/🏠_Dashboard.py")  # ← FIXED HERE (correct path)
         else:
             st.error("Login failed – check credentials or role")
 
 st.markdown("</div>", unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# PROTECTED CONTENT – ONLY RENDER IF AUTHENTICATED
+# STOP IF NOT AUTHENTICATED
 # ────────────────────────────────────────────────
 if not is_authenticated():
     st.stop()
