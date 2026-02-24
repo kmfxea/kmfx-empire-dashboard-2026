@@ -528,7 +528,7 @@ Confidence high. Comeback stronger — para sa legacy, community, financial free
         "✨ Realization & Future Vision</h3>",
         unsafe_allow_html=True,
     )
-    resized_vision = make_same_size("assets/journey_vision.jpg", target_width=800, target_height=700)
+    resized_vision = make_same_size("assets/journey_vision.jpg")
     if resized_vision:
         st.image(resized_vision, use_column_width=True, caption="Built by Faith, Shared for Generations 👑")
 
