@@ -70,23 +70,29 @@ else:
     </style>
     """, unsafe_allow_html=True)
 
-# ────────────────────────────────────────────────
-# EARLY REDIRECT + LOGOUT HANDLER
-# ────────────────────────────────────────────────
+# main.py (important snippet - add / replace in the early section)
+
 if authenticated:
-    # If authenticated → redirect to dashboard
     st.switch_page("pages/🏠_Dashboard.py")
-
 else:
-    # Kung hindi authenticated (logged out)
-    # Check kung galing sa logout (para may message)
-    if st.session_state.get("logging_out", False):
-        st.session_state.pop("logging_out", None)
-        st.success("You have been logged out. Welcome back to the public page.")
-        # Optional: st.rerun() kung gusto mo i-refresh para fresh state
+    # Handle logout success message
+    if st.session_state.pop("logging_out", False):
+        msg = st.session_state.pop("logout_success_message", None)
+        if msg:
+            st.success(msg)
+        # Also make sure sidebar flag is gone
+        st.session_state.pop("_sidebar_rendered", None)
 
-    # Walang early redirect → tuloy sa public landing content
-    # (QR login, logo, hero, stats, story, FAQs, login tabs, etc.)
+    # Optional: hide sidebar completely on public page
+    st.markdown("""
+    <style>
+        section[data-testid="stSidebar"] {
+            visibility: hidden !important;
+            width: 0 !important;
+            min-width: 0 !important;
+        }
+    </style>
+    """, unsafe_allow_html=True)
 # ────────────────────────────────────────────────
 # THEME & COLORS (simplified - no forced switch)
 # ────────────────────────────────────────────────

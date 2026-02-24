@@ -9,11 +9,11 @@ def render_sidebar():
     - Admin: client pages + admin tools
     - Owner: everything
     Includes logout button at the bottom.
-    Uses session_state flag to prevent double rendering.
     """
-    # Prevent double rendering (very important in multi-page apps)
+    # ── Prevent double rendering (very important in multi-page apps) ────────
     if st.session_state.get("_sidebar_rendered", False):
         return
+    
     st.session_state["_sidebar_rendered"] = True
 
     # Get user info with safe defaults
@@ -26,7 +26,7 @@ def render_sidebar():
     st.sidebar.markdown("### KMFX Empire")
     st.sidebar.markdown("---")
 
-    # ── COMMON PAGES (available to all logged-in users) ─────────────────────
+    # ── COMMON PAGES ────────────────────────────────────────────────────────
     st.sidebar.page_link("pages/🏠_Dashboard.py", label="Dashboard", icon="🏠")
     st.sidebar.page_link("pages/👤_My_Profile.py", label="My Profile", icon="👤")
 
@@ -55,28 +55,40 @@ def render_sidebar():
         st.sidebar.page_link("pages/🔑_License_Generator.py", label="License Generator", icon="🔑")
         st.sidebar.page_link("pages/👤_Admin_Management.py", label="Admin Management", icon="👤")
         st.sidebar.page_link("pages/🔮_Simulator.py", label="Simulator", icon="🔮")
+
     # ── LOGOUT SECTION ──────────────────────────────────────────────────────
     st.sidebar.markdown("---")
     st.sidebar.markdown("### Account")
 
-        # ── LOGOUT SECTION ──────────────────────────────────────────────────────
-    st.sidebar.markdown("---")
-    st.sidebar.markdown("### Account")
-
+    # ── LOGOUT BUTTON ───────────────────────────────────────────────────────
     if st.sidebar.button(
         "🚪 Logout",
         type="primary",
         use_container_width=True,
-        key=f"logout_{int(time.time())}",  # unique key gamit time para walang collision
-        help="End session and return to login page"
+        key=f"logout_{int(time.time() * 1000)}",  # more unique
+        help="End session and return to public landing page"
     ):
-        # Clear lahat ng critical keys agad
-        for key in list(st.session_state.keys()):
-            if key in [
-                "authenticated", "username", "full_name", "role",
-                "just_logged_in", "theme", "_sidebar_rendered"
-            ]:
-                del st.session_state[key]
-        
-        st.success("Logging out... Redirecting to home.")
-        st.rerun()  # trigger full app rerun para ma-detect ang cleared state
+        # 1. Mark that we are logging out (used in main.py)
+        st.session_state["logging_out"] = True
+
+        # 2. Clear only the important keys
+        keys_to_clear = [
+            "authenticated",
+            "username",
+            "full_name",
+            "role",
+            "just_logged_in",
+            "theme",
+            "_sidebar_rendered",
+            # Add any other sensitive session keys you might have
+        ]
+
+        for key in keys_to_clear:
+            st.session_state.pop(key, None)
+
+        # 3. Optional: small goodbye message that survives one rerun
+        st.session_state["logout_success_message"] = "You have been logged out. See you again! 👋"
+
+        # 4. Most reliable: force navigation back to main.py
+        #    (st.switch_page is usually better than st.rerun() for logout)
+        st.switch_page("main.py")
