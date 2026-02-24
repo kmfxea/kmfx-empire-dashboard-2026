@@ -751,7 +751,7 @@ for q, a in faqs:
 st.markdown("</div>", unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# SECURE MEMBER LOGIN – FIXED WITH SUBMIT BUTTONS
+# SECURE MEMBER LOGIN – ROLE-AWARE + BETTER REDIRECTS
 # ────────────────────────────────────────────────
 st.markdown("<div class='glass-card' style='text-align:center; margin:5rem auto; padding:4rem; max-width:800px;'>", unsafe_allow_html=True)
 st.markdown("<h2 class='gold-text'>Already a Pioneer or Member?</h2>", unsafe_allow_html=True)
@@ -759,34 +759,63 @@ st.markdown("<p style='font-size:1.4rem; opacity:0.9;'>Access your elite dashboa
 
 tab_owner, tab_admin, tab_client = st.tabs(["👑 Owner Login", "🛠️ Admin Login", "👥 Client Login"])
 
+# ── OWNER ────────────────────────────────────────
 with tab_owner:
-    with st.form(key="owner_login_form", clear_on_submit=False):
+    with st.form(key="owner_login_form", clear_on_submit=True):
         st.markdown("<p style='text-align:center; opacity:0.8;'>Owner-only access</p>", unsafe_allow_html=True)
-        username = st.text_input("Username", placeholder="e.g. kingminted", key="owner_username")
-        password = st.text_input("Password", type="password", key="owner_password")
-        submit_owner = st.form_submit_button("Login as Owner →", type="primary", use_container_width=True)
-        if submit_owner:
-            login_user(username.strip().lower(), password, expected_role="owner")
+        owner_username = st.text_input("Username", placeholder="e.g. kingminted", key="owner_username")
+        owner_password = st.text_input("Password", type="password", key="owner_password")
+        submit_owner  = st.form_submit_button("Login as Owner →", type="primary", use_container_width=True)
 
+    if submit_owner:
+        success = login_user(owner_username.strip().lower(), owner_password, expected_role="owner")
+        if success:
+            st.success("Owner login successful! Redirecting to control center...")
+            st.session_state.role = "owner"  # ensure it's set
+            # Optional: tiny delay so user sees the success message
+            # import time; time.sleep(0.8)
+            st.switch_page("pages/👤_Admin_Management.py")   # ← Owner starts here (or your preferred owner page)
+        else:
+            st.error("Login failed – check credentials or role")
+
+# ── ADMIN ────────────────────────────────────────
 with tab_admin:
-    with st.form(key="admin_login_form", clear_on_submit=False):
+    with st.form(key="admin_login_form", clear_on_submit=True):
         st.markdown("<p style='text-align:center; opacity:0.8;'>Admin access</p>", unsafe_allow_html=True)
-        username = st.text_input("Username", placeholder="Your admin username", key="admin_username")
-        password = st.text_input("Password", type="password", key="admin_password")
-        submit_admin = st.form_submit_button("Login as Admin →", type="primary", use_container_width=True)
-        if submit_admin:
-            login_user(username.strip().lower(), password, expected_role="admin")
+        admin_username = st.text_input("Username", placeholder="Your admin username", key="admin_username")
+        admin_password = st.text_input("Password", type="password", key="admin_password")
+        submit_admin  = st.form_submit_button("Login as Admin →", type="primary", use_container_width=True)
 
+    if submit_admin:
+        success = login_user(admin_username.strip().lower(), admin_password, expected_role="admin")
+        if success:
+            st.success("Admin login successful! Redirecting to management...")
+            st.session_state.role = "admin"
+            st.switch_page("pages/👤_Admin_Management.py")   # ← Most admins start here
+        else:
+            st.error("Login failed – check credentials or role")
+
+# ── CLIENT / PIONEER ─────────────────────────────
 with tab_client:
-    with st.form(key="client_login_form", clear_on_submit=False):
+    with st.form(key="client_login_form", clear_on_submit=True):
         st.markdown("<p style='text-align:center; opacity:0.8;'>Client / Pioneer access</p>", unsafe_allow_html=True)
-        username = st.text_input("Username", placeholder="Your username", key="client_username")
-        password = st.text_input("Password", type="password", key="client_password")
-        submit_client = st.form_submit_button("Login as Client →", type="primary", use_container_width=True)
-        if submit_client:
-            login_user(username.strip().lower(), password, expected_role="client")
+        client_username = st.text_input("Username", placeholder="Your username", key="client_username")
+        client_password = st.text_input("Password", type="password", key="client_password")
+        submit_client  = st.form_submit_button("Login as Client →", type="primary", use_container_width=True)
+
+    if submit_client:
+        success = login_user(client_username.strip().lower(), client_password, expected_role="client")
+        if success:
+            st.success("Welcome back! Redirecting to your dashboard...")
+            st.session_state.role = "client"
+            st.switch_page("pages/🏠_Dashboard.py")          # ← Clients go to personal dashboard
+        else:
+            st.error("Login failed – check credentials or role")
 
 st.markdown("</div>", unsafe_allow_html=True)
 
-# Stop rendering authenticated content if not logged in
-st.stop()
+# ────────────────────────────────────────────────
+# PROTECTED CONTENT – ONLY RENDER IF AUTHENTICATED
+# ────────────────────────────────────────────────
+if not is_authenticated():
+    st.stop()
