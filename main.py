@@ -120,41 +120,6 @@ if qr_token:
         st.query_params.clear()
 
 # ────────────────────────────────────────────────
-# HERO + LOGO
-# ────────────────────────────────────────────────
-col_logo = st.columns([1, 4, 1])[1]
-with col_logo:
-    st.image("assets/logo.png", use_column_width=True)
-
-st.markdown(f"""
-<div class='glass-card' style='text-align:center; padding:4rem 2rem;'>
-    <h1 class='gold-text' style='font-size:4.8rem; margin-bottom:1rem;'>KMFX EA</h1>
-    <h2>Automated Gold Trading for Financial Freedom</h2>
-    <p style='font-size:1.4rem; opacity:0.9; margin:1.5rem 0;'>
-        Passed FTMO Phase 1 • +3,071% 5-Year Backtest • Building Legacies of Generosity
-    </p>
-    <p style='opacity:0.8;'>Mark Jeff Blando – Founder & Developer • 2026</p>
-</div>
-""", unsafe_allow_html=True)
-
-# Realtime stats row
-try:
-    accounts_count = supabase.table("ftmo_accounts").select("id", count="exact").execute().count or 0
-    equity_sum = sum(r.get("current_equity", 0) for r in supabase.table("ftmo_accounts").select("current_equity").execute().data or [])
-    gf_in = supabase.table("growth_fund_transactions").select("amount").eq("type", "In").execute().data or []
-    gf_out = supabase.table("growth_fund_transactions").select("amount").eq("type", "Out").execute().data or []
-    gf_balance = sum(i["amount"] for i in gf_in) - sum(o["amount"] for o in gf_out)
-    members_count = supabase.table("users").select("id", count="exact").eq("role", "client").execute().count or 0
-except:
-    accounts_count = equity_sum = gf_balance = members_count = 0
-
-cols = st.columns(4)
-cols[0].metric("Active Accounts", accounts_count)
-cols[1].metric("Total Equity", f"${equity_sum:,.0f}")
-cols[2].metric("Growth Fund", f"${gf_balance:,.0f}")
-cols[3].metric("Members", members_count)
-
-# ────────────────────────────────────────────────
 # PUBLIC LANDING CONTENT (centered with max-width)
 # ────────────────────────────────────────────────
 # Logo (centered)
