@@ -56,7 +56,7 @@ def render_sidebar():
         st.sidebar.page_link("pages/👤_Admin_Management.py", label="Admin Management", icon="👤")
         st.sidebar.page_link("pages/🔮_Simulator.py", label="Simulator", icon="🔮")
 
-    # ── LOGOUT SECTION ──────────────────────────────────────────────────────
+        # ── LOGOUT SECTION ──────────────────────────────────────────────────────
     st.sidebar.markdown("---")
     st.sidebar.markdown("### Account")
 
@@ -64,10 +64,13 @@ def render_sidebar():
         "🚪 Logout",
         type="primary",
         use_container_width=True,
-        key=f"logout_{role}_{int(time.time())}",  # unique key per session to avoid Streamlit key collision
+        key=f"logout_{role}_{int(time.time())}",
         help="End session and return to public login page"
     ):
-        # Clear only relevant keys (safer than clearing everything)
+        # Set flag para malaman ng page na nag-logout
+        st.session_state["logging_out"] = True
+        
+        # Clear keys agad
         keys_to_clear = [
             "authenticated", "username", "full_name", "role",
             "just_logged_in", "theme", "_sidebar_rendered"
@@ -75,7 +78,6 @@ def render_sidebar():
         for key in keys_to_clear:
             if key in st.session_state:
                 del st.session_state[key]
-
+        
         st.success("Logged out successfully! Redirecting...")
-        time.sleep(1.0)  # enough time to see the message, not too long
-        st.switch_page("main.py")  # main.py should be in root folder
+        st.rerun()  # ← important: rerun para ma-detect agad ang flag
