@@ -1,0 +1,9 @@
+streamlit==1.38.0
+pandas==2.2.2
+plotly==5.24.0
+supabase==2.8.0          # official Python client para sa Supabase
+bcrypt==4.2.0
+qrcode[pil]==7.4.2       # kasama ang Pillow dependency para sa QR generation
+Pillow==10.4.0           # para sa QR image at image handling
+requests==2.32.3
+python-dotenv==1.0.1     # optional, kung gagamit ka ng .env file locally (hindi kailangan sa Streamlit Cloud)
