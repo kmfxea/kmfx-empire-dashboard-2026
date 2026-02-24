@@ -27,6 +27,20 @@ from utils.helpers import (
 
 # Start keep-alive to prevent sleep on Streamlit Cloud
 start_keep_alive_if_needed()
+# ────────────────────────────────────────────────
+# HIDE DEFAULT SIDEBAR ON PUBLIC PAGE (we use custom one later)
+# ────────────────────────────────────────────────
+if not is_authenticated():
+    st.markdown("""
+    <style>
+        section[data-testid="stSidebar"] {
+            display: none !important;
+        }
+        [data-testid="collapsedControl"] {
+            display: none !important;
+        }
+    </style>
+    """, unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
 # PAGE CONFIG & SIDEBAR CONTROL (hide sidebar on public landing)

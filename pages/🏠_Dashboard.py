@@ -10,10 +10,10 @@ from utils.sidebar import render_sidebar
 # ────────────────────────────────────────────────
 # PROTECTION + SIDEBAR
 # ────────────────────────────────────────────────
-require_auth()          # client, admin, owner allowed
-render_sidebar()        # role-aware sidebar + logout
+require_auth()          # Allows client, admin, owner
+render_sidebar()        # Role-aware sidebar + logout
 
-# Accent colors (fallback)
+# Accent fallback
 accent_primary = st.session_state.get("accent_primary", "#00ffaa")
 accent_gold = "#ffd700"
 
@@ -40,7 +40,7 @@ st.markdown(
 )
 
 # ────────────────────────────────────────────────
-# HEADER + GROWTH FUND METRIC
+# HEADER + GROWTH FUND
 # ────────────────────────────────────────────────
 col1, col2 = st.columns([5, 2])
 with col1:
@@ -55,7 +55,7 @@ with col2:
         st.metric("Growth Fund Balance", "$0 (loading...)")
 
 # ────────────────────────────────────────────────
-# PERSONAL SNAPSHOT – FIXED LOADING + BETTER FALLBACK
+# PERSONAL SNAPSHOT – FIXED & ROBUST
 # ────────────────────────────────────────────────
 st.subheader("Your Empire Snapshot")
 try:
@@ -68,11 +68,71 @@ try:
         cols[2].metric("Your Profit Share", f"{u.get('share_percentage', 0):.2f}%", help="Your share of profit distributions")
     else:
         st.info("Your personal stats will appear here once your profile is fully set up. Contact admin if needed.")
-except Exception as e:
+except Exception:
     st.info("Snapshot loading... (this will update shortly)")
 
 # ────────────────────────────────────────────────
-# QUICK ACTIONS – MORE ROLE-AWARE
+# EMPIRE DATA FETCH – ALWAYS RETURNS 11 VALUES
+# ────────────────────────────────────────────────
+@st.cache_data(ttl=300)
+def fetch_empire_summary():
+    try:
+        gf_resp = supabase.table("mv_growth_fund_balance").select("balance").execute()
+        gf_balance = gf_resp.data[0]["balance"] if gf_resp.data else 0.0
+
+        empire_resp = supabase.table("mv_empire_summary").select("*").execute()
+        empire = empire_resp.data[0] if empire_resp.data else {}
+        total_accounts = empire.get("total_accounts", 0)
+        total_equity = empire.get("total_equity", 0.0)
+        total_withdrawable = empire.get("total_withdrawable", 0.0)
+
+        client_resp = supabase.table("mv_client_balances").select("*").execute()
+        total_client_balances = client_resp.data[0].get("total_client_balances", 0.0) if client_resp.data else 0.0
+
+        accounts_resp = supabase.table("ftmo_accounts").select("*").execute()
+        accounts = accounts_resp.data or []
+
+        profits_resp = supabase.table("profits").select("gross_profit").execute()
+        total_gross = sum(p.get("gross_profit", 0) for p in profits_resp.data or [])
+
+        dist_resp = supabase.table("profit_distributions").select("share_amount, participant_name, is_growth_fund").execute()
+        distributions = dist_resp.data or []
+        total_distributed = sum(d.get("share_amount", 0) for d in distributions if not d.get("is_growth_fund", False))
+
+        participant_shares = {}
+        for d in distributions:
+            if not d.get("is_growth_fund", False):
+                name = d["participant_name"]
+                participant_shares[name] = participant_shares.get(name, 0) + d["share_amount"]
+
+        total_funded_php = 0
+        for acc in accounts:
+            contrib = acc.get("contributors_v2") or acc.get("contributors", [])
+            for c in contrib:
+                total_funded_php += c.get("units", 0) * (c.get("php_per_unit", 0) or 0)
+
+        history = []  # placeholder – add real history query later if needed
+
+        return (
+            accounts, total_accounts, total_equity, total_withdrawable,
+            gf_balance, total_gross, total_distributed,
+            total_client_balances, participant_shares, total_funded_php, history
+        )
+    except Exception as e:
+        st.warning(f"Some dashboard data limited: {str(e)}")
+        # MUST return EXACTLY 11 values
+        return [], 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, {}, 0, []
+
+# Unpack safely
+data = fetch_empire_summary()
+(
+    accounts, total_accounts, total_equity, total_withdrawable,
+    gf_balance, total_gross, total_distributed,
+    total_client_balances, participant_shares, total_funded_php, history
+) = data
+
+# ────────────────────────────────────────────────
+# QUICK ACTIONS – ROLE-AWARE
 # ────────────────────────────────────────────────
 st.subheader("⚡ Quick Actions")
 role = st.session_state.get("role", "client").lower()
@@ -102,7 +162,7 @@ with action_cols[3]:
               on_click=lambda: st.switch_page("pages/🤖_EA_Versions.py"))
 
 # ────────────────────────────────────────────────
-# RECENT ACTIVITY – NICER FORMAT
+# RECENT ACTIVITY
 # ────────────────────────────────────────────────
 st.subheader("Recent Activity")
 try:
@@ -117,13 +177,13 @@ except:
     st.info("Activity feed temporarily unavailable.")
 
 # ────────────────────────────────────────────────
-# EMPIRE FLOW TREES (kept polished)
+# EMPIRE FLOW TREES – FIXED VARIABLE ACCESS
 # ────────────────────────────────────────────────
 st.subheader("🌳 Empire Flow Trees")
 tab1, tab2 = st.tabs(["Participant Shares", "Contributor Funding (PHP)"])
 
 with tab1:
-    if participant_shares:
+    if participant_shares and isinstance(participant_shares, dict):
         labels = ["Empire"] + list(participant_shares.keys())
         values = [0] + list(participant_shares.values())
         fig = go.Figure(go.Sankey(
@@ -156,7 +216,7 @@ with tab2:
         st.info("No contributors recorded yet.")
 
 # ────────────────────────────────────────────────
-# LIVE FTMO ACCOUNTS (kept but cleaner)
+# LIVE FTMO ACCOUNTS
 # ────────────────────────────────────────────────
 st.subheader("📊 Live FTMO Accounts")
 if accounts:
