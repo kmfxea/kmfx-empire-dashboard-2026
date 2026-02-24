@@ -1,39 +1,79 @@
 # utils/helpers.py
 """
-Reusable utility functions for the KMFX EA app
-- File upload to Supabase Storage
-- Image resizing (for testimonials, timeline photos, etc.)
+Reusable utility functions for KMFX EA Dashboard
+- File upload to Supabase Storage (with signed URL option)
+- Image resizing (uniform size with padding for journey/timeline/testimonials)
 - Action logging to Supabase logs table
-- Keep-alive ping for Streamlit Cloud
-- Other small helpers used across pages
+- Keep-alive ping to prevent Streamlit Cloud sleep
+- QR code generation helpers
 """
 import os
 import uuid
 import requests
 import threading
 import time
+from datetime import datetime
 from io import BytesIO
 from PIL import Image
 import streamlit as st
-from datetime import datetime
+import qrcode
 
 from utils.supabase_client import supabase
 
-
-def upload_to_supabase(
-    file,
-    bucket: str,
-    folder: str = "",
-    use_signed_url: bool = False,
-    signed_expiry: int = 3600
-) -> tuple[str | None, str | None]:
+# ────────────────────────────────────────────────
+# IMAGE RESIZING – Uniform size with padding (800x700 default)
+# ────────────────────────────────────────────────
+def make_same_size(image_input, target_width=800, target_height=700, bg_color=(0, 0, 0)):
     """
-    Upload file to Supabase Storage
-    Returns (public_url or signed_url, storage_path) or (None, None) on failure
+    Resize image to exact target size with centered padding (black bg for dark theme).
+    Accepts:
+    - Local file path (str)
+    - Uploaded file object (with .getvalue() or .read())
+    - BytesIO or raw bytes
+    Returns bytes ready for st.image() or None on failure
     """
     try:
-        safe_name = f"{uuid.uuid4()}_{file.name}"
-        file_path = f"{folder}/{safe_name}" if folder else safe_name
+        # Handle different input types
+        if isinstance(image_input, str):  # local path
+            img = Image.open(image_input)
+        elif hasattr(image_input, "getvalue"):  # UploadedFile.getvalue()
+            img = Image.open(BytesIO(image_input.getvalue()))
+        elif hasattr(image_input, "read"):  # file-like object
+            img = Image.open(BytesIO(image_input.read()))
+        else:  # assume raw bytes
+            img = Image.open(BytesIO(image_input))
+
+        # Resize preserving aspect ratio
+        img.thumbnail((target_width, target_height), Image.LANCZOS)
+
+        # Create new image with target size + background
+        new_img = Image.new("RGB", (target_width, target_height), bg_color)
+        offset = ((target_width - img.width) // 2, (target_height - img.height) // 2)
+        new_img.paste(img, offset)
+
+        # Convert to bytes
+        buf = BytesIO()
+        new_img.save(buf, format="PNG")
+        buf.seek(0)
+        return buf.getvalue()
+    except Exception as e:
+        st.warning(f"Image resize failed: {str(e)}")
+        return None
+
+# ────────────────────────────────────────────────
+# UPLOAD TO SUPABASE STORAGE
+# ────────────────────────────────────────────────
+def upload_to_supabase(file, bucket: str, folder: str = "", use_signed_url: bool = False, signed_expiry: int = 604800):
+    """
+    Upload file to Supabase Storage
+    Returns (url, storage_path) or (None, None) on failure
+    - use_signed_url=True → returns 7-day signed URL (private buckets)
+    - use_signed_url=False → returns public URL (if bucket is public)
+    """
+    try:
+        file_name = getattr(file, "name", f"file_{uuid.uuid4().hex}")
+        safe_name = f"{uuid.uuid4()}_{file_name}"
+        storage_path = f"{folder}/{safe_name}" if folder else safe_name
 
         # Get bytes safely
         if hasattr(file, "getvalue"):
@@ -41,72 +81,39 @@ def upload_to_supabase(
         elif hasattr(file, "read"):
             content = file.read()
         else:
-            content = file  # assume already bytes
+            content = file  # assume bytes
 
-        with st.spinner(f"Uploading {file.name}..."):
+        with st.spinner(f"Uploading {file_name}..."):
             supabase.storage.from_(bucket).upload(
-                path=file_path,
+                path=storage_path,
                 file=content,
                 file_options={
-                    "content-type": file.type or "application/octet-stream",
+                    "content-type": getattr(file, "type", "application/octet-stream"),
                     "upsert": "true"
                 }
             )
 
         if use_signed_url:
-            signed = supabase.storage.from_(bucket).create_signed_url(file_path, signed_expiry)
-            url = signed.get("signedURL")
+            signed = supabase.storage.from_(bucket).create_signed_url(storage_path, signed_expiry)
+            url = signed.get("signedURL") if signed else None
         else:
-            url = supabase.storage.from_(bucket).get_public_url(file_path)
+            url = supabase.storage.from_(bucket).get_public_url(storage_path)
 
-        st.success(f"✅ {file.name} uploaded")
-        return url, file_path
-
+        st.success(f"✅ {file_name} uploaded")
+        return url, storage_path
     except Exception as e:
-        st.error(f"Upload failed for {file.name}: {str(e)}")
+        st.error(f"Upload failed: {str(e)}")
         return None, None
 
-
-def make_same_size(
-    image_path,
-    target_width: int = 800,
-    target_height: int = 500
-) -> Image.Image:
+# ────────────────────────────────────────────────
+# LOG ACTION TO SUPABASE LOGS TABLE
+# ────────────────────────────────────────────────
+def log_action(action: str, details: str = "", user_name: str = None, user_type: str = None):
     """
-    Center-crop and resize image to exact dimensions without distortion
-    Used for timeline photos, testimonials, etc.
-    """
-    try:
-        img = Image.open(image_path)
-        target_ratio = target_width / target_height
-        img_ratio = img.width / img.height
-
-        if img_ratio > target_ratio:  # too wide → crop sides
-            new_width = int(img.height * target_ratio)
-            left = (img.width - new_width) // 2
-            img = img.crop((left, 0, left + new_width, img.height))
-        elif img_ratio < target_ratio:  # too tall → crop top/bottom
-            new_height = int(img.width / target_ratio)
-            top = (img.height - new_height) // 2
-            img = img.crop((0, top, img.width, top + new_height))
-
-        img = img.resize((target_width, target_height), Image.LANCZOS)
-        return img
-    except Exception as e:
-        st.warning(f"Image resize failed: {e}")
-        return Image.new("RGB", (target_width, target_height), color=(200, 200, 200))
-
-
-def log_action(
-    action: str,
-    details: str = "",
-    user_name: str = None
-):
-    """
-    Log important user/admin actions to Supabase logs table
+    Log important actions to logs table (silent fail if error)
     """
     user_name = user_name or st.session_state.get("full_name", "Unknown")
-    user_type = st.session_state.get("role", "unknown")
+    user_type = user_type or st.session_state.get("role", "unknown")
 
     try:
         supabase.table("logs").insert({
@@ -117,48 +124,48 @@ def log_action(
             "user_name": user_name
         }).execute()
     except Exception:
-        # Silent fail — logging should not break the app
+        # Silent – logging should never break the app
         pass
 
-
+# ────────────────────────────────────────────────
+# KEEP-ALIVE THREAD – Prevent Streamlit Cloud sleep
+# ────────────────────────────────────────────────
 def keep_alive():
-    """
-    Simple keep-alive ping to prevent Streamlit Cloud from sleeping
-    Runs in background thread
-    """
-    url = "https://kmfxeaftmo.streamlit.app"  # ← palitan kung iba ang app URL mo
+    """Ping the app every ~25 minutes to keep it awake on Cloud"""
+    url = "https://kmfxea.streamlit.app"  # ← CHANGE TO YOUR ACTUAL LIVE URL
     while True:
         try:
             requests.get(url, timeout=10)
         except:
             pass
-        time.sleep(1500)  # ~25 minutes
-
+        time.sleep(1500)  # 25 minutes
 
 def start_keep_alive_if_needed():
-    """
-    Start the keep-alive thread only once (call in main.py)
-    """
+    """Start keep-alive only once and only on Cloud"""
     if "keep_alive_started" not in st.session_state:
         if os.getenv("STREAMLIT_SHARING") or os.getenv("STREAMLIT_CLOUD"):
             thread = threading.Thread(target=keep_alive, daemon=True)
             thread.start()
             st.session_state.keep_alive_started = True
 
-
-# Optional: small helper for generating QR URLs (used in Admin Management & Profile)
+# ────────────────────────────────────────────────
+# QR CODE GENERATORS (for profile/admin QR display)
+# ────────────────────────────────────────────────
 def generate_qr_url(app_base_url: str, qr_token: str) -> str:
     """Generate full QR login URL"""
     return f"{app_base_url}/?qr={qr_token}"
 
-
-# Optional: QR code image generator (used when displaying QR)
-def generate_qr_image(url: str, fill_color="#000000", back_color="#ffffff") -> BytesIO:
-    qr = qrcode.QRCode(version=1, box_size=10, border=4)
-    qr.add_data(url)
-    qr.make(fit=True)
-    img = qr.make_image(fill_color=fill_color, back_color=back_color)
-    buf = BytesIO()
-    img.save(buf, format="PNG")
-    buf.seek(0)
-    return buf
+def generate_qr_image(url: str, fill_color="#000000", back_color="#ffffff", box_size=10, border=4) -> BytesIO:
+    """Generate QR code image as BytesIO for st.image()"""
+    try:
+        qr = qrcode.QRCode(version=1, box_size=box_size, border=border)
+        qr.add_data(url)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color=fill_color, back_color=back_color)
+        buf = BytesIO()
+        img.save(buf, format="PNG")
+        buf.seek(0)
+        return buf
+    except Exception as e:
+        st.warning(f"QR generation failed: {str(e)}")
+        return BytesIO()
