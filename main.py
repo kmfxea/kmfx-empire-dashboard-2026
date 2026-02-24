@@ -27,16 +27,49 @@ if not is_authenticated():
         layout="wide",
         initial_sidebar_state="collapsed"
     )
-    # Completely hide sidebar + collapse button on public page
+    # Hide sidebar, collapse button, default header & remove top white space/line
     st.markdown("""
     <style>
+        /* Hide sidebar completely on public page */
         section[data-testid="stSidebar"] { display: none !important; }
         [data-testid="collapsedControl"] { display: none !important; }
+
+        /* Remove default Streamlit header & top white/gray bar */
+        header[data-testid="stHeader"] { display: none !important; }
+        .stApp > header { display: none !important; }
+        .stApp { margin-top: 0 !important; padding-top: 0 !important; }
+
+        /* Minimize top padding of main content (no white line) */
         .block-container {
-            padding-top: 2rem !important;
+            padding-top: 0.5rem !important;      /* almost zero top space */
             padding-bottom: 2rem !important;
-            max-width: 1100px !important;
-            margin: 0 auto !important;
+            margin-top: 0 !important;
+            max-width: 1200px !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
+        }
+
+        /* Make metrics/stats white cards with dark text */
+        div[data-testid="stMetric"] {
+            background: white !important;
+            color: #0f172a !important;
+            border-radius: 12px !important;
+            padding: 1.2rem !important;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.18) !important;
+            border: 1px solid #e2e8f0 !important;
+        }
+        div[data-testid="stMetricLabel"] {
+            color: #334155 !important;
+            font-weight: 600 !important;
+            font-size: 1.1rem !important;
+        }
+        div[data-testid="stMetricValue"] {
+            color: #0f172a !important;
+            font-size: 2.4rem !important;
+            font-weight: 700 !important;
+        }
+        div[data-testid="stMetricDelta"] {
+            color: #059669 !important;   /* green for positive delta if any */
         }
     </style>
     """, unsafe_allow_html=True)
