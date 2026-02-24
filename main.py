@@ -522,15 +522,24 @@ Confidence high. Comeback stronger — para sa legacy, community, financial free
 *Built by faith, tested by fire.*
     """)
 
-    # Realization & Future Vision
+        # Realization & Future Vision
     st.markdown(
         f"<h3 style='color:{accent_gold}; text-align:center; font-size:1.8rem; margin:2rem 0;'>"
         "✨ Realization & Future Vision</h3>",
         unsafe_allow_html=True,
     )
-    resized_vision = make_same_size("assets/journey_vision.jpg")
-    if resized_vision:
-        st.image(resized_vision, use_column_width=True, caption="Built by Faith, Shared for Generations 👑")
+
+    # Vision image – FULL SIZE, NO CROP, NO FORCED RATIO
+    try:
+        vision_image = Image.open("assets/journey_vision.jpg")
+        st.image(
+            vision_image,
+            use_column_width=True,               # mag-a-adjust sa column width (responsive)
+            caption="Built by Faith, Shared for Generations 👑"
+        )
+    except Exception as e:
+        st.warning(f"Vision image not found or failed to load: {str(e)}")
+        st.info("Image: assets/journey_vision.jpg")
 
     st.write("""
 Mula noong 2014, ramdam na ramdam ko na may malaking plano si Lord para sa akin.
