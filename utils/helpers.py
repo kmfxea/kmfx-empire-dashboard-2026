@@ -7,7 +7,7 @@ Reusable utility functions for the KMFX EA app
 - Keep-alive ping for Streamlit Cloud
 - Other small helpers used across pages
 """
-
+import os
 import uuid
 import requests
 import threading
