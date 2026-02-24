@@ -13,11 +13,6 @@ from utils.sidebar import render_sidebar
 require_auth()
 render_sidebar()
 
-# Logout redirect (critical para gumana ang button sa sidebar)
-if st.session_state.get("logging_out", False):
-    st.session_state.pop("logging_out", None)
-    st.switch_page("main.py")  # adjust path kung hindi sa root
-
 # ────────────────────────────────────────────────
 # Theme colors (consistent with rest of app)
 # ────────────────────────────────────────────────

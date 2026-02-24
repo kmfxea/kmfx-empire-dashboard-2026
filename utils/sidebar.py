@@ -59,22 +59,24 @@ def render_sidebar():
     st.sidebar.markdown("---")
     st.sidebar.markdown("### Account")
 
+        # ── LOGOUT SECTION ──────────────────────────────────────────────────────
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("### Account")
+
     if st.sidebar.button(
         "🚪 Logout",
         type="primary",
         use_container_width=True,
-        key=f"logout_btn_{role}_{st.session_state.get('username', 'anon')}",  # mas stable key
+        key=f"logout_{int(time.time())}",  # unique key gamit time para walang collision
         help="End session and return to login page"
     ):
-        # Set flag + clear keys
-        st.session_state["logging_out"] = True
+        # Clear lahat ng critical keys agad
+        for key in list(st.session_state.keys()):
+            if key in [
+                "authenticated", "username", "full_name", "role",
+                "just_logged_in", "theme", "_sidebar_rendered"
+            ]:
+                del st.session_state[key]
         
-        keys_to_clear = [
-            "authenticated", "username", "full_name", "role",
-            "just_logged_in", "theme", "_sidebar_rendered"
-        ]
-        for key in keys_to_clear:
-            st.session_state.pop(key, None)
-        
-        st.success("Logging out...")  # optional message
-        st.rerun()  # importante: trigger full rerun para ma-detect agad
+        st.success("Logging out... Redirecting to home.")
+        st.rerun()  # trigger full app rerun para ma-detect ang cleared state

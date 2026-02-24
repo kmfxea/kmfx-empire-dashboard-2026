@@ -27,7 +27,7 @@ from utils.helpers import (
     start_keep_alive_if_needed
 )
 
-# Optional keep-alive (usually not needed in modern Streamlit Cloud)
+# Optional keep-alive
 start_keep_alive_if_needed()
 
 # ────────────────────────────────────────────────
@@ -52,7 +52,7 @@ else:
         layout="wide",
         initial_sidebar_state="collapsed"
     )
-    # Modern, reliable sidebar hiding (2025+ compatible)
+    # Modern sidebar hiding for public page
     st.markdown("""
     <style>
         [data-testid="collapsedControl"] { display: none !important; }
@@ -71,26 +71,22 @@ else:
     """, unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# EARLY REDIRECT for authenticated users
+# EARLY REDIRECT + LOGOUT HANDLER
 # ────────────────────────────────────────────────
 if authenticated:
+    # If authenticated → redirect to dashboard
     st.switch_page("pages/🏠_Dashboard.py")
-    # ────────────────────────────────────────────────
-# DAGDAG: Logout handler para sa main.py
-# Kung may logging_out flag (mula sa sidebar), siguraduhin na hindi na redirect
-# ────────────────────────────────────────────────
-if st.session_state.get("logging_out", False):
-    # Linisin ang flag
-    st.session_state.pop("logging_out", None)
-    
-    # Walang early redirect — manatili sa public landing
-    # (hindi na kailangan ng st.switch_page dito, dahil nandito na tayo sa main.py)
-    st.success("You have been logged out. Welcome back to the public page.")
-    # Optional: st.rerun() kung gusto mo i-refresh ulit para siguradong fresh
 
-# Kung hindi authenticated at walang logging_out flag → tuloy sa public landing content
-# (logo, hero, stats, story, login form, etc.)
+else:
+    # Kung hindi authenticated (logged out)
+    # Check kung galing sa logout (para may message)
+    if st.session_state.get("logging_out", False):
+        st.session_state.pop("logging_out", None)
+        st.success("You have been logged out. Welcome back to the public page.")
+        # Optional: st.rerun() kung gusto mo i-refresh para fresh state
 
+    # Walang early redirect → tuloy sa public landing content
+    # (QR login, logo, hero, stats, story, FAQs, login tabs, etc.)
 # ────────────────────────────────────────────────
 # THEME & COLORS (simplified - no forced switch)
 # ────────────────────────────────────────────────
