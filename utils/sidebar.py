@@ -61,26 +61,37 @@ def render_sidebar():
         st.sidebar.page_link("pages/👤_Admin_Management.py", label="Admin Management", icon="👤")
         st.sidebar.page_link("pages/🔮_Simulator.py", label="Simulator", icon="🔮")
 
-    # ── LOGOUT SECTION ───────────────────────────────────────────────────────
+# ── LOGOUT SECTION ───────────────────────────────────────────────────────
     st.sidebar.markdown("---")
     st.sidebar.markdown("### Account")
 
-    if st.sidebar.button(
-        "🚪 Logout",
-        type="primary",
-        use_container_width=True,
-        key="logout_button",  # stable key is fine now
-        help="End session and return to public page"
-    ):
-        # Clear session
-        keys_to_clear = [
-            "authenticated", "username", "full_name", "role",
-            "just_logged_in", "theme", "_sidebar_rendered"
-        ]
-        for k in keys_to_clear:
-            st.session_state.pop(k, None)
-
-        st.session_state["logging_out"] = True
-        st.session_state["logout_message"] = "Logged out successfully. See you again! 👋"
-
-        st.switch_page("main.py")
+if st.sidebar.button(
+    "🚪 Logout",
+    type="primary",
+    use_container_width=True,
+    key="logout_button_unique",  # stable key para hindi mag-recreate lagi
+    help="End session and return to public landing"
+):
+    # 1. Set flag para alam ng main.py na logout
+    st.session_state["logging_out"] = True
+    
+    # 2. Clear lahat ng auth keys
+    for key in [
+        "authenticated", "username", "full_name", "role",
+        "just_logged_in", "theme", "_sidebar_rendered"
+    ]:
+        if key in st.session_state:
+            del st.session_state[key]
+    
+    # 3. Optional message na dadalhin sa main.py
+    st.session_state["logout_msg"] = "You have been logged out successfully."
+    
+    # 4. IMPORTANT: Huwag st.rerun() dito — gamitin natin st.switch_page sa ibang paraan
+    #    Pero para siguradong mag-trigger ng navigation:
+    st.session_state["_force_redirect"] = "main.py"
+    
+    # Small delay para ma-render muna ang message (optional pero nakakatulong sa UX)
+    import time
+    time.sleep(0.4)
+    
+    st.switch_page("main.py")
