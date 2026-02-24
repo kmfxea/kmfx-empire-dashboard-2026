@@ -75,9 +75,8 @@ else:
 if authenticated:
     st.switch_page("pages/🏠_Dashboard.py")
 else:
-    # Handle logout success message
     if st.session_state.pop("logging_out", False):
-        msg = st.session_state.pop("logout_success_message", None)
+        msg = st.session_state.pop("logout_message", None)
         if msg:
             st.success(msg)
         # Also make sure sidebar flag is gone

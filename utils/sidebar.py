@@ -1,36 +1,41 @@
 # utils/sidebar.py
 import streamlit as st
-import time
 
 def render_sidebar():
     """
     Role-based sidebar navigation for KMFX Empire
-    - Client: basic pages
-    - Admin: client pages + admin tools
-    - Owner: everything
-    Includes logout button at the bottom.
     """
-    # ── Prevent double rendering (very important in multi-page apps) ────────
-    if st.session_state.get("_sidebar_rendered", False):
-        return
-    
-    st.session_state["_sidebar_rendered"] = True
+    # ── Force reset sidebar flag right after login (prevents empty sidebar bug) ──
+    if st.session_state.get("just_logged_in", False):
+        st.session_state.pop("_sidebar_rendered", None)
+        st.session_state["just_logged_in"] = False  # consume the flag
 
-    # Get user info with safe defaults
+    # ── Read role & name EARLY ───────────────────────────────────────────────
     role = st.session_state.get("role", "guest").lower().strip()
     full_name = st.session_state.get("full_name", "Guest")
 
-    # ── User Info Header ────────────────────────────────────────────────────
+    # ── Double-render prevention ─────────────────────────────────────────────
+    if st.session_state.get("_sidebar_rendered", False):
+        return
+
+    st.session_state["_sidebar_rendered"] = True
+
+    # ── User Info Header ─────────────────────────────────────────────────────
     st.sidebar.markdown(f"**👑 {full_name}**")
-    st.sidebar.caption(f"Role: {role.title()}")
+    st.sidebar.caption(f"Role: {role.title() if role != 'guest' else 'Not logged in'}")
+
+    if role == "guest":
+        st.sidebar.warning("No role detected – please log in again")
+        return  # Early exit if something is wrong
+
     st.sidebar.markdown("### KMFX Empire")
     st.sidebar.markdown("---")
 
-    # ── COMMON PAGES ────────────────────────────────────────────────────────
+    # ── COMMON PAGES (all logged-in users) ───────────────────────────────────
     st.sidebar.page_link("pages/🏠_Dashboard.py", label="Dashboard", icon="🏠")
     st.sidebar.page_link("pages/👤_My_Profile.py", label="My Profile", icon="👤")
 
-    # ── CLIENT + ADMIN + OWNER PAGES ────────────────────────────────────────
+    # ── CLIENT + ADMIN + OWNER ───────────────────────────────────────────────
     if role in ["client", "admin", "owner"]:
         st.sidebar.page_link("pages/💰_Profit_Sharing.py", label="Profit Sharing", icon="💰")
         st.sidebar.page_link("pages/💳_Withdrawals.py", label="Withdrawals", icon="💳")
@@ -39,7 +44,7 @@ def render_sidebar():
         st.sidebar.page_link("pages/🔔_Notifications.py", label="Notifications", icon="🔔")
         st.sidebar.page_link("pages/📸_Testimonials.py", label="Testimonials", icon="📸")
 
-    # ── ADMIN + OWNER ONLY ──────────────────────────────────────────────────
+    # ── ADMIN + OWNER ONLY ───────────────────────────────────────────────────
     if role in ["admin", "owner"]:
         st.sidebar.page_link("pages/📊_FTMO_Accounts.py", label="FTMO Accounts", icon="📊")
         st.sidebar.page_link("pages/📜_Audit_Logs.py", label="Audit Logs", icon="📜")
@@ -48,7 +53,7 @@ def render_sidebar():
         st.sidebar.page_link("pages/📁_File_Vault.py", label="File Vault", icon="📁")
         st.sidebar.page_link("pages/💬_Messages.py", label="Messages", icon="💬")
 
-    # ── OWNER ONLY ──────────────────────────────────────────────────────────
+    # ── OWNER ONLY ───────────────────────────────────────────────────────────
     if role == "owner":
         st.sidebar.markdown("---")
         st.sidebar.subheader("👑 Owner Tools")
@@ -56,39 +61,26 @@ def render_sidebar():
         st.sidebar.page_link("pages/👤_Admin_Management.py", label="Admin Management", icon="👤")
         st.sidebar.page_link("pages/🔮_Simulator.py", label="Simulator", icon="🔮")
 
-    # ── LOGOUT SECTION ──────────────────────────────────────────────────────
+    # ── LOGOUT SECTION ───────────────────────────────────────────────────────
     st.sidebar.markdown("---")
     st.sidebar.markdown("### Account")
 
-    # ── LOGOUT BUTTON ───────────────────────────────────────────────────────
     if st.sidebar.button(
         "🚪 Logout",
         type="primary",
         use_container_width=True,
-        key=f"logout_{int(time.time() * 1000)}",  # more unique
-        help="End session and return to public landing page"
+        key="logout_button",  # stable key is fine now
+        help="End session and return to public page"
     ):
-        # 1. Mark that we are logging out (used in main.py)
-        st.session_state["logging_out"] = True
-
-        # 2. Clear only the important keys
+        # Clear session
         keys_to_clear = [
-            "authenticated",
-            "username",
-            "full_name",
-            "role",
-            "just_logged_in",
-            "theme",
-            "_sidebar_rendered",
-            # Add any other sensitive session keys you might have
+            "authenticated", "username", "full_name", "role",
+            "just_logged_in", "theme", "_sidebar_rendered"
         ]
+        for k in keys_to_clear:
+            st.session_state.pop(k, None)
 
-        for key in keys_to_clear:
-            st.session_state.pop(key, None)
+        st.session_state["logging_out"] = True
+        st.session_state["logout_message"] = "Logged out successfully. See you again! 👋"
 
-        # 3. Optional: small goodbye message that survives one rerun
-        st.session_state["logout_success_message"] = "You have been logged out. See you again! 👋"
-
-        # 4. Most reliable: force navigation back to main.py
-        #    (st.switch_page is usually better than st.rerun() for logout)
         st.switch_page("main.py")
