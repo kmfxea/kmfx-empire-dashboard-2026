@@ -1,141 +1,105 @@
 # main.py
 # =====================================================================
-# KMFX EA - PUBLIC LANDING + LOGIN PAGE
-# Multi-page entry point: redirects to dashboard if already logged-in
+# KMFX EA - PURE CENTERED PUBLIC LANDING + LOGIN
+# No sidebar, no header, full centering, dark mode, max-width content
+# Redirects to dashboard if already logged in
 # =====================================================================
 import streamlit as st
 from datetime import datetime
 from utils.supabase_client import supabase
 from utils.auth import login_user, is_authenticated
-from utils.helpers import (
-    log_action,
-    start_keep_alive_if_needed,
-    make_same_size
-)
+from utils.helpers import log_action, make_same_size
 from PIL import Image
 
-# Keep Streamlit Cloud from sleeping
-start_keep_alive_if_needed()
-
 # ────────────────────────────────────────────────
-# PAGE CONFIG – NO SIDEBAR + FULL CENTERING SETUP
+# PAGE CONFIG: NO SIDEBAR, NO HEADER, FULL CENTER
 # ────────────────────────────────────────────────
-if not is_authenticated():
-    st.set_page_config(
-        page_title="KMFX EA - Elite Empire",
-        page_icon="👑",
-        layout="wide",
-        initial_sidebar_state="collapsed"
-    )
-    
-    # Full centering + no sidebar + no top white space
-    st.markdown("""
-    <style>
-        /* Kill sidebar completely */
-        section[data-testid="stSidebar"] { display: none !important; width: 0 !important; }
-        [data-testid="collapsedControl"] { display: none !important; }
-        
-        /* Remove top header/bar */
-        header[data-testid="stHeader"] { display: none !important; }
-        .stApp > header { display: none !important; }
-        
-        /* Full centering for all content */
-        .stApp {
-            background: #0a0d14 !important;
-            margin: 0 !important;
-            padding: 0 !important;
-        }
-        .main .block-container {
-            max-width: 1200px !important;
-            margin: 0 auto !important;
-            padding-top: 1rem !important;
-            padding-bottom: 2rem !important;
-            padding-left: 1rem !important;
-            padding-right: 1rem !important;
-        }
-        /* Center all elements inside */
-        .stMarkdown, .stImage, .stColumns, div[data-testid="stMetric"] {
-            margin-left: auto !important;
-            margin-right: auto !important;
-            text-align: center !important;
-        }
-        /* White metric cards */
-        div[data-testid="stMetric"] {
-            background: white !important;
-            color: #0f172a !important;
-            border-radius: 16px !important;
-            padding: 1.4rem !important;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.2) !important;
-            border: 1px solid #e2e8f0 !important;
-            max-width: 320px !important;
-            margin: 0 auto 1rem auto !important;
-        }
-        div[data-testid="stMetricLabel"] {
-            color: #334155 !important;
-            font-weight: 600 !important;
-            font-size: 1.1rem !important;
-        }
-        div[data-testid="stMetricValue"] {
-            color: #0f172a !important;
-            font-size: 2.5rem !important;
-            font-weight: 700 !important;
-        }
-    </style>
-    """, unsafe_allow_html=True)
+st.set_page_config(
+    page_title="KMFX EA - Elite Empire",
+    page_icon="👑",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
 
-else:
-    st.set_page_config(
-        page_title="KMFX Empire Dashboard",
-        page_icon="👑",
-        layout="wide",
-        initial_sidebar_state="expanded"
-    )
-
-# ────────────────────────────────────────────────
-# AUTO-REDIRECT if already logged in
-# ────────────────────────────────────────────────
-if is_authenticated():
-    # Light theme for dashboard
-    if st.session_state.get("theme") != "light":
-        st.session_state.theme = "light"
-    st.switch_page("pages/🏠_Dashboard.py")
-
-# ────────────────────────────────────────────────
-# Only public content below this point
-# ────────────────────────────────────────────────
-
-# Theme & accent colors (dark mode for landing)
-accent_primary = "#00ffaa"
-accent_gold    = "#ffd700"
-bg_color       = "#0a0d14"
-text_primary   = "#ffffff"
-text_muted     = "#aaaaaa"
-
-st.markdown(f"""
+# Hide sidebar completely + header + top space
+st.markdown("""
 <style>
-    .stApp {{ background: {bg_color}; color: {text_primary}; }}
-    h1, h2, h3 {{ color: {text_primary} !important; }}
-    .gold-text {{ 
-        background: linear-gradient(90deg, {accent_gold}, {accent_primary});
+    /* Kill sidebar & collapse button */
+    section[data-testid="stSidebar"] { display: none !important; }
+    [data-testid="collapsedControl"] { display: none !important; }
+
+    /* Kill Streamlit header & top bar */
+    header { visibility: hidden !important; }
+    .stApp > header { display: none !important; }
+
+    /* Full dark background + remove all top/bottom padding */
+    .stApp {
+        background: #0a0d14 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* Center container with max-width like old version */
+    .main .block-container {
+        max-width: 1200px !important;
+        margin: 0 auto !important;
+        padding-top: 1rem !important;
+        padding-bottom: 4rem !important;
+        padding-left: 1.5rem !important;
+        padding-right: 1.5rem !important;
+    }
+
+    /* Center everything inside */
+    .stMarkdown, .stImage, .stColumns, div[data-testid="stMetric"] {
+        margin-left: auto !important;
+        margin-right: auto !important;
+        text-align: center !important;
+    }
+
+    /* White metric cards for contrast */
+    div[data-testid="stMetric"] {
+        background: white !important;
+        color: #0f172a !important;
+        border-radius: 16px !important;
+        padding: 1.4rem !important;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.3) !important;
+        border: 1px solid #e2e8f0 !important;
+        max-width: 320px !important;
+        margin: 1rem auto !important;
+    }
+
+    /* Glass cards - centered with max-width */
+    .glass-card {
+        background: rgba(15,20,30,0.75) !important;
+        backdrop-filter: blur(20px) !important;
+        border: 1px solid rgba(100,100,100,0.3) !important;
+        border-radius: 20px !important;
+        padding: 2.5rem !important;
+        margin: 3rem auto !important;
+        max-width: 1100px !important;
+        box-shadow: 0 12px 40px rgba(0,0,0,0.6) !important;
+    }
+
+    /* Gold gradient text */
+    .gold-text {
+        background: linear-gradient(90deg, #ffd700, #00ffaa);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         font-weight: 700;
-    }}
-    .glass-card {{
-        background: rgba(15,20,30,0.70);
-        backdrop-filter: blur(20px);
-        border: 1px solid rgba(100,100,100,0.25);
-        border-radius: 20px;
-        padding: 2.2rem;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        margin: 2rem auto;
-        max-width: 1100px;
-    }}
+    }
 </style>
 """, unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# QR AUTO-LOGIN
+# AUTO-REDIRECT IF ALREADY LOGGED IN
+# ────────────────────────────────────────────────
+if is_authenticated():
+    # Light theme for dashboard
+    st.session_state.theme = "light"
+    st.switch_page("pages/🏠_Dashboard.py")
+
+# ────────────────────────────────────────────────
+# QR AUTO-LOGIN (runs early)
 # ────────────────────────────────────────────────
 params = st.query_params
 qr_token = params.get("qr", [None])[0]
@@ -163,22 +127,27 @@ if qr_token:
         st.query_params.clear()
 
 # ────────────────────────────────────────────────
-# PUBLIC LANDING CONTENT (centered with max-width)
+# PUBLIC LANDING – CENTERED CONTENT STARTS HERE
 # ────────────────────────────────────────────────
+
 # Logo (centered)
 logo_col = st.columns([1, 4, 1])[1]
 with logo_col:
     st.image("assets/logo.png", use_column_width=True)
 
-# Hero (centered)
-hero_container = st.container()
-with hero_container:
-    st.markdown(f"<h1 class='gold-text' style='text-align: center;'>KMFX EA</h1>", unsafe_allow_html=True)
-    st.markdown("<h2 style='text-align: center; color:{text_primary};'>Automated Gold Trading for Financial Freedom</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; font-size:1.4rem; color:{text_muted};'>Passed FTMO Phase 1 • +3,071% 5-Year Backtest • Building Legacies of Generosity</p>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; font-size:1.2rem;'>Mark Jeff Blando – Founder & Developer • 2026</p>", unsafe_allow_html=True)
+# Hero Section
+st.markdown(f"""
+<div class='glass-card'>
+    <h1 class='gold-text' style='font-size:4.5rem; margin-bottom:1rem;'>KMFX EA</h1>
+    <h2 style='font-size:2.2rem; margin:1rem 0;'>Automated Gold Trading for Financial Freedom</h2>
+    <p style='font-size:1.5rem; opacity:0.9; margin:1.5rem 0;'>
+        Passed FTMO Phase 1 • +3,071% 5-Year Backtest • Building Legacies of Generosity
+    </p>
+    <p style='font-size:1.3rem; opacity:0.8;'>Mark Jeff Blando – Founder & Developer • 2026</p>
+</div>
+""", unsafe_allow_html=True)
 
-# Realtime Stats (centered)
+# Realtime Stats – centered white cards
 try:
     accounts_count = supabase.table("ftmo_accounts").select("id", count="exact").execute().count or 0
     equity_data = supabase.table("ftmo_accounts").select("current_equity").execute().data or []
@@ -186,7 +155,7 @@ try:
     gf_data = supabase.table("growth_fund_transactions").select("type, amount").execute().data or []
     gf_balance = sum(t["amount"] if t["type"] == "In" else -t["amount"] for t in gf_data)
     members_count = supabase.table("users").select("id", count="exact").eq("role", "client").execute().count or 0
-except Exception:
+except:
     accounts_count = total_equity = gf_balance = members_count = 0
 
 stat_cols = st.columns(4)
@@ -661,9 +630,9 @@ for q, a in faqs:
 st.markdown("</div>", unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# LOGIN SECTION – role-based tabs
+# LOGIN TABS – centered glass card
 # ────────────────────────────────────────────────
-st.markdown("<div class='glass-card' style='max-width:800px; margin:5rem auto; padding:3rem;'>", unsafe_allow_html=True)
+st.markdown("<div class='glass-card' style='max-width:800px; margin:5rem auto;'>", unsafe_allow_html=True)
 st.markdown("<h2 class='gold-text' style='text-align:center;'>Member Login</h2>", unsafe_allow_html=True)
 st.markdown("<p style='text-align:center; opacity:0.9; margin-bottom:2rem;'>Access your dashboard, balances, shares & tools</p>", unsafe_allow_html=True)
 
@@ -671,36 +640,27 @@ tab_owner, tab_admin, tab_client = st.tabs(["👑 Owner", "🛠️ Admin", "👥
 
 with tab_owner:
     with st.form("owner_form", clear_on_submit=True):
-        username = st.text_input("Username", key="o_user")
-        password = st.text_input("Password", type="password", key="o_pass")
-        if st.form_submit_button("Login as Owner", type="primary", use_container_width=True):
-            if login_user(username.strip().lower(), password, expected_role="owner"):
-                st.success("Owner login successful!")
-                st.session_state.role = "owner"
-                st.switch_page("pages/🏠_Dashboard.py")   # or "pages/👤_Admin_Management.py" if preferred for owner
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
+        if st.form_submit_button("Login as Owner →", type="primary", use_container_width=True):
+            login_user(username.strip().lower(), password, expected_role="owner")
 
 with tab_admin:
     with st.form("admin_form", clear_on_submit=True):
-        username = st.text_input("Username", key="a_user")
-        password = st.text_input("Password", type="password", key="a_pass")
-        if st.form_submit_button("Login as Admin", type="primary", use_container_width=True):
-            if login_user(username.strip().lower(), password, expected_role="admin"):
-                st.success("Admin login successful!")
-                st.session_state.role = "admin"
-                st.switch_page("pages/🏠_Dashboard.py")
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
+        if st.form_submit_button("Login as Admin →", type="primary", use_container_width=True):
+            login_user(username.strip().lower(), password, expected_role="admin")
 
 with tab_client:
     with st.form("client_form", clear_on_submit=True):
-        username = st.text_input("Username", key="c_user")
-        password = st.text_input("Password", type="password", key="c_pass")
-        if st.form_submit_button("Login as Client", type="primary", use_container_width=True):
-            if login_user(username.strip().lower(), password, expected_role="client"):
-                st.success("Welcome back!")
-                st.session_state.role = "client"
-                st.switch_page("pages/🏠_Dashboard.py")
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
+        if st.form_submit_button("Login as Client →", type="primary", use_container_width=True):
+            login_user(username.strip().lower(), password, expected_role="client")
 
 st.markdown("</div>", unsafe_allow_html=True)
 
-# Final stop – prevents anything below from running on public page
+# Final stop – hindi na lalabas ang dashboard content dito
 if not is_authenticated():
     st.stop()
