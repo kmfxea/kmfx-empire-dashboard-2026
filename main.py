@@ -1,71 +1,42 @@
 # main.py
 # =====================================================================
 # KMFX EA - PUBLIC LANDING + LOGIN PAGE
-# Multi-page entry point: redirects to dashboard if logged-in
+# Multi-page entry point: redirects to dashboard if already logged-in
 # =====================================================================
 import streamlit as st
-import datetime
-import bcrypt
-import threading
-import time
-import requests
-import qrcode
-from io import BytesIO
-from supabase import create_client, Client
-from dotenv import load_dotenv
-import uuid
-from PIL import Image
-import os
+from datetime import datetime
 from utils.supabase_client import supabase
 from utils.auth import login_user, is_authenticated
 from utils.helpers import (
-    upload_to_supabase,
-    make_same_size,
     log_action,
-    start_keep_alive_if_needed
+    start_keep_alive_if_needed,
+    make_same_size
 )
+from PIL import Image
 
-# Start keep-alive to prevent sleep on Streamlit Cloud
+# Keep Streamlit Cloud from sleeping
 start_keep_alive_if_needed()
-# ────────────────────────────────────────────────
-# HIDE DEFAULT SIDEBAR ON PUBLIC PAGE (we use custom one later)
-# ────────────────────────────────────────────────
-if not is_authenticated():
-    st.markdown("""
-    <style>
-        section[data-testid="stSidebar"] {
-            display: none !important;
-        }
-        [data-testid="collapsedControl"] {
-            display: none !important;
-        }
-    </style>
-    """, unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# PAGE CONFIG & SIDEBAR CONTROL (hide sidebar on public landing)
+# PAGE CONFIG – different for public vs authenticated
 # ────────────────────────────────────────────────
 if not is_authenticated():
     st.set_page_config(
         page_title="KMFX EA - Elite Empire",
         page_icon="👑",
         layout="wide",
-        initial_sidebar_state="collapsed"  # minimized/hidden on public
+        initial_sidebar_state="collapsed"
     )
-    # Force hide sidebar via CSS on public page + center main content
+    # Completely hide sidebar + collapse button on public page
     st.markdown("""
     <style>
-        section[data-testid="stSidebar"] {
-            display: none !important;
-        }
-        .st-emotion-cache-1cpxqw2 { /* main content area */
-            max-width: 1100px !important; /* centered with max-width */
-            margin: 0 auto !important;
-            padding: 1rem 2rem !important;
-        }
+        section[data-testid="stSidebar"] { display: none !important; }
+        [data-testid="collapsedControl"] { display: none !important; }
         .block-container {
             padding-top: 2rem !important;
             padding-bottom: 2rem !important;
+            max-width: 1100px !important;
+            margin: 0 auto !important;
         }
     </style>
     """, unsafe_allow_html=True)
@@ -78,191 +49,110 @@ else:
     )
 
 # ────────────────────────────────────────────────
-# THEME & COLORS
+# AUTO-REDIRECT if already logged in
 # ────────────────────────────────────────────────
-accent_primary = "#00ffaa"
-accent_gold = "#ffd700"
-accent_glow = "#00ffaa40"
-accent_hover = "#00ffcc"
-
-if "theme" not in st.session_state:
-    st.session_state.theme = "dark"
-theme = st.session_state.theme
-
-# Auto theme + redirect if authenticated
 if is_authenticated():
-    if theme != "light":
+    # Light theme for dashboard
+    if st.session_state.get("theme") != "light":
         st.session_state.theme = "light"
-        st.rerun()
     st.switch_page("pages/🏠_Dashboard.py")
-else:
-    if theme != "dark":
-        st.session_state.theme = "dark"
-        st.rerun()
-
-bg_color = "#f8fbff" if theme == "light" else "#0a0d14"
-card_bg = "rgba(255,255,255,0.75)" if theme == "light" else "rgba(15,20,30,0.70)"
-border_color = "rgba(0,0,0,0.08)" if theme == "light" else "rgba(100,100,100,0.15)"
-text_primary = "#0f172a" if theme == "light" else "#ffffff"
-text_muted = "#64748b" if theme == "light" else "#aaaaaa"
-card_shadow = "0 8px 25px rgba(0,0,0,0.12)" if theme == "light" else "0 10px 30px rgba(0,0,0,0.5)"
-sidebar_bg = "rgba(248,251,255,0.95)" if theme == "light" else "rgba(10,13,20,0.95)"
 
 # ────────────────────────────────────────────────
-# FULL CSS STYLING (with centered content adjustments)
+# Only public content below this point
 # ────────────────────────────────────────────────
+
+# Theme & accent colors (dark mode for landing)
+accent_primary = "#00ffaa"
+accent_gold    = "#ffd700"
+bg_color       = "#0a0d14"
+text_primary   = "#ffffff"
+text_muted     = "#aaaaaa"
+
 st.markdown(f"""
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
 <style>
-    html, body, [class*="css-"] {{
-        font-family: 'Poppins', sans-serif !important;
-        font-size: 15px !important;
-    }}
-    .stApp {{
-        background: {bg_color};
-        color: {text_primary};
-    }}
-    h1, h2, h3, h4, h5, h6, p, div, span, label, .stMarkdown {{
-        color: {text_primary} !important;
-    }}
-    small, caption, .caption {{
-        color: {text_muted} !important;
-    }}
-    .glass-card {{
-        background: {card_bg};
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border-radius: 20px;
-        border: 1px solid {border_color};
-        padding: 2.2rem !important;
-        box-shadow: {card_shadow};
-        transition: all 0.3s ease;
-        margin: 2rem auto;
-        max-width: 1100px; /* centered content width */
-    }}
-    .glass-card:hover {{
-        box-shadow: 0 15px 40px {accent_glow if theme=='dark' else 'rgba(0,0,0,0.2)'};
-        transform: translateY(-6px);
-        border-color: {accent_primary};
-    }}
-    .gold-text {{
-        color: {accent_gold} !important;
-        font-weight: 600;
-        letter-spacing: 0.5px;
-    }}
-    .public-hero {{
-        text-align: center;
-        padding: 6rem 1rem 4rem;
-        min-height: 80vh;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        max-width: 1100px;
-        margin: 0 auto;
-    }}
-    .public-hero h1 {{
-        font-size: clamp(3rem, 8vw, 5rem);
+    .stApp {{ background: {bg_color}; color: {text_primary}; }}
+    h1, h2, h3 {{ color: {text_primary} !important; }}
+    .gold-text {{ 
         background: linear-gradient(90deg, {accent_gold}, {accent_primary});
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        margin-bottom: 1rem;
-    }}
-    .timeline-card {{
-        background: rgba(30, 35, 45, 0.6);
-        border-left: 6px solid {accent_gold};
-        border-radius: 0 20px 20px 0;
-        padding: 2rem;
-        margin: 2.5rem auto;
-        transition: all 0.3s ease;
-        max-width: 900px;
-    }}
-    .timeline-card:hover {{
-        transform: translateX(10px);
-        box-shadow: 0 10px 30px {accent_glow};
-    }}
-    .big-stat {{
-        font-size: 3rem !important;
         font-weight: 700;
-        color: {accent_primary};
     }}
-    .stTextInput > div > div > input,
-    .stTextArea > div > div > textarea,
-    .stSelectbox > div > div > div,
-    .stSelectbox > div > div > div > div,
-    .stSelectbox > div > div input {{
-        background: #ffffff !important;
-        color: #000000 !important;
-        border: 1px solid {border_color} !important;
-        border-radius: 16px !important;
-    }}
-    button[kind="primary"] {{
-        background: {accent_primary} !important;
-        color: #000000 !important;
-        border-radius: 16px !important;
-        box-shadow: 0 6px 20px {accent_glow} !important;
-        padding: 1rem 2rem !important;
-        font-size: 1.2rem !important;
-    }}
-    button[kind="primary"]:hover {{
-        background: {accent_hover} !important;
-        box-shadow: 0 12px 35px {accent_glow} !important;
-        transform: translateY(-3px);
-    }}
-    header[data-testid="stHeader"] {{
-        background-color: {bg_color} !important;
+    .glass-card {{
+        background: rgba(15,20,30,0.70);
         backdrop-filter: blur(20px);
-    }}
-    section[data-testid="stSidebar"] {{
-        background: {sidebar_bg} !important;
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border-right: 1px solid {border_color};
-    }}
-    [data-testid="collapsedControl"] {{
-        color: #ff4757 !important;
-    }}
-    @media (min-width: 769px) {{
-        .main .block-container {{
-            padding-left: 3rem !important;
-            padding-top: 2rem !important;
-            max-width: 1200px !important;
-            margin: 0 auto !important;
-        }}
-    }}
-    @media (max-width: 768px) {{
-        .public-hero {{ padding: 4rem 1rem 3rem; min-height: 70vh; }}
-        .glass-card {{ padding: 1.5rem !important; max-width: 95% !important; }}
-        .timeline-card {{ border-left: none; border-top: 6px solid {accent_gold}; border-radius: 20px; }}
-        .big-stat {{ font-size: 2.2rem !important; }}
+        border: 1px solid rgba(100,100,100,0.25);
+        border-radius: 20px;
+        padding: 2.2rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        margin: 2rem auto;
+        max-width: 1100px;
     }}
 </style>
 """, unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# QR AUTO-LOGIN (fixed path)
+# QR AUTO-LOGIN
 # ────────────────────────────────────────────────
 params = st.query_params
 qr_token = params.get("qr", [None])[0]
-if qr_token and not is_authenticated():
+if qr_token:
     try:
         resp = supabase.table("users").select("*").eq("qr_token", qr_token).execute()
         if resp.data:
             user = resp.data[0]
-            st.session_state.authenticated = True
-            st.session_state.username = user["username"].lower()
-            st.session_state.full_name = user["full_name"] or user["username"]
-            st.session_state.role = user["role"]
-            st.session_state.theme = "light"
-            st.session_state.just_logged_in = True
-            log_action("QR Login Success", f"User: {user['full_name']} | Role: {user['role']}")
+            st.session_state.update({
+                "authenticated": True,
+                "username": user["username"].lower(),
+                "full_name": user["full_name"] or user["username"],
+                "role": user["role"],
+                "theme": "light",
+                "just_logged_in": True
+            })
+            log_action("QR Login Success", f"User: {user.get('full_name')} | Role: {user['role']}")
             st.query_params.clear()
-            st.switch_page("pages/🏠_Dashboard.py")  # ← FIXED HERE
+            st.switch_page("pages/🏠_Dashboard.py")
         else:
             st.error("Invalid or revoked QR code")
             st.query_params.clear()
     except Exception as e:
         st.error(f"QR login failed: {str(e)}")
         st.query_params.clear()
+
+# ────────────────────────────────────────────────
+# HERO + LOGO
+# ────────────────────────────────────────────────
+col_logo = st.columns([1, 4, 1])[1]
+with col_logo:
+    st.image("assets/logo.png", use_column_width=True)
+
+st.markdown(f"""
+<div class='glass-card' style='text-align:center; padding:4rem 2rem;'>
+    <h1 class='gold-text' style='font-size:4.8rem; margin-bottom:1rem;'>KMFX EA</h1>
+    <h2>Automated Gold Trading for Financial Freedom</h2>
+    <p style='font-size:1.4rem; opacity:0.9; margin:1.5rem 0;'>
+        Passed FTMO Phase 1 • +3,071% 5-Year Backtest • Building Legacies of Generosity
+    </p>
+    <p style='opacity:0.8;'>Mark Jeff Blando – Founder & Developer • 2026</p>
+</div>
+""", unsafe_allow_html=True)
+
+# Realtime stats row
+try:
+    accounts_count = supabase.table("ftmo_accounts").select("id", count="exact").execute().count or 0
+    equity_sum = sum(r.get("current_equity", 0) for r in supabase.table("ftmo_accounts").select("current_equity").execute().data or [])
+    gf_in = supabase.table("growth_fund_transactions").select("amount").eq("type", "In").execute().data or []
+    gf_out = supabase.table("growth_fund_transactions").select("amount").eq("type", "Out").execute().data or []
+    gf_balance = sum(i["amount"] for i in gf_in) - sum(o["amount"] for o in gf_out)
+    members_count = supabase.table("users").select("id", count="exact").eq("role", "client").execute().count or 0
+except:
+    accounts_count = equity_sum = gf_balance = members_count = 0
+
+cols = st.columns(4)
+cols[0].metric("Active Accounts", accounts_count)
+cols[1].metric("Total Equity", f"${equity_sum:,.0f}")
+cols[2].metric("Growth Fund", f"${gf_balance:,.0f}")
+cols[3].metric("Members", members_count)
 
 # ────────────────────────────────────────────────
 # PUBLIC LANDING CONTENT (centered with max-width)
@@ -763,72 +653,46 @@ for q, a in faqs:
 st.markdown("</div>", unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# SECURE MEMBER LOGIN – ROLE-AWARE + FIXED REDIRECTS
+# LOGIN SECTION – role-based tabs
 # ────────────────────────────────────────────────
-st.markdown("<div class='glass-card' style='text-align:center; margin:5rem auto; padding:4rem; max-width:800px;'>", unsafe_allow_html=True)
-st.markdown("<h2 class='gold-text'>Already a Pioneer or Member?</h2>", unsafe_allow_html=True)
-st.markdown("<p style='font-size:1.4rem; opacity:0.9;'>Access your elite dashboard, realtime balance, profit shares, EA versions, and empire tools</p>", unsafe_allow_html=True)
+st.markdown("<div class='glass-card' style='max-width:800px; margin:5rem auto; padding:3rem;'>", unsafe_allow_html=True)
+st.markdown("<h2 class='gold-text' style='text-align:center;'>Member Login</h2>", unsafe_allow_html=True)
+st.markdown("<p style='text-align:center; opacity:0.9; margin-bottom:2rem;'>Access your dashboard, balances, shares & tools</p>", unsafe_allow_html=True)
 
-tab_owner, tab_admin, tab_client = st.tabs(["👑 Owner Login", "🛠️ Admin Login", "👥 Client Login"])
+tab_owner, tab_admin, tab_client = st.tabs(["👑 Owner", "🛠️ Admin", "👥 Client"])
 
-# ── OWNER ────────────────────────────────────────
 with tab_owner:
-    with st.form(key="owner_login_form", clear_on_submit=True):
-        st.markdown("<p style='text-align:center; opacity:0.8;'>Owner-only access</p>", unsafe_allow_html=True)
-        owner_username = st.text_input("Username", placeholder="e.g. kingminted", key="owner_username")
-        owner_password = st.text_input("Password", type="password", key="owner_password")
-        submit_owner = st.form_submit_button("Login as Owner →", type="primary", use_container_width=True)
+    with st.form("owner_form", clear_on_submit=True):
+        username = st.text_input("Username", key="o_user")
+        password = st.text_input("Password", type="password", key="o_pass")
+        if st.form_submit_button("Login as Owner", type="primary", use_container_width=True):
+            if login_user(username.strip().lower(), password, expected_role="owner"):
+                st.success("Owner login successful!")
+                st.session_state.role = "owner"
+                st.switch_page("pages/🏠_Dashboard.py")   # or "pages/👤_Admin_Management.py" if preferred for owner
 
-    if submit_owner:
-        success = login_user(owner_username.strip().lower(), owner_password, expected_role="owner")
-        if success:
-            st.success("Owner login successful! Redirecting...")
-            st.session_state.role = "owner"
-            # time.sleep(0.8)  # uncomment if you want a small delay to see message
-            st.switch_page("pages/👤_Admin_Management.py")  # Owner starts here
-        else:
-            st.error("Login failed – check credentials or role")
-
-# ── ADMIN ────────────────────────────────────────
 with tab_admin:
-    with st.form(key="admin_login_form", clear_on_submit=True):
-        st.markdown("<p style='text-align:center; opacity:0.8;'>Admin access</p>", unsafe_allow_html=True)
-        admin_username = st.text_input("Username", placeholder="Your admin username", key="admin_username")
-        admin_password = st.text_input("Password", type="password", key="admin_password")
-        submit_admin = st.form_submit_button("Login as Admin →", type="primary", use_container_width=True)
+    with st.form("admin_form", clear_on_submit=True):
+        username = st.text_input("Username", key="a_user")
+        password = st.text_input("Password", type="password", key="a_pass")
+        if st.form_submit_button("Login as Admin", type="primary", use_container_width=True):
+            if login_user(username.strip().lower(), password, expected_role="admin"):
+                st.success("Admin login successful!")
+                st.session_state.role = "admin"
+                st.switch_page("pages/🏠_Dashboard.py")
 
-    if submit_admin:
-        success = login_user(admin_username.strip().lower(), admin_password, expected_role="admin")
-        if success:
-            st.success("Admin login successful! Redirecting...")
-            st.session_state.role = "admin"
-            # time.sleep(0.8)
-            st.switch_page("pages/👤_Admin_Management.py")  # Admin starts here
-        else:
-            st.error("Login failed – check credentials or role")
-
-# ── CLIENT / PIONEER ─────────────────────────────
 with tab_client:
-    with st.form(key="client_login_form", clear_on_submit=True):
-        st.markdown("<p style='text-align:center; opacity:0.8;'>Client / Pioneer access</p>", unsafe_allow_html=True)
-        client_username = st.text_input("Username", placeholder="Your username", key="client_username")
-        client_password = st.text_input("Password", type="password", key="client_password")
-        submit_client = st.form_submit_button("Login as Client →", type="primary", use_container_width=True)
-
-    if submit_client:
-        success = login_user(client_username.strip().lower(), client_password, expected_role="client")
-        if success:
-            st.success("Welcome back! Redirecting to your dashboard...")
-            st.session_state.role = "client"
-            # time.sleep(0.8)
-            st.switch_page("pages/🏠_Dashboard.py")  # ← FIXED HERE (correct path)
-        else:
-            st.error("Login failed – check credentials or role")
+    with st.form("client_form", clear_on_submit=True):
+        username = st.text_input("Username", key="c_user")
+        password = st.text_input("Password", type="password", key="c_pass")
+        if st.form_submit_button("Login as Client", type="primary", use_container_width=True):
+            if login_user(username.strip().lower(), password, expected_role="client"):
+                st.success("Welcome back!")
+                st.session_state.role = "client"
+                st.switch_page("pages/🏠_Dashboard.py")
 
 st.markdown("</div>", unsafe_allow_html=True)
 
-# ────────────────────────────────────────────────
-# STOP IF NOT AUTHENTICATED
-# ────────────────────────────────────────────────
+# Final stop – prevents anything below from running on public page
 if not is_authenticated():
     st.stop()

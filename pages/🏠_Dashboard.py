@@ -8,17 +8,19 @@ from utils.supabase_client import supabase
 from utils.sidebar import render_sidebar
 
 # ────────────────────────────────────────────────
-# PROTECTION + SIDEBAR
+# PROTECTION + SIDEBAR (only once per page)
 # ────────────────────────────────────────────────
-require_auth()          # Allows client, admin, owner
-render_sidebar()        # Role-aware sidebar + logout
+require_auth()          # Enforce login (client, admin, owner allowed)
+render_sidebar()        # Role-aware sidebar + logout button
 
-# Accent fallback
+# ────────────────────────────────────────────────
+# Theme / Accent colors
+# ────────────────────────────────────────────────
 accent_primary = st.session_state.get("accent_primary", "#00ffaa")
-accent_gold = "#ffd700"
+accent_gold    = "#ffd700"
 
 # ────────────────────────────────────────────────
-# WELCOME HERO
+# WELCOME HERO + BALLOONS ON FIRST LOGIN
 # ────────────────────────────────────────────────
 if st.session_state.get("just_logged_in", False):
     st.balloons()
@@ -26,12 +28,24 @@ if st.session_state.get("just_logged_in", False):
 
 st.markdown(
     f"""
-    <div class='glass-card' style='text-align:center; padding:3rem 2rem; margin-bottom:2.5rem; border:2px solid {accent_primary}40;'>
-        <h1 style='margin:0 0 1rem; font-size:3.2rem; background:linear-gradient(90deg,{accent_primary},{accent_gold}); -webkit-background-clip:text; -webkit-text-fill-color:transparent;'>
+    <div class='glass-card' style='
+        text-align:center; 
+        padding:3rem 2rem; 
+        margin-bottom:2.5rem; 
+        border:2px solid {accent_primary}40;
+        border-radius:16px;
+    '>
+        <h1 style='
+            margin:0 0 1rem; 
+            font-size:3.2rem; 
+            background:linear-gradient(90deg,{accent_primary},{accent_gold}); 
+            -webkit-background-clip:text; 
+            -webkit-text-fill-color:transparent;
+        '>
             Welcome back, {st.session_state.get('full_name', 'Empire Builder')} 👑
         </h1>
         <p style='font-size:1.3rem; opacity:0.9; margin:0;'>
-            Role: <strong>{st.session_state.get('role', 'Client').upper()}</strong> • 
+            Role: <strong>{st.session_state.get('role', 'Client').upper()}</strong> •
             {datetime.now().strftime('%B %d, %Y • %I:%M %p')}
         </p>
     </div>
@@ -40,7 +54,7 @@ st.markdown(
 )
 
 # ────────────────────────────────────────────────
-# HEADER + GROWTH FUND
+# HEADER + GROWTH FUND METRIC
 # ────────────────────────────────────────────────
 col1, col2 = st.columns([5, 2])
 with col1:
@@ -51,53 +65,69 @@ with col2:
         gf_resp = supabase.table("mv_growth_fund_balance").select("balance").execute()
         gf_balance = gf_resp.data[0]["balance"] if gf_resp.data else 0.0
         st.metric("Growth Fund Balance", f"${gf_balance:,.0f}")
-    except:
+    except Exception:
         st.metric("Growth Fund Balance", "$0 (loading...)")
 
 # ────────────────────────────────────────────────
-# PERSONAL SNAPSHOT – FIXED & ROBUST
+# PERSONAL SNAPSHOT
 # ────────────────────────────────────────────────
 st.subheader("Your Empire Snapshot")
 try:
-    user_query = supabase.table("users").select("balance, funded_amount, share_percentage").eq("username", st.session_state.get("username", "")).execute()
-    if user_query.data:
-        u = user_query.data[0]
+    user_data = supabase.table("users")\
+        .select("balance, funded_amount, share_percentage")\
+        .eq("username", st.session_state.get("username", ""))\
+        .execute()
+
+    if user_data.data:
+        u = user_data.data[0]
         cols = st.columns(3)
-        cols[0].metric("Your Balance", f"${u.get('balance', 0):,.2f}", help="Your current available balance")
-        cols[1].metric("Your Funded (PHP)", f"₱{u.get('funded_amount', 0):,.0f}", help="Total PHP contributed/funded")
-        cols[2].metric("Your Profit Share", f"{u.get('share_percentage', 0):.2f}%", help="Your share of profit distributions")
+        cols[0].metric("Your Balance", f"${u.get('balance', 0):,.2f}", help="Current available balance")
+        cols[1].metric("Your Funded (PHP)", f"₱{u.get('funded_amount', 0):,.0f}", help="Total PHP contributed")
+        cols[2].metric("Your Profit Share", f"{u.get('share_percentage', 0):.2f}%", help="Your share percentage")
     else:
-        st.info("Your personal stats will appear here once your profile is fully set up. Contact admin if needed.")
+        st.info("Your personal stats will appear here once your profile is set up.")
 except Exception:
-    st.info("Snapshot loading... (this will update shortly)")
+    st.info("Snapshot loading... (will update shortly)")
 
 # ────────────────────────────────────────────────
-# EMPIRE DATA FETCH – ALWAYS RETURNS 11 VALUES
+# EMPIRE SUMMARY FETCH (cached 5 min)
 # ────────────────────────────────────────────────
 @st.cache_data(ttl=300)
 def fetch_empire_summary():
     try:
-        gf_resp = supabase.table("mv_growth_fund_balance").select("balance").execute()
-        gf_balance = gf_resp.data[0]["balance"] if gf_resp.data else 0.0
+        # Growth Fund
+        gf = supabase.table("mv_growth_fund_balance").select("balance").execute()
+        gf_balance = gf.data[0]["balance"] if gf.data else 0.0
 
+        # Empire summary
         empire_resp = supabase.table("mv_empire_summary").select("*").execute()
         empire = empire_resp.data[0] if empire_resp.data else {}
         total_accounts = empire.get("total_accounts", 0)
         total_equity = empire.get("total_equity", 0.0)
         total_withdrawable = empire.get("total_withdrawable", 0.0)
 
+        # Client balances
         client_resp = supabase.table("mv_client_balances").select("*").execute()
         total_client_balances = client_resp.data[0].get("total_client_balances", 0.0) if client_resp.data else 0.0
 
+        # FTMO accounts
         accounts_resp = supabase.table("ftmo_accounts").select("*").execute()
         accounts = accounts_resp.data or []
 
-        profits_resp = supabase.table("profits").select("gross_profit").execute()
-        total_gross = sum(p.get("gross_profit", 0) for p in profits_resp.data or [])
+        # Total gross profit
+        profits = supabase.table("profits").select("gross_profit").execute()
+        total_gross = sum(p.get("gross_profit", 0) for p in profits.data or [])
 
-        dist_resp = supabase.table("profit_distributions").select("share_amount, participant_name, is_growth_fund").execute()
-        distributions = dist_resp.data or []
-        total_distributed = sum(d.get("share_amount", 0) for d in distributions if not d.get("is_growth_fund", False))
+        # Profit distributions
+        dist = supabase.table("profit_distributions")\
+            .select("share_amount, participant_name, is_growth_fund")\
+            .execute()
+        distributions = dist.data or []
+
+        total_distributed = sum(
+            d.get("share_amount", 0) for d in distributions 
+            if not d.get("is_growth_fund", False)
+        )
 
         participant_shares = {}
         for d in distributions:
@@ -105,40 +135,40 @@ def fetch_empire_summary():
                 name = d["participant_name"]
                 participant_shares[name] = participant_shares.get(name, 0) + d["share_amount"]
 
+        # Total funded PHP
         total_funded_php = 0
         for acc in accounts:
             contrib = acc.get("contributors_v2") or acc.get("contributors", [])
             for c in contrib:
                 total_funded_php += c.get("units", 0) * (c.get("php_per_unit", 0) or 0)
 
-        history = []  # placeholder – add real history query later if needed
+        history = []  # ← can be expanded later with real query
 
         return (
             accounts, total_accounts, total_equity, total_withdrawable,
             gf_balance, total_gross, total_distributed,
             total_client_balances, participant_shares, total_funded_php, history
         )
+
     except Exception as e:
-        st.warning(f"Some dashboard data limited: {str(e)}")
-        # MUST return EXACTLY 11 values
+        st.warning(f"Dashboard data partially limited: {str(e)}")
         return [], 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, {}, 0, []
 
-# Unpack safely
-data = fetch_empire_summary()
+# Unpack
 (
     accounts, total_accounts, total_equity, total_withdrawable,
     gf_balance, total_gross, total_distributed,
     total_client_balances, participant_shares, total_funded_php, history
-) = data
+) = fetch_empire_summary()
 
 # ────────────────────────────────────────────────
 # QUICK ACTIONS – ROLE-AWARE
 # ────────────────────────────────────────────────
 st.subheader("⚡ Quick Actions")
 role = st.session_state.get("role", "client").lower()
-action_cols = st.columns(4)
+cols = st.columns(4)
 
-with action_cols[0]:
+with cols[0]:
     if role in ["admin", "owner"]:
         st.button("➕ Launch New Account", type="primary", use_container_width=True,
                   on_click=lambda: st.switch_page("pages/📊_FTMO_Accounts.py"))
@@ -146,44 +176,49 @@ with action_cols[0]:
         st.button("💳 Request Withdrawal", type="primary", use_container_width=True,
                   on_click=lambda: st.switch_page("pages/💳_Withdrawals.py"))
 
-with action_cols[1]:
+with cols[1]:
     if role in ["admin", "owner"]:
         st.button("💰 Record Profit", use_container_width=True,
                   on_click=lambda: st.switch_page("pages/💰_Profit_Sharing.py"))
     else:
-        st.button("View My Shares", use_container_width=True, disabled=True)
+        st.button("View My Shares", disabled=True, use_container_width=True)
 
-with action_cols[2]:
+with cols[2]:
     st.button("🌱 Growth Fund", use_container_width=True,
               on_click=lambda: st.switch_page("pages/🌱_Growth_Fund.py"))
 
-with action_cols[3]:
+with cols[3]:
     st.button("🤖 EA Versions", use_container_width=True,
               on_click=lambda: st.switch_page("pages/🤖_EA_Versions.py"))
 
 # ────────────────────────────────────────────────
-# RECENT ACTIVITY
+# RECENT ACTIVITY (last 5 logs)
 # ────────────────────────────────────────────────
 st.subheader("Recent Activity")
 try:
-    logs = supabase.table("audit_logs").select("action, username, created_at").order("created_at", desc=True).limit(5).execute().data or []
+    logs = supabase.table("audit_logs")\
+        .select("action, username, created_at")\
+        .order("created_at", desc=True)\
+        .limit(5)\
+        .execute().data or []
+
     if logs:
         for log in logs:
             ts = log["created_at"][:19].replace("T", " ")
             st.markdown(f"**{ts}** • **{log['action']}** by {log.get('username', 'System')}")
     else:
         st.info("No recent activity recorded yet.")
-except:
+except Exception:
     st.info("Activity feed temporarily unavailable.")
 
 # ────────────────────────────────────────────────
-# EMPIRE FLOW TREES – FIXED VARIABLE ACCESS
+# EMPIRE FLOW TREES
 # ────────────────────────────────────────────────
 st.subheader("🌳 Empire Flow Trees")
 tab1, tab2 = st.tabs(["Participant Shares", "Contributor Funding (PHP)"])
 
 with tab1:
-    if participant_shares and isinstance(participant_shares, dict):
+    if participant_shares:
         labels = ["Empire"] + list(participant_shares.keys())
         values = [0] + list(participant_shares.values())
         fig = go.Figure(go.Sankey(
@@ -203,6 +238,7 @@ with tab2:
             name = c.get("display_name") or c.get("name", "Unknown")
             funded = c.get("units", 0) * (c.get("php_per_unit", 0) or 0)
             funded_by[name] = funded_by.get(name, 0) + funded
+
     if funded_by:
         labels = ["Empire Funded"] + list(funded_by.keys())
         values = [0] + list(funded_by.values())
@@ -224,7 +260,11 @@ if accounts:
         with st.expander(f"{acc.get('name', 'Unnamed')} • {acc.get('current_phase', '—')}"):
             contrib = acc.get("contributors_v2") or acc.get("contributors", [])
             funded_php = sum(c.get("units", 0) * (c.get("php_per_unit", 0) or 0) for c in contrib)
-            phase_map = {"Challenge P1": "🔴", "Challenge P2": "🟡", "Verification": "🟠", "Funded": "🟢", "Scaled": "💎"}
+
+            phase_map = {
+                "Challenge P1": "🔴", "Challenge P2": "🟡", 
+                "Verification": "🟠", "Funded": "🟢", "Scaled": "💎"
+            }
             phase_emoji = phase_map.get(acc.get("current_phase", ""), "⚪")
 
             cols = st.columns(4)
@@ -239,18 +279,23 @@ if accounts:
                 if parts:
                     labels = ["Profits"] + [p.get("display_name") or p.get("name", "?") for p in parts]
                     vals = [p.get("percentage", 0) for p in parts]
-                    fig = go.Figure(go.Sankey(node=dict(pad=15, thickness=20, label=labels),
-                                              link=dict(source=[0]*len(vals), target=list(range(1,len(labels))), value=vals)))
+                    fig = go.Figure(go.Sankey(
+                        node=dict(pad=15, thickness=20, label=labels),
+                        link=dict(source=[0]*len(vals), target=list(range(1,len(labels))), value=vals)
+                    ))
                     fig.update_layout(height=350)
                     st.plotly_chart(fig, use_container_width=True)
                 else:
                     st.info("No participants assigned yet")
+
             with t2:
                 if contrib:
                     labels = ["Funded"] + [c.get("display_name") or c.get("name", "?") for c in contrib]
                     vals = [c.get("units", 0) * (c.get("php_per_unit", 0) or 0) for c in contrib]
-                    fig = go.Figure(go.Sankey(node=dict(pad=15, thickness=20, label=labels),
-                                              link=dict(source=[0]*len(vals), target=list(range(1,len(labels))), value=vals)))
+                    fig = go.Figure(go.Sankey(
+                        node=dict(pad=15, thickness=20, label=labels),
+                        link=dict(source=[0]*len(vals), target=list(range(1,len(labels))), value=vals)
+                    ))
                     fig.update_layout(height=350)
                     st.plotly_chart(fig, use_container_width=True)
                 else:
@@ -259,22 +304,29 @@ else:
     st.info("No live accounts yet • Launch one to begin")
 
 # ────────────────────────────────────────────────
-# CLIENT BALANCES (ADMIN/OWNER ONLY)
+# CLIENT BALANCES OVERVIEW (ADMIN/OWNER ONLY)
 # ────────────────────────────────────────────────
 if st.session_state.get("role") in ["admin", "owner"]:
     st.subheader("👥 Client Balances Overview")
     try:
-        clients = supabase.table("users").select("full_name, balance").eq("role", "client").execute().data or []
+        clients = supabase.table("users")\
+            .select("full_name, balance")\
+            .eq("role", "client")\
+            .execute().data or []
+
         if clients:
-            df = pd.DataFrame([{"Client": c["full_name"], "Balance": f"${c.get('balance', 0):,.2f}"} for c in clients])
+            df = pd.DataFrame([
+                {"Client": c["full_name"], "Balance": f"${c.get('balance', 0):,.2f}"}
+                for c in clients
+            ])
             st.dataframe(df, use_container_width=True, hide_index=True)
         else:
             st.info("No clients registered yet")
-    except:
+    except Exception:
         st.warning("Client list temporarily unavailable")
 
 # ────────────────────────────────────────────────
-# SOLID MOTIVATIONAL FOOTER
+# MOTIVATIONAL FOOTER
 # ────────────────────────────────────────────────
 st.markdown(
     f"""
@@ -298,11 +350,9 @@ st.markdown(
         '>
             Fully Automatic • Realtime • Exponential Empire
         </h1>
-        
         <p style='font-size:1.6rem; opacity:0.92; margin:0 0 2.5rem; line-height:1.6;'>
             Every transaction auto-syncs • Trees update instantly • Balances flow realtime • Empire scales itself.
         </p>
-        
         <h2 style='
             font-size:2.8rem;
             color:{accent_gold};
@@ -311,7 +361,6 @@ st.markdown(
         '>
             Built by Faith, Shared for Generations
         </h2>
-        
         <p style='font-size:1.4rem; opacity:0.85; font-style:italic; color:#aaaaaa;'>
             KMFX Pro • Cloud Edition 2026 • Mark Jeff Blando
         </p>
@@ -320,9 +369,9 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Smooth scroll-to-top
+# Smooth scroll to top after load
 st.markdown("""
     <script>
-    setTimeout(() => window.scrollTo({top: 0, behavior: 'smooth'}), 1000);
+    setTimeout(() => window.scrollTo({top: 0, behavior: 'smooth'}), 800);
     </script>
 """, unsafe_allow_html=True)
