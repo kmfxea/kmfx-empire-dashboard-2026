@@ -1,18 +1,24 @@
 # main.py
 # =====================================================================
-# KMFX EA - PUBLIC LANDING + LOGIN PAGE with QR Auto-Login
+# KMFX EA - PUBLIC LANDING + LOGIN PAGE
+# Multi-page entry point: redirects to dashboard if already logged-in
 # =====================================================================
 import streamlit as st
 from datetime import datetime
 from utils.supabase_client import supabase
 from utils.auth import login_user, is_authenticated
-from utils.helpers import log_action, start_keep_alive_if_needed
+from utils.helpers import (
+    log_action,
+    start_keep_alive_if_needed,
+    make_same_size
+)
+from PIL import Image
 
-# Prevent sleep on Streamlit Cloud
+# Keep Streamlit Cloud from sleeping
 start_keep_alive_if_needed()
 
 # ────────────────────────────────────────────────
-# PAGE CONFIG – NO SIDEBAR on landing, full centering
+# PAGE CONFIG – NO SIDEBAR + FULL CENTERING SETUP
 # ────────────────────────────────────────────────
 if not is_authenticated():
     st.set_page_config(
@@ -22,18 +28,18 @@ if not is_authenticated():
         initial_sidebar_state="collapsed"
     )
     
-    # No sidebar + full centering + white metrics + no top white line
+    # Full centering + no sidebar + no top white space
     st.markdown("""
     <style>
         /* Kill sidebar completely */
-        section[data-testid="stSidebar"] { display: none !important; width: 0 !important; min-width: 0 !important; }
+        section[data-testid="stSidebar"] { display: none !important; width: 0 !important; }
         [data-testid="collapsedControl"] { display: none !important; }
-
+        
         /* Remove top header/bar */
         header[data-testid="stHeader"] { display: none !important; }
         .stApp > header { display: none !important; }
-
-        /* Full centering & background */
+        
+        /* Full centering for all content */
         .stApp {
             background: #0a0d14 !important;
             margin: 0 !important;
@@ -42,36 +48,36 @@ if not is_authenticated():
         .main .block-container {
             max-width: 1200px !important;
             margin: 0 auto !important;
-            padding: 1rem 1rem 3rem 1rem !important;
-            text-align: center !important;
+            padding-top: 1rem !important;
+            padding-bottom: 2rem !important;
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
         }
-
-        /* Center everything */
-        .stImage, .stMarkdown, .stColumns, div[data-testid="stMetric"] {
+        /* Center all elements inside */
+        .stMarkdown, .stImage, .stColumns, div[data-testid="stMetric"] {
             margin-left: auto !important;
             margin-right: auto !important;
-            display: block !important;
+            text-align: center !important;
         }
-
         /* White metric cards */
         div[data-testid="stMetric"] {
             background: white !important;
             color: #0f172a !important;
             border-radius: 16px !important;
-            padding: 1.5rem !important;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.25) !important;
+            padding: 1.4rem !important;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2) !important;
             border: 1px solid #e2e8f0 !important;
-            max-width: 340px !important;
-            margin: 1.2rem auto !important;
+            max-width: 320px !important;
+            margin: 0 auto 1rem auto !important;
         }
         div[data-testid="stMetricLabel"] {
             color: #334155 !important;
             font-weight: 600 !important;
-            font-size: 1.15rem !important;
+            font-size: 1.1rem !important;
         }
         div[data-testid="stMetricValue"] {
             color: #0f172a !important;
-            font-size: 2.8rem !important;
+            font-size: 2.5rem !important;
             font-weight: 700 !important;
         }
     </style>
@@ -89,12 +95,47 @@ else:
 # AUTO-REDIRECT if already logged in
 # ────────────────────────────────────────────────
 if is_authenticated():
+    # Light theme for dashboard
     if st.session_state.get("theme") != "light":
         st.session_state.theme = "light"
     st.switch_page("pages/🏠_Dashboard.py")
 
 # ────────────────────────────────────────────────
-# QR AUTO-LOGIN (integrated fully)
+# Only public content below this point
+# ────────────────────────────────────────────────
+
+# Theme & accent colors (dark mode for landing)
+accent_primary = "#00ffaa"
+accent_gold    = "#ffd700"
+bg_color       = "#0a0d14"
+text_primary   = "#ffffff"
+text_muted     = "#aaaaaa"
+
+st.markdown(f"""
+<style>
+    .stApp {{ background: {bg_color}; color: {text_primary}; }}
+    h1, h2, h3 {{ color: {text_primary} !important; }}
+    .gold-text {{ 
+        background: linear-gradient(90deg, {accent_gold}, {accent_primary});
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 700;
+    }}
+    .glass-card {{
+        background: rgba(15,20,30,0.70);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(100,100,100,0.25);
+        border-radius: 20px;
+        padding: 2.2rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        margin: 2rem auto;
+        max-width: 1100px;
+    }}
+</style>
+""", unsafe_allow_html=True)
+
+# ────────────────────────────────────────────────
+# QR AUTO-LOGIN
 # ────────────────────────────────────────────────
 params = st.query_params
 qr_token = params.get("qr", [None])[0]
@@ -122,48 +163,37 @@ if qr_token:
         st.query_params.clear()
 
 # ────────────────────────────────────────────────
-# THEME COLORS (dark mode for landing)
+# PUBLIC LANDING CONTENT (centered with max-width)
 # ────────────────────────────────────────────────
-accent_primary = "#00ffaa"
-accent_gold    = "#ffd700"
+# Logo (centered)
+logo_col = st.columns([1, 4, 1])[1]
+with logo_col:
+    st.image("assets/logo.png", use_column_width=True)
 
-# ────────────────────────────────────────────────
-# HERO + LOGO – FULLY CENTERED
-# ────────────────────────────────────────────────
-st.image("assets/logo.png", width=300)  # centered logo
+# Hero (centered)
+hero_container = st.container()
+with hero_container:
+    st.markdown(f"<h1 class='gold-text' style='text-align: center;'>KMFX EA</h1>", unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align: center; color:{text_primary};'>Automated Gold Trading for Financial Freedom</h2>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; font-size:1.4rem; color:{text_muted};'>Passed FTMO Phase 1 • +3,071% 5-Year Backtest • Building Legacies of Generosity</p>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; font-size:1.2rem;'>Mark Jeff Blando – Founder & Developer • 2026</p>", unsafe_allow_html=True)
 
-st.markdown(f"""
-<div style='text-align:center; max-width:1100px; margin:2rem auto; padding:0 1rem;'>
-    <h1 class='gold-text' style='font-size:6rem; margin:0.5rem 0; letter-spacing:2px;'>KMFX EA</h1>
-    <h2 style='font-size:2.5rem; margin:1.5rem 0; color:#ffffff;'>Automated Gold Trading for Financial Freedom</h2>
-    <p style='font-size:1.6rem; opacity:0.9; margin:2rem 0;'>
-        Passed FTMO Phase 1 • +3,071% 5-Year Backtest • Building Legacies of Generosity
-    </p>
-    <p style='font-size:1.4rem; opacity:0.8;'>
-        Mark Jeff Blando – Founder & Developer • 2026
-    </p>
-</div>
-""", unsafe_allow_html=True)
-
-# ────────────────────────────────────────────────
-# WHITE METRICS – CENTERED GRID
-# ────────────────────────────────────────────────
+# Realtime Stats (centered)
 try:
     accounts_count = supabase.table("ftmo_accounts").select("id", count="exact").execute().count or 0
     equity_data = supabase.table("ftmo_accounts").select("current_equity").execute().data or []
     total_equity = sum(acc.get("current_equity", 0) for acc in equity_data)
-    gf_in = supabase.table("growth_fund_transactions").select("amount").eq("type", "In").execute().data or []
-    gf_out = supabase.table("growth_fund_transactions").select("amount").eq("type", "Out").execute().data or []
-    gf_balance = sum(i["amount"] for i in gf_in) - sum(o["amount"] for o in gf_out)
+    gf_data = supabase.table("growth_fund_transactions").select("type, amount").execute().data or []
+    gf_balance = sum(t["amount"] if t["type"] == "In" else -t["amount"] for t in gf_data)
     members_count = supabase.table("users").select("id", count="exact").eq("role", "client").execute().count or 0
 except Exception:
     accounts_count = total_equity = gf_balance = members_count = 0
 
-stat_cols = st.columns([1,1,1,1])
-stat_cols[0].metric("Active Accounts", accounts_count)
-stat_cols[1].metric("Total Equity", f"${total_equity:,.0f}")
-stat_cols[2].metric("Growth Fund", f"${gf_balance:,.0f}")
-stat_cols[3].metric("Members", members_count)
+stat_cols = st.columns(4)
+with stat_cols[0]: st.metric("Active Accounts", accounts_count)
+with stat_cols[1]: st.metric("Total Equity", f"${total_equity:,.0f}")
+with stat_cols[2]: st.metric("Growth Fund", f"${gf_balance:,.0f}")
+with stat_cols[3]: st.metric("Members", members_count)
 
 # Portfolio Story (centered)
 st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
