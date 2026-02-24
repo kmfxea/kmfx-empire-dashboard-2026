@@ -55,8 +55,7 @@ def render_sidebar():
         st.sidebar.page_link("pages/🔑_License_Generator.py", label="License Generator", icon="🔑")
         st.sidebar.page_link("pages/👤_Admin_Management.py", label="Admin Management", icon="👤")
         st.sidebar.page_link("pages/🔮_Simulator.py", label="Simulator", icon="🔮")
-
-        # ── LOGOUT SECTION ──────────────────────────────────────────────────────
+    # ── LOGOUT SECTION ──────────────────────────────────────────────────────
     st.sidebar.markdown("---")
     st.sidebar.markdown("### Account")
 
@@ -64,19 +63,18 @@ def render_sidebar():
         "🚪 Logout",
         type="primary",
         use_container_width=True,
-        key=f"logout_{role}_{int(time.time())}",
-        help="End session and return to public login page"
+        key=f"logout_btn_{role}_{st.session_state.get('username', 'anon')}",  # mas stable key
+        help="End session and return to login page"
     ):
-        # 1. I-set ang logout flag
+        # Set flag + clear keys
         st.session_state["logging_out"] = True
         
-        # 2. Clear auth-related keys agad
         keys_to_clear = [
             "authenticated", "username", "full_name", "role",
             "just_logged_in", "theme", "_sidebar_rendered"
         ]
         for key in keys_to_clear:
-            st.session_state.pop(key, None)  # mas safe kaysa del
+            st.session_state.pop(key, None)
         
-        # 3. Rerun para ma-detect agad ang flag
-        st.rerun()
+        st.success("Logging out...")  # optional message
+        st.rerun()  # importante: trigger full rerun para ma-detect agad

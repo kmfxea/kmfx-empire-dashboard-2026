@@ -27,7 +27,7 @@ from utils.helpers import (
     start_keep_alive_if_needed
 )
 
-# Optional: keep-alive (usually not needed anymore in 2025+ Streamlit Cloud)
+# Optional keep-alive (usually not needed in modern Streamlit Cloud)
 start_keep_alive_if_needed()
 
 # ────────────────────────────────────────────────
@@ -52,8 +52,7 @@ else:
         layout="wide",
         initial_sidebar_state="collapsed"
     )
-
-    # Modern, more reliable sidebar hiding (2025+ compatible)
+    # Modern, reliable sidebar hiding (2025+ compatible)
     st.markdown("""
     <style>
         [data-testid="collapsedControl"] { display: none !important; }
@@ -72,14 +71,10 @@ else:
     """, unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# EARLY REDIRECT for already authenticated users
-# Prevents loop and unnecessary content rendering
+# EARLY REDIRECT for authenticated users
 # ────────────────────────────────────────────────
 if authenticated:
-    # Only redirect on first load after login (avoids loop)
-    if "just_logged_in" not in st.session_state:
-        st.switch_page("pages/🏠_Dashboard.py")
-    # If just logged in → show a brief welcome then redirect naturally on next run
+    st.switch_page("pages/🏠_Dashboard.py")
 
 # ────────────────────────────────────────────────
 # THEME & COLORS (simplified - no forced switch)
