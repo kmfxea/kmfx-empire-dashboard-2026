@@ -8,17 +8,21 @@ from utils.supabase_client import supabase
 from utils.sidebar import render_sidebar
 
 # ────────────────────────────────────────────────
-# AUTH + SIDEBAR (required in every page now)
+# AUTH + SIDEBAR + LOGOUT HANDLER
 # ────────────────────────────────────────────────
 require_auth()
 render_sidebar()
+
+# Logout redirect (critical para gumana ang button sa sidebar)
+if st.session_state.get("logging_out", False):
+    st.session_state.pop("logging_out", None)
+    st.switch_page("main.py")  # adjust path kung hindi sa root
 
 # ────────────────────────────────────────────────
 # Theme colors (consistent with rest of app)
 # ────────────────────────────────────────────────
 accent_primary = st.session_state.get("accent_primary", "#00ffaa")
 accent_gold    = "#ffd700"
-
 # ────────────────────────────────────────────────
 # WELCOME + BALLOONS
 # ────────────────────────────────────────────────

@@ -67,17 +67,16 @@ def render_sidebar():
         key=f"logout_{role}_{int(time.time())}",
         help="End session and return to public login page"
     ):
-        # Set flag para malaman ng page na nag-logout
+        # 1. I-set ang logout flag
         st.session_state["logging_out"] = True
         
-        # Clear keys agad
+        # 2. Clear auth-related keys agad
         keys_to_clear = [
             "authenticated", "username", "full_name", "role",
             "just_logged_in", "theme", "_sidebar_rendered"
         ]
         for key in keys_to_clear:
-            if key in st.session_state:
-                del st.session_state[key]
+            st.session_state.pop(key, None)  # mas safe kaysa del
         
-        st.success("Logged out successfully! Redirecting...")
-        st.rerun()  # ← important: rerun para ma-detect agad ang flag
+        # 3. Rerun para ma-detect agad ang flag
+        st.rerun()
