@@ -82,7 +82,7 @@ if is_authenticated():
     if theme != "light":
         st.session_state.theme = "light"
         st.rerun()
-    st.switch_page("pages/01_🏠_Dashboard.py")
+    st.switch_page("pages/🏠_Dashboard.py")
 else:
     if theme != "dark":
         st.session_state.theme = "dark"
