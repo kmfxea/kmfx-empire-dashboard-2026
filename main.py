@@ -46,7 +46,7 @@ if not is_authenticated():
             display: none !important;
         }
         .st-emotion-cache-1cpxqw2 {  /* main content area */
-            max-width: 1200px !important;  /* centered with max-width */
+            max-width: 1100px !important;  /* centered with max-width */
             margin: 0 auto !important;
             padding: 1rem 2rem !important;
         }
@@ -174,7 +174,10 @@ st.markdown(f"""
         color: {accent_primary};
     }}
     .stTextInput > div > div > input,
-    .stTextArea > div > div > textarea {{
+    .stTextArea > div > div > textarea,
+    .stSelectbox > div > div > div,
+    .stSelectbox > div > div > div > div,
+    .stSelectbox > div > div input {{
         background: #ffffff !important;
         color: #000000 !important;
         border: 1px solid {border_color} !important;
@@ -252,7 +255,7 @@ if qr_token and not is_authenticated():
 # ────────────────────────────────────────────────
 # PUBLIC LANDING CONTENT (centered with max-width)
 # ────────────────────────────────────────────────
-# Logo
+# Logo (centered)
 logo_col = st.columns([1, 4, 1])[1]
 with logo_col:
     st.image("assets/logo.png", use_column_width=True)
@@ -365,7 +368,7 @@ if "show_full_journey" not in st.session_state:
     st.session_state.show_full_journey = False
 
 st.markdown(
-    "<div class='glass-card' style='text-align:center; margin:5rem 0; padding:3rem;'>",
+    "<div class='glass-card' style='text-align:center; margin:5rem auto; padding:3rem; max-width:1100px;'>",
     unsafe_allow_html=True,
 )
 st.markdown(f"<h2 class='gold-text'>Want the Full Story Behind KMFX EA?</h2>", unsafe_allow_html=True)
@@ -379,7 +382,7 @@ if st.button("👑 Read My Full Trading Journey (2014–2026)", type="primary", 
 
 if st.session_state.get("show_full_journey", False):
     st.markdown(
-        "<div class='glass-card' style='padding:3rem; margin:3rem 0; border-left:6px solid {accent_gold};'>",
+        "<div class='glass-card' style='padding:3rem; margin:3rem auto; max-width:1100px; border-left:6px solid {accent_gold};'>",
         unsafe_allow_html=True,
     )
     st.markdown(
@@ -550,19 +553,17 @@ Confidence high. Comeback stronger — para sa legacy, community, financial free
 *Built by faith, tested by fire.*
     """)
 
-        # Realization & Future Vision
+    # Realization & Future Vision – FULL SIZE, NO CROP
     st.markdown(
         f"<h3 style='color:{accent_gold}; text-align:center; font-size:1.8rem; margin:2rem 0;'>"
         "✨ Realization & Future Vision</h3>",
         unsafe_allow_html=True,
     )
-
-    # Vision image – FULL SIZE, NO CROP, NO FORCED RATIO
     try:
         vision_image = Image.open("assets/journey_vision.jpg")
         st.image(
             vision_image,
-            use_column_width=True,               # mag-a-adjust sa column width (responsive)
+            use_column_width=True,
             caption="Built by Faith, Shared for Generations 👑"
         )
     except Exception as e:
@@ -594,11 +595,12 @@ Na patunayan na kapag may faith, discipline, at tamang system — kaya baguhin a
         st.rerun()
 
 st.markdown("</div>", unsafe_allow_html=True)
+
 # ────────────────────────────────────────────────
-# WHY CHOOSE KMFX EA? (FULL ORIGINAL BENEFITS GRID)
+# WHY CHOOSE KMFX EA? (FULL GRID – RESTORED)
 # ────────────────────────────────────────────────
 st.markdown(
-    "<div class='glass-card' style='margin:4rem 0; padding:3rem;'>",
+    "<div class='glass-card' style='margin:4rem auto; padding:3rem; max-width:1100px;'>",
     unsafe_allow_html=True,
 )
 st.markdown(
@@ -662,11 +664,12 @@ for i, benefit in enumerate(benefits):
         )
 
 st.markdown("</div>", unsafe_allow_html=True)
+
 # ────────────────────────────────────────────────
-# IN-DEPTH FAQs (YOUR ORIGINAL QUESTIONS & ANSWERS)
+# IN-DEPTH FAQs – RESTORED
 # ────────────────────────────────────────────────
 st.markdown(
-    "<div class='glass-card' style='margin:4rem 0; padding:3rem;'>",
+    "<div class='glass-card' style='margin:4rem auto; padding:3rem; max-width:1100px;'>",
     unsafe_allow_html=True,
 )
 st.markdown(
