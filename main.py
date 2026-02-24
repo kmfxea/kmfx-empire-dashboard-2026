@@ -1,7 +1,7 @@
 # main.py
 # =====================================================================
 # KMFX EA - PUBLIC LANDING + LOGIN PAGE
-# Multi-page entry point: redirects to dashboard if logged-in
+# Multi-page entry point: redirects to dashboard if already logged-in
 # =====================================================================
 import streamlit as st
 from datetime import datetime
@@ -14,19 +14,58 @@ from utils.helpers import (
 )
 from PIL import Image
 
-# Prevent sleep on Streamlit Cloud
+# Keep Streamlit Cloud from sleeping
 start_keep_alive_if_needed()
 
 # ────────────────────────────────────────────────
-# PAGE CONFIG – no sidebar on public page
+# PAGE CONFIG – NO SIDEBAR on public landing page
 # ────────────────────────────────────────────────
 if not is_authenticated():
     st.set_page_config(
         page_title="KMFX EA - Elite Empire",
         page_icon="👑",
         layout="wide",
-        initial_sidebar_state="collapsed"  # minimized by default
+        initial_sidebar_state="collapsed"  # collapsed by default, but we will kill it
     )
+    
+    # Aggressively prevent ANY sidebar from appearing on public page
+    # (removes container, visibility, width, and shifts content full-width)
+    st.markdown("""
+    <style>
+        /* Completely remove sidebar container & control */
+        section[data-testid="stSidebar"] {
+            display: none !important;
+            visibility: hidden !important;
+            width: 0 !important;
+            min-width: 0 !important;
+            max-width: 0 !important;
+        }
+        [data-testid="collapsedControl"] {
+            display: none !important;
+            visibility: hidden !important;
+        }
+        /* Force main content to full width (no sidebar gap) */
+        .main .block-container {
+            max-width: 1400px !important;
+            margin: 0 auto !important;
+            padding-left: 2rem !important;
+            padding-right: 2rem !important;
+            padding-top: 1rem !important;   /* minimal top space */
+        }
+        /* Remove any default header/top bar if present */
+        header[data-testid="stHeader"] {
+            display: none !important;
+        }
+        .stApp > header {
+            display: none !important;
+        }
+        .stApp {
+            margin-top: 0 !important;
+            padding-top: 0 !important;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+
 else:
     st.set_page_config(
         page_title="KMFX Empire Dashboard",
@@ -39,12 +78,13 @@ else:
 # AUTO-REDIRECT if already logged in
 # ────────────────────────────────────────────────
 if is_authenticated():
+    # Light theme for dashboard
     if st.session_state.get("theme") != "light":
         st.session_state.theme = "light"
     st.switch_page("pages/🏠_Dashboard.py")
 
 # ────────────────────────────────────────────────
-# Only public content below – NO SIDEBAR HERE
+# Only public content below this point
 # ────────────────────────────────────────────────
 
 # Theme & accent colors (dark mode for landing)
@@ -58,7 +98,7 @@ st.markdown(f"""
 <style>
     .stApp {{ background: {bg_color}; color: {text_primary}; }}
     h1, h2, h3 {{ color: {text_primary} !important; }}
-    .gold-text {{
+    .gold-text {{ 
         background: linear-gradient(90deg, {accent_gold}, {accent_primary});
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
@@ -106,42 +146,37 @@ if qr_token:
         st.query_params.clear()
 
 # ────────────────────────────────────────────────
-# HERO + SINGLE LOGO (no duplicates)
+# PUBLIC LANDING CONTENT (centered with max-width)
 # ────────────────────────────────────────────────
-col_logo = st.columns([1, 4, 1])[1]
-with col_logo:
+# Logo (centered)
+logo_col = st.columns([1, 4, 1])[1]
+with logo_col:
     st.image("assets/logo.png", use_column_width=True)
 
-st.markdown(f"""
-<div class='glass-card' style='text-align:center; padding:4rem 2rem;'>
-    <h1 class='gold-text' style='font-size:5rem; margin-bottom:1rem;'>KMFX EA</h1>
-    <h2>Automated Gold Trading for Financial Freedom</h2>
-    <p style='font-size:1.4rem; opacity:0.9; margin:1.5rem 0;'>
-        Passed FTMO Phase 1 • +3,071% 5-Year Backtest • Building Legacies of Generosity
-    </p>
-    <p style='opacity:0.8;'>Mark Jeff Blando – Founder & Developer • 2026</p>
-</div>
-""", unsafe_allow_html=True)
+# Hero (centered)
+hero_container = st.container()
+with hero_container:
+    st.markdown(f"<h1 class='gold-text' style='text-align: center;'>KMFX EA</h1>", unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align: center; color:{text_primary};'>Automated Gold Trading for Financial Freedom</h2>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; font-size:1.4rem; color:{text_muted};'>Passed FTMO Phase 1 • +3,071% 5-Year Backtest • Building Legacies of Generosity</p>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; font-size:1.2rem;'>Mark Jeff Blando – Founder & Developer • 2026</p>", unsafe_allow_html=True)
 
-# ────────────────────────────────────────────────
-# REALTIME STATS (single clean query)
-# ────────────────────────────────────────────────
+# Realtime Stats (centered)
 try:
     accounts_count = supabase.table("ftmo_accounts").select("id", count="exact").execute().count or 0
     equity_data = supabase.table("ftmo_accounts").select("current_equity").execute().data or []
     total_equity = sum(acc.get("current_equity", 0) for acc in equity_data)
-    gf_in = supabase.table("growth_fund_transactions").select("amount").eq("type", "In").execute().data or []
-    gf_out = supabase.table("growth_fund_transactions").select("amount").eq("type", "Out").execute().data or []
-    gf_balance = sum(i["amount"] for i in gf_in) - sum(o["amount"] for o in gf_out)
+    gf_data = supabase.table("growth_fund_transactions").select("type, amount").execute().data or []
+    gf_balance = sum(t["amount"] if t["type"] == "In" else -t["amount"] for t in gf_data)
     members_count = supabase.table("users").select("id", count="exact").eq("role", "client").execute().count or 0
 except Exception:
     accounts_count = total_equity = gf_balance = members_count = 0
 
 stat_cols = st.columns(4)
-stat_cols[0].metric("Active Accounts", accounts_count)
-stat_cols[1].metric("Total Equity", f"${total_equity:,.0f}")
-stat_cols[2].metric("Growth Fund", f"${gf_balance:,.0f}")
-stat_cols[3].metric("Members", members_count)
+with stat_cols[0]: st.metric("Active Accounts", accounts_count)
+with stat_cols[1]: st.metric("Total Equity", f"${total_equity:,.0f}")
+with stat_cols[2]: st.metric("Growth Fund", f"${gf_balance:,.0f}")
+with stat_cols[3]: st.metric("Members", members_count)
 
 # Portfolio Story (centered)
 st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
@@ -625,7 +660,7 @@ with tab_owner:
             if login_user(username.strip().lower(), password, expected_role="owner"):
                 st.success("Owner login successful!")
                 st.session_state.role = "owner"
-                st.switch_page("pages/🏠_Dashboard.py")
+                st.switch_page("pages/🏠_Dashboard.py")   # or "pages/👤_Admin_Management.py" if preferred for owner
 
 with tab_admin:
     with st.form("admin_form", clear_on_submit=True):
@@ -649,6 +684,6 @@ with tab_client:
 
 st.markdown("</div>", unsafe_allow_html=True)
 
-# Stop execution for public page
+# Final stop – prevents anything below from running on public page
 if not is_authenticated():
     st.stop()
