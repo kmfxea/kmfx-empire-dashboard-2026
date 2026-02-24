@@ -8,19 +8,20 @@ from utils.supabase_client import supabase
 from utils.sidebar import render_sidebar
 
 # ────────────────────────────────────────────────
-# PROTECTION + SIDEBAR (only once per page)
+# AUTH & SIDEBAR (only once)
 # ────────────────────────────────────────────────
-require_auth()          # Enforce login (client, admin, owner allowed)
-render_sidebar()        # Role-aware sidebar + logout button
+require_auth()
+render_sidebar()
 
 # ────────────────────────────────────────────────
-# Theme / Accent colors
+# Theme colors
 # ────────────────────────────────────────────────
 accent_primary = st.session_state.get("accent_primary", "#00ffaa")
 accent_gold    = "#ffd700"
+accent_dark    = "#0f172a"
 
 # ────────────────────────────────────────────────
-# WELCOME HERO + BALLOONS ON FIRST LOGIN
+# WELCOME HERO + BALLOONS
 # ────────────────────────────────────────────────
 if st.session_state.get("just_logged_in", False):
     st.balloons()
@@ -28,24 +29,26 @@ if st.session_state.get("just_logged_in", False):
 
 st.markdown(
     f"""
-    <div class='glass-card' style='
+    <div style='
         text-align:center; 
-        padding:3rem 2rem; 
-        margin-bottom:2.5rem; 
-        border:2px solid {accent_primary}40;
+        padding:2.5rem 2rem; 
+        margin-bottom:2rem; 
         border-radius:16px;
+        background:linear-gradient(135deg, rgba(0,255,170,0.08), rgba(255,215,0,0.05));
+        border:2px solid {accent_primary}30;
+        box-shadow:0 8px 32px rgba(0,255,170,0.15);
     '>
         <h1 style='
             margin:0 0 1rem; 
-            font-size:3.2rem; 
+            font-size:3rem; 
             background:linear-gradient(90deg,{accent_primary},{accent_gold}); 
             -webkit-background-clip:text; 
             -webkit-text-fill-color:transparent;
         '>
             Welcome back, {st.session_state.get('full_name', 'Empire Builder')} 👑
         </h1>
-        <p style='font-size:1.3rem; opacity:0.9; margin:0;'>
-            Role: <strong>{st.session_state.get('role', 'Client').upper()}</strong> •
+        <p style='font-size:1.25rem; opacity:0.9;'>
+            <strong>{st.session_state.get('role', 'Client').upper()}</strong> • 
             {datetime.now().strftime('%B %d, %Y • %I:%M %p')}
         </p>
     </div>
@@ -54,121 +57,58 @@ st.markdown(
 )
 
 # ────────────────────────────────────────────────
-# HEADER + GROWTH FUND METRIC
+# EMPIRE OVERVIEW METRICS (top level)
 # ────────────────────────────────────────────────
-col1, col2 = st.columns([5, 2])
-with col1:
-    st.header("🏠 Dashboard")
-    st.caption("Realtime • Fully Automatic • Exponential Empire Overview")
-with col2:
+st.subheader("Empire Overview", divider="rainbow")
+with st.spinner("Loading empire summary..."):
     try:
+        # Fetch growth fund
         gf_resp = supabase.table("mv_growth_fund_balance").select("balance").execute()
         gf_balance = gf_resp.data[0]["balance"] if gf_resp.data else 0.0
-        st.metric("Growth Fund Balance", f"${gf_balance:,.0f}")
-    except Exception:
-        st.metric("Growth Fund Balance", "$0 (loading...)")
+
+        # Fetch empire summary
+        empire_resp = supabase.table("mv_empire_summary").select("*").execute()
+        empire = empire_resp.data[0] if empire_resp.data else {}
+
+        cols = st.columns(4)
+        cols[0].metric("Total Accounts", empire.get("total_accounts", 0), help="Live FTMO accounts")
+        cols[1].metric("Total Equity", f"${empire.get('total_equity', 0):,.0f}", help="Current total equity")
+        cols[2].metric("Withdrawable", f"${empire.get('total_withdrawable', 0):,.0f}", help="Total withdrawable balance")
+        cols[3].metric("Growth Fund", f"${gf_balance:,.0f}", help="Current growth fund balance")
+    except Exception as e:
+        st.warning(f"Overview loading issue: {str(e)}")
+        st.metric("Empire Overview", "Loading...")
 
 # ────────────────────────────────────────────────
 # PERSONAL SNAPSHOT
 # ────────────────────────────────────────────────
 st.subheader("Your Empire Snapshot")
-try:
-    user_data = supabase.table("users")\
-        .select("balance, funded_amount, share_percentage")\
-        .eq("username", st.session_state.get("username", ""))\
-        .execute()
-
-    if user_data.data:
-        u = user_data.data[0]
-        cols = st.columns(3)
-        cols[0].metric("Your Balance", f"${u.get('balance', 0):,.2f}", help="Current available balance")
-        cols[1].metric("Your Funded (PHP)", f"₱{u.get('funded_amount', 0):,.0f}", help="Total PHP contributed")
-        cols[2].metric("Your Profit Share", f"{u.get('share_percentage', 0):.2f}%", help="Your share percentage")
-    else:
-        st.info("Your personal stats will appear here once your profile is set up.")
-except Exception:
-    st.info("Snapshot loading... (will update shortly)")
-
-# ────────────────────────────────────────────────
-# EMPIRE SUMMARY FETCH (cached 5 min)
-# ────────────────────────────────────────────────
-@st.cache_data(ttl=300)
-def fetch_empire_summary():
+with st.spinner("Loading your stats..."):
     try:
-        # Growth Fund
-        gf = supabase.table("mv_growth_fund_balance").select("balance").execute()
-        gf_balance = gf.data[0]["balance"] if gf.data else 0.0
-
-        # Empire summary
-        empire_resp = supabase.table("mv_empire_summary").select("*").execute()
-        empire = empire_resp.data[0] if empire_resp.data else {}
-        total_accounts = empire.get("total_accounts", 0)
-        total_equity = empire.get("total_equity", 0.0)
-        total_withdrawable = empire.get("total_withdrawable", 0.0)
-
-        # Client balances
-        client_resp = supabase.table("mv_client_balances").select("*").execute()
-        total_client_balances = client_resp.data[0].get("total_client_balances", 0.0) if client_resp.data else 0.0
-
-        # FTMO accounts
-        accounts_resp = supabase.table("ftmo_accounts").select("*").execute()
-        accounts = accounts_resp.data or []
-
-        # Total gross profit
-        profits = supabase.table("profits").select("gross_profit").execute()
-        total_gross = sum(p.get("gross_profit", 0) for p in profits.data or [])
-
-        # Profit distributions
-        dist = supabase.table("profit_distributions")\
-            .select("share_amount, participant_name, is_growth_fund")\
+        user_data = supabase.table("users")\
+            .select("balance, funded_amount, share_percentage")\
+            .eq("username", st.session_state.get("username", ""))\
             .execute()
-        distributions = dist.data or []
 
-        total_distributed = sum(
-            d.get("share_amount", 0) for d in distributions 
-            if not d.get("is_growth_fund", False)
-        )
-
-        participant_shares = {}
-        for d in distributions:
-            if not d.get("is_growth_fund", False):
-                name = d["participant_name"]
-                participant_shares[name] = participant_shares.get(name, 0) + d["share_amount"]
-
-        # Total funded PHP
-        total_funded_php = 0
-        for acc in accounts:
-            contrib = acc.get("contributors_v2") or acc.get("contributors", [])
-            for c in contrib:
-                total_funded_php += c.get("units", 0) * (c.get("php_per_unit", 0) or 0)
-
-        history = []  # ← can be expanded later with real query
-
-        return (
-            accounts, total_accounts, total_equity, total_withdrawable,
-            gf_balance, total_gross, total_distributed,
-            total_client_balances, participant_shares, total_funded_php, history
-        )
-
-    except Exception as e:
-        st.warning(f"Dashboard data partially limited: {str(e)}")
-        return [], 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, {}, 0, []
-
-# Unpack
-(
-    accounts, total_accounts, total_equity, total_withdrawable,
-    gf_balance, total_gross, total_distributed,
-    total_client_balances, participant_shares, total_funded_php, history
-) = fetch_empire_summary()
+        if user_data.data:
+            u = user_data.data[0]
+            cols = st.columns(3)
+            cols[0].metric("Your Balance", f"${u.get('balance', 0):,.2f}", help="Available balance")
+            cols[1].metric("Your Funded (PHP)", f"₱{u.get('funded_amount', 0):,.0f}", help="Total funded amount")
+            cols[2].metric("Your Profit Share", f"{u.get('share_percentage', 0):.2f}%", help="Your share percentage")
+        else:
+            st.info("Your personal stats will appear here once your profile is fully set up.")
+    except Exception:
+        st.info("Your snapshot is loading...")
 
 # ────────────────────────────────────────────────
-# QUICK ACTIONS – ROLE-AWARE
+# QUICK ACTIONS – ROLE-AWARE & STYLED
 # ────────────────────────────────────────────────
 st.subheader("⚡ Quick Actions")
 role = st.session_state.get("role", "client").lower()
-cols = st.columns(4)
+action_cols = st.columns(4)
 
-with cols[0]:
+with action_cols[0]:
     if role in ["admin", "owner"]:
         st.button("➕ Launch New Account", type="primary", use_container_width=True,
                   on_click=lambda: st.switch_page("pages/📊_FTMO_Accounts.py"))
@@ -176,40 +116,41 @@ with cols[0]:
         st.button("💳 Request Withdrawal", type="primary", use_container_width=True,
                   on_click=lambda: st.switch_page("pages/💳_Withdrawals.py"))
 
-with cols[1]:
+with action_cols[1]:
     if role in ["admin", "owner"]:
-        st.button("💰 Record Profit", use_container_width=True,
+        st.button("💰 Record Profit", type="primary", use_container_width=True,
                   on_click=lambda: st.switch_page("pages/💰_Profit_Sharing.py"))
     else:
         st.button("View My Shares", disabled=True, use_container_width=True)
 
-with cols[2]:
-    st.button("🌱 Growth Fund", use_container_width=True,
+with action_cols[2]:
+    st.button("🌱 Growth Fund", type="primary", use_container_width=True,
               on_click=lambda: st.switch_page("pages/🌱_Growth_Fund.py"))
 
-with cols[3]:
-    st.button("🤖 EA Versions", use_container_width=True,
+with action_cols[3]:
+    st.button("🤖 EA Versions", type="primary", use_container_width=True,
               on_click=lambda: st.switch_page("pages/🤖_EA_Versions.py"))
 
 # ────────────────────────────────────────────────
-# RECENT ACTIVITY (last 5 logs)
+# RECENT ACTIVITY
 # ────────────────────────────────────────────────
 st.subheader("Recent Activity")
-try:
-    logs = supabase.table("audit_logs")\
-        .select("action, username, created_at")\
-        .order("created_at", desc=True)\
-        .limit(5)\
-        .execute().data or []
+with st.spinner("Loading activity..."):
+    try:
+        logs = supabase.table("audit_logs")\
+            .select("action, username, created_at")\
+            .order("created_at", desc=True)\
+            .limit(5)\
+            .execute().data or []
 
-    if logs:
-        for log in logs:
-            ts = log["created_at"][:19].replace("T", " ")
-            st.markdown(f"**{ts}** • **{log['action']}** by {log.get('username', 'System')}")
-    else:
-        st.info("No recent activity recorded yet.")
-except Exception:
-    st.info("Activity feed temporarily unavailable.")
+        if logs:
+            for log in logs:
+                ts = log["created_at"][:19].replace("T", " ")
+                st.markdown(f"**{ts}** • **{log['action']}** by {log.get('username', 'System')}")
+        else:
+            st.info("No recent activity yet.")
+    except Exception:
+        st.info("Activity feed temporarily unavailable.")
 
 # ────────────────────────────────────────────────
 # EMPIRE FLOW TREES
@@ -225,7 +166,7 @@ with tab1:
             node=dict(pad=20, thickness=30, label=labels, color=["#00ffaa"] + [accent_primary]*len(participant_shares)),
             link=dict(source=[0]*len(participant_shares), target=list(range(1, len(labels))), value=values[1:])
         ))
-        fig.update_layout(height=600, title="Total Distributed Shares")
+        fig.update_layout(height=600, title="Total Distributed Shares", font_size=14)
         st.plotly_chart(fig, use_container_width=True)
     else:
         st.info("No profit distributions recorded yet.")
@@ -246,7 +187,7 @@ with tab2:
             node=dict(pad=20, thickness=30, label=labels, color=["#ffd700"] + ["#ff6b6b"]*len(funded_by)),
             link=dict(source=[0]*len(funded_by), target=list(range(1, len(labels))), value=values[1:])
         ))
-        fig.update_layout(height=600, title="Funding by Contributor (PHP)")
+        fig.update_layout(height=600, title="Funding by Contributor (PHP)", font_size=14)
         st.plotly_chart(fig, use_container_width=True)
     else:
         st.info("No contributors recorded yet.")
@@ -261,10 +202,7 @@ if accounts:
             contrib = acc.get("contributors_v2") or acc.get("contributors", [])
             funded_php = sum(c.get("units", 0) * (c.get("php_per_unit", 0) or 0) for c in contrib)
 
-            phase_map = {
-                "Challenge P1": "🔴", "Challenge P2": "🟡", 
-                "Verification": "🟠", "Funded": "🟢", "Scaled": "💎"
-            }
+            phase_map = {"Challenge P1": "🔴", "Challenge P2": "🟡", "Verification": "🟠", "Funded": "🟢", "Scaled": "💎"}
             phase_emoji = phase_map.get(acc.get("current_phase", ""), "⚪")
 
             cols = st.columns(4)
@@ -279,89 +217,76 @@ if accounts:
                 if parts:
                     labels = ["Profits"] + [p.get("display_name") or p.get("name", "?") for p in parts]
                     vals = [p.get("percentage", 0) for p in parts]
-                    fig = go.Figure(go.Sankey(
-                        node=dict(pad=15, thickness=20, label=labels),
-                        link=dict(source=[0]*len(vals), target=list(range(1,len(labels))), value=vals)
-                    ))
+                    fig = go.Figure(go.Sankey(node=dict(pad=15, thickness=20, label=labels), link=dict(source=[0]*len(vals), target=list(range(1,len(labels))), value=vals)))
                     fig.update_layout(height=350)
                     st.plotly_chart(fig, use_container_width=True)
                 else:
-                    st.info("No participants assigned yet")
+                    st.info("No participants assigned yet.")
 
             with t2:
                 if contrib:
                     labels = ["Funded"] + [c.get("display_name") or c.get("name", "?") for c in contrib]
                     vals = [c.get("units", 0) * (c.get("php_per_unit", 0) or 0) for c in contrib]
-                    fig = go.Figure(go.Sankey(
-                        node=dict(pad=15, thickness=20, label=labels),
-                        link=dict(source=[0]*len(vals), target=list(range(1,len(labels))), value=vals)
-                    ))
+                    fig = go.Figure(go.Sankey(node=dict(pad=15, thickness=20, label=labels), link=dict(source=[0]*len(vals), target=list(range(1,len(labels))), value=vals)))
                     fig.update_layout(height=350)
                     st.plotly_chart(fig, use_container_width=True)
                 else:
-                    st.info("No contributors yet")
+                    st.info("No contributors yet.")
 else:
-    st.info("No live accounts yet • Launch one to begin")
+    st.info("No live accounts yet • Launch one to begin.")
 
 # ────────────────────────────────────────────────
-# CLIENT BALANCES OVERVIEW (ADMIN/OWNER ONLY)
+# CLIENT BALANCES (ADMIN/OWNER ONLY)
 # ────────────────────────────────────────────────
 if st.session_state.get("role") in ["admin", "owner"]:
     st.subheader("👥 Client Balances Overview")
-    try:
-        clients = supabase.table("users")\
-            .select("full_name, balance")\
-            .eq("role", "client")\
-            .execute().data or []
-
-        if clients:
-            df = pd.DataFrame([
-                {"Client": c["full_name"], "Balance": f"${c.get('balance', 0):,.2f}"}
-                for c in clients
-            ])
-            st.dataframe(df, use_container_width=True, hide_index=True)
-        else:
-            st.info("No clients registered yet")
-    except Exception:
-        st.warning("Client list temporarily unavailable")
+    with st.spinner("Loading clients..."):
+        try:
+            clients = supabase.table("users").select("full_name, balance").eq("role", "client").execute().data or []
+            if clients:
+                df = pd.DataFrame([{"Client": c["full_name"], "Balance": f"${c.get('balance', 0):,.2f}"} for c in clients])
+                st.dataframe(df, use_container_width=True, hide_index=True)
+            else:
+                st.info("No clients registered yet.")
+        except Exception:
+            st.warning("Client list temporarily unavailable.")
 
 # ────────────────────────────────────────────────
-# MOTIVATIONAL FOOTER
+# MOTIVATIONAL FOOTER (slimmer version)
 # ────────────────────────────────────────────────
 st.markdown(
     f"""
-    <div class='glass-card' style='
-        padding:5rem 2rem;
-        text-align:center;
-        margin:6rem auto 4rem;
-        max-width:1100px;
+    <div style='
+        text-align:center; 
+        padding:4rem 2rem; 
+        margin:6rem auto 4rem; 
+        max-width:1100px; 
         border-radius:24px;
-        border:3px solid {accent_primary}30;
-        background:linear-gradient(135deg, rgba(0,255,170,0.08), rgba(255,215,0,0.05));
-        box-shadow:0 20px 50px rgba(0,255,170,0.15);
+        border:2px solid {accent_primary}40;
+        background:linear-gradient(135deg, rgba(0,255,170,0.06), rgba(255,215,0,0.04));
+        box-shadow:0 12px 40px rgba(0,255,170,0.12);
     '>
-        <h1 style='
-            font-size:3.8rem;
-            margin:0 0 1.5rem;
-            background:linear-gradient(90deg, {accent_primary}, {accent_gold}, {accent_primary});
-            -webkit-background-clip:text;
+        <h2 style='
+            font-size:2.8rem; 
+            background:linear-gradient(90deg, {accent_primary}, {accent_gold});
+            -webkit-background-clip:text; 
             -webkit-text-fill-color:transparent;
-            letter-spacing:1.5px;
+            margin-bottom:1.5rem;
         '>
             Fully Automatic • Realtime • Exponential Empire
-        </h1>
-        <p style='font-size:1.6rem; opacity:0.92; margin:0 0 2.5rem; line-height:1.6;'>
-            Every transaction auto-syncs • Trees update instantly • Balances flow realtime • Empire scales itself.
+        </h2>
+        <p style='font-size:1.4rem; opacity:0.9; line-height:1.6;'>
+            Every transaction auto-syncs • Balances flow realtime • Empire scales itself.
         </p>
-        <h2 style='
-            font-size:2.8rem;
-            color:{accent_gold};
-            margin:0 0 1rem;
+        <p style='
+            font-size:1.5rem; 
+            color:{accent_gold}; 
+            margin:2rem 0 1rem; 
             font-weight:700;
         '>
             Built by Faith, Shared for Generations
-        </h2>
-        <p style='font-size:1.4rem; opacity:0.85; font-style:italic; color:#aaaaaa;'>
+        </p>
+        <p style='font-size:1.1rem; opacity:0.7; font-style:italic;'>
             KMFX Pro • Cloud Edition 2026 • Mark Jeff Blando
         </p>
     </div>
@@ -369,7 +294,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Smooth scroll to top after load
+# Smooth scroll to top
 st.markdown("""
     <script>
     setTimeout(() => window.scrollTo({top: 0, behavior: 'smooth'}), 800);
