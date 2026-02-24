@@ -1,124 +1,248 @@
 # main.py
 # =====================================================================
-# KMFX EA - PURE CENTERED PUBLIC LANDING + LOGIN
-# No sidebar, no header, full centering, dark mode, max-width content
-# Redirects to dashboard if already logged in
+# KMFX EA - PUBLIC LANDING + LOGIN PAGE
+# Multi-page entry point: redirects to dashboard if logged-in
 # =====================================================================
 import streamlit as st
-from datetime import datetime
+import datetime
+import bcrypt
+import threading
+import time
+import requests
+import qrcode
+from io import BytesIO
+from supabase import create_client, Client
+from dotenv import load_dotenv
+import uuid
+from PIL import Image
+import os
 from utils.supabase_client import supabase
 from utils.auth import login_user, is_authenticated
-from utils.helpers import log_action, make_same_size
-from PIL import Image
-
-# ────────────────────────────────────────────────
-# PAGE CONFIG: NO SIDEBAR, NO HEADER, FULL CENTER
-# ────────────────────────────────────────────────
-st.set_page_config(
-    page_title="KMFX EA - Elite Empire",
-    page_icon="👑",
-    layout="wide",
-    initial_sidebar_state="collapsed"
+from utils.helpers import (
+    upload_to_supabase,
+    make_same_size,
+    log_action,
+    start_keep_alive_if_needed
 )
 
-# Hide sidebar completely + header + top space
-st.markdown("""
+# Start keep-alive to prevent sleep on Streamlit Cloud
+start_keep_alive_if_needed()
+
+# ────────────────────────────────────────────────
+# PAGE CONFIG & SIDEBAR CONTROL (hide sidebar on public landing)
+# ────────────────────────────────────────────────
+if not is_authenticated():
+    st.set_page_config(
+        page_title="KMFX EA - Elite Empire",
+        page_icon="👑",
+        layout="wide",
+        initial_sidebar_state="collapsed"  # minimized/hidden on public
+    )
+    # Force hide sidebar via CSS on public page + center main content
+    st.markdown("""
+    <style>
+        section[data-testid="stSidebar"] {
+            display: none !important;
+        }
+        .st-emotion-cache-1cpxqw2 { /* main content area */
+            max-width: 1100px !important; /* centered with max-width */
+            margin: 0 auto !important;
+            padding: 1rem 2rem !important;
+        }
+        .block-container {
+            padding-top: 2rem !important;
+            padding-bottom: 2rem !important;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+else:
+    st.set_page_config(
+        page_title="KMFX Empire Dashboard",
+        page_icon="👑",
+        layout="wide",
+        initial_sidebar_state="expanded"
+    )
+
+# ────────────────────────────────────────────────
+# THEME & COLORS
+# ────────────────────────────────────────────────
+accent_primary = "#00ffaa"
+accent_gold = "#ffd700"
+accent_glow = "#00ffaa40"
+accent_hover = "#00ffcc"
+
+if "theme" not in st.session_state:
+    st.session_state.theme = "dark"
+theme = st.session_state.theme
+
+# Auto theme + redirect if authenticated
+if is_authenticated():
+    if theme != "light":
+        st.session_state.theme = "light"
+        st.rerun()
+    st.switch_page("pages/🏠_Dashboard.py")
+else:
+    if theme != "dark":
+        st.session_state.theme = "dark"
+        st.rerun()
+
+bg_color = "#f8fbff" if theme == "light" else "#0a0d14"
+card_bg = "rgba(255,255,255,0.75)" if theme == "light" else "rgba(15,20,30,0.70)"
+border_color = "rgba(0,0,0,0.08)" if theme == "light" else "rgba(100,100,100,0.15)"
+text_primary = "#0f172a" if theme == "light" else "#ffffff"
+text_muted = "#64748b" if theme == "light" else "#aaaaaa"
+card_shadow = "0 8px 25px rgba(0,0,0,0.12)" if theme == "light" else "0 10px 30px rgba(0,0,0,0.5)"
+sidebar_bg = "rgba(248,251,255,0.95)" if theme == "light" else "rgba(10,13,20,0.95)"
+
+# ────────────────────────────────────────────────
+# FULL CSS STYLING (with centered content adjustments)
+# ────────────────────────────────────────────────
+st.markdown(f"""
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
 <style>
-    /* Kill sidebar & collapse button */
-    section[data-testid="stSidebar"] { display: none !important; }
-    [data-testid="collapsedControl"] { display: none !important; }
-
-    /* Kill Streamlit header & top bar */
-    header { visibility: hidden !important; }
-    .stApp > header { display: none !important; }
-
-    /* Full dark background + remove all top/bottom padding */
-    .stApp {
-        background: #0a0d14 !important;
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-
-    /* Center container with max-width like old version */
-    .main .block-container {
-        max-width: 1200px !important;
-        margin: 0 auto !important;
-        padding-top: 1rem !important;
-        padding-bottom: 4rem !important;
-        padding-left: 1.5rem !important;
-        padding-right: 1.5rem !important;
-    }
-
-    /* Center everything inside */
-    .stMarkdown, .stImage, .stColumns, div[data-testid="stMetric"] {
-        margin-left: auto !important;
-        margin-right: auto !important;
-        text-align: center !important;
-    }
-
-    /* White metric cards for contrast */
-    div[data-testid="stMetric"] {
-        background: white !important;
-        color: #0f172a !important;
-        border-radius: 16px !important;
-        padding: 1.4rem !important;
-        box-shadow: 0 6px 20px rgba(0,0,0,0.3) !important;
-        border: 1px solid #e2e8f0 !important;
-        max-width: 320px !important;
-        margin: 1rem auto !important;
-    }
-
-    /* Glass cards - centered with max-width */
-    .glass-card {
-        background: rgba(15,20,30,0.75) !important;
-        backdrop-filter: blur(20px) !important;
-        border: 1px solid rgba(100,100,100,0.3) !important;
-        border-radius: 20px !important;
-        padding: 2.5rem !important;
-        margin: 3rem auto !important;
-        max-width: 1100px !important;
-        box-shadow: 0 12px 40px rgba(0,0,0,0.6) !important;
-    }
-
-    /* Gold gradient text */
-    .gold-text {
-        background: linear-gradient(90deg, #ffd700, #00ffaa);
+    html, body, [class*="css-"] {{
+        font-family: 'Poppins', sans-serif !important;
+        font-size: 15px !important;
+    }}
+    .stApp {{
+        background: {bg_color};
+        color: {text_primary};
+    }}
+    h1, h2, h3, h4, h5, h6, p, div, span, label, .stMarkdown {{
+        color: {text_primary} !important;
+    }}
+    small, caption, .caption {{
+        color: {text_muted} !important;
+    }}
+    .glass-card {{
+        background: {card_bg};
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 20px;
+        border: 1px solid {border_color};
+        padding: 2.2rem !important;
+        box-shadow: {card_shadow};
+        transition: all 0.3s ease;
+        margin: 2rem auto;
+        max-width: 1100px; /* centered content width */
+    }}
+    .glass-card:hover {{
+        box-shadow: 0 15px 40px {accent_glow if theme=='dark' else 'rgba(0,0,0,0.2)'};
+        transform: translateY(-6px);
+        border-color: {accent_primary};
+    }}
+    .gold-text {{
+        color: {accent_gold} !important;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }}
+    .public-hero {{
+        text-align: center;
+        padding: 6rem 1rem 4rem;
+        min-height: 80vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        max-width: 1100px;
+        margin: 0 auto;
+    }}
+    .public-hero h1 {{
+        font-size: clamp(3rem, 8vw, 5rem);
+        background: linear-gradient(90deg, {accent_gold}, {accent_primary});
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
+        margin-bottom: 1rem;
+    }}
+    .timeline-card {{
+        background: rgba(30, 35, 45, 0.6);
+        border-left: 6px solid {accent_gold};
+        border-radius: 0 20px 20px 0;
+        padding: 2rem;
+        margin: 2.5rem auto;
+        transition: all 0.3s ease;
+        max-width: 900px;
+    }}
+    .timeline-card:hover {{
+        transform: translateX(10px);
+        box-shadow: 0 10px 30px {accent_glow};
+    }}
+    .big-stat {{
+        font-size: 3rem !important;
         font-weight: 700;
-    }
+        color: {accent_primary};
+    }}
+    .stTextInput > div > div > input,
+    .stTextArea > div > div > textarea,
+    .stSelectbox > div > div > div,
+    .stSelectbox > div > div > div > div,
+    .stSelectbox > div > div input {{
+        background: #ffffff !important;
+        color: #000000 !important;
+        border: 1px solid {border_color} !important;
+        border-radius: 16px !important;
+    }}
+    button[kind="primary"] {{
+        background: {accent_primary} !important;
+        color: #000000 !important;
+        border-radius: 16px !important;
+        box-shadow: 0 6px 20px {accent_glow} !important;
+        padding: 1rem 2rem !important;
+        font-size: 1.2rem !important;
+    }}
+    button[kind="primary"]:hover {{
+        background: {accent_hover} !important;
+        box-shadow: 0 12px 35px {accent_glow} !important;
+        transform: translateY(-3px);
+    }}
+    header[data-testid="stHeader"] {{
+        background-color: {bg_color} !important;
+        backdrop-filter: blur(20px);
+    }}
+    section[data-testid="stSidebar"] {{
+        background: {sidebar_bg} !important;
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-right: 1px solid {border_color};
+    }}
+    [data-testid="collapsedControl"] {{
+        color: #ff4757 !important;
+    }}
+    @media (min-width: 769px) {{
+        .main .block-container {{
+            padding-left: 3rem !important;
+            padding-top: 2rem !important;
+            max-width: 1200px !important;
+            margin: 0 auto !important;
+        }}
+    }}
+    @media (max-width: 768px) {{
+        .public-hero {{ padding: 4rem 1rem 3rem; min-height: 70vh; }}
+        .glass-card {{ padding: 1.5rem !important; max-width: 95% !important; }}
+        .timeline-card {{ border-left: none; border-top: 6px solid {accent_gold}; border-radius: 20px; }}
+        .big-stat {{ font-size: 2.2rem !important; }}
+    }}
 </style>
 """, unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# AUTO-REDIRECT IF ALREADY LOGGED IN
-# ────────────────────────────────────────────────
-if is_authenticated():
-    # Light theme for dashboard
-    st.session_state.theme = "light"
-    st.switch_page("pages/🏠_Dashboard.py")
-
-# ────────────────────────────────────────────────
-# QR AUTO-LOGIN (runs early)
+# QR AUTO-LOGIN (fixed path)
 # ────────────────────────────────────────────────
 params = st.query_params
 qr_token = params.get("qr", [None])[0]
-if qr_token:
+if qr_token and not is_authenticated():
     try:
         resp = supabase.table("users").select("*").eq("qr_token", qr_token).execute()
         if resp.data:
             user = resp.data[0]
-            st.session_state.update({
-                "authenticated": True,
-                "username": user["username"].lower(),
-                "full_name": user["full_name"] or user["username"],
-                "role": user["role"],
-                "theme": "light",
-                "just_logged_in": True
-            })
-            log_action("QR Login Success", f"User: {user.get('full_name')} | Role: {user['role']}")
+            st.session_state.authenticated = True
+            st.session_state.username = user["username"].lower()
+            st.session_state.full_name = user["full_name"] or user["username"]
+            st.session_state.role = user["role"]
+            st.session_state.theme = "light"
+            st.session_state.just_logged_in = True
+            log_action("QR Login Success", f"User: {user['full_name']} | Role: {user['role']}")
             st.query_params.clear()
-            st.switch_page("pages/🏠_Dashboard.py")
+            st.switch_page("pages/🏠_Dashboard.py")  # ← FIXED HERE
         else:
             st.error("Invalid or revoked QR code")
             st.query_params.clear()
@@ -127,27 +251,22 @@ if qr_token:
         st.query_params.clear()
 
 # ────────────────────────────────────────────────
-# PUBLIC LANDING – CENTERED CONTENT STARTS HERE
+# PUBLIC LANDING CONTENT (centered with max-width)
 # ────────────────────────────────────────────────
-
 # Logo (centered)
 logo_col = st.columns([1, 4, 1])[1]
 with logo_col:
     st.image("assets/logo.png", use_column_width=True)
 
-# Hero Section
-st.markdown(f"""
-<div class='glass-card'>
-    <h1 class='gold-text' style='font-size:4.5rem; margin-bottom:1rem;'>KMFX EA</h1>
-    <h2 style='font-size:2.2rem; margin:1rem 0;'>Automated Gold Trading for Financial Freedom</h2>
-    <p style='font-size:1.5rem; opacity:0.9; margin:1.5rem 0;'>
-        Passed FTMO Phase 1 • +3,071% 5-Year Backtest • Building Legacies of Generosity
-    </p>
-    <p style='font-size:1.3rem; opacity:0.8;'>Mark Jeff Blando – Founder & Developer • 2026</p>
-</div>
-""", unsafe_allow_html=True)
+# Hero (centered)
+hero_container = st.container()
+with hero_container:
+    st.markdown(f"<h1 class='gold-text' style='text-align: center;'>KMFX EA</h1>", unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align: center; color:{text_primary};'>Automated Gold Trading for Financial Freedom</h2>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; font-size:1.4rem; color:{text_muted};'>Passed FTMO Phase 1 • +3,071% 5-Year Backtest • Building Legacies of Generosity</p>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; font-size:1.2rem;'>Mark Jeff Blando – Founder & Developer • 2026</p>", unsafe_allow_html=True)
 
-# Realtime Stats – centered white cards
+# Realtime Stats (centered)
 try:
     accounts_count = supabase.table("ftmo_accounts").select("id", count="exact").execute().count or 0
     equity_data = supabase.table("ftmo_accounts").select("current_equity").execute().data or []
@@ -155,7 +274,7 @@ try:
     gf_data = supabase.table("growth_fund_transactions").select("type, amount").execute().data or []
     gf_balance = sum(t["amount"] if t["type"] == "In" else -t["amount"] for t in gf_data)
     members_count = supabase.table("users").select("id", count="exact").eq("role", "client").execute().count or 0
-except:
+except Exception:
     accounts_count = total_equity = gf_balance = members_count = 0
 
 stat_cols = st.columns(4)
@@ -630,37 +749,72 @@ for q, a in faqs:
 st.markdown("</div>", unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# LOGIN TABS – centered glass card
+# SECURE MEMBER LOGIN – ROLE-AWARE + FIXED REDIRECTS
 # ────────────────────────────────────────────────
-st.markdown("<div class='glass-card' style='max-width:800px; margin:5rem auto;'>", unsafe_allow_html=True)
-st.markdown("<h2 class='gold-text' style='text-align:center;'>Member Login</h2>", unsafe_allow_html=True)
-st.markdown("<p style='text-align:center; opacity:0.9; margin-bottom:2rem;'>Access your dashboard, balances, shares & tools</p>", unsafe_allow_html=True)
+st.markdown("<div class='glass-card' style='text-align:center; margin:5rem auto; padding:4rem; max-width:800px;'>", unsafe_allow_html=True)
+st.markdown("<h2 class='gold-text'>Already a Pioneer or Member?</h2>", unsafe_allow_html=True)
+st.markdown("<p style='font-size:1.4rem; opacity:0.9;'>Access your elite dashboard, realtime balance, profit shares, EA versions, and empire tools</p>", unsafe_allow_html=True)
 
-tab_owner, tab_admin, tab_client = st.tabs(["👑 Owner", "🛠️ Admin", "👥 Client"])
+tab_owner, tab_admin, tab_client = st.tabs(["👑 Owner Login", "🛠️ Admin Login", "👥 Client Login"])
 
+# ── OWNER ────────────────────────────────────────
 with tab_owner:
-    with st.form("owner_form", clear_on_submit=True):
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
-        if st.form_submit_button("Login as Owner →", type="primary", use_container_width=True):
-            login_user(username.strip().lower(), password, expected_role="owner")
+    with st.form(key="owner_login_form", clear_on_submit=True):
+        st.markdown("<p style='text-align:center; opacity:0.8;'>Owner-only access</p>", unsafe_allow_html=True)
+        owner_username = st.text_input("Username", placeholder="e.g. kingminted", key="owner_username")
+        owner_password = st.text_input("Password", type="password", key="owner_password")
+        submit_owner = st.form_submit_button("Login as Owner →", type="primary", use_container_width=True)
 
+    if submit_owner:
+        success = login_user(owner_username.strip().lower(), owner_password, expected_role="owner")
+        if success:
+            st.success("Owner login successful! Redirecting...")
+            st.session_state.role = "owner"
+            # time.sleep(0.8)  # uncomment if you want a small delay to see message
+            st.switch_page("pages/👤_Admin_Management.py")  # Owner starts here
+        else:
+            st.error("Login failed – check credentials or role")
+
+# ── ADMIN ────────────────────────────────────────
 with tab_admin:
-    with st.form("admin_form", clear_on_submit=True):
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
-        if st.form_submit_button("Login as Admin →", type="primary", use_container_width=True):
-            login_user(username.strip().lower(), password, expected_role="admin")
+    with st.form(key="admin_login_form", clear_on_submit=True):
+        st.markdown("<p style='text-align:center; opacity:0.8;'>Admin access</p>", unsafe_allow_html=True)
+        admin_username = st.text_input("Username", placeholder="Your admin username", key="admin_username")
+        admin_password = st.text_input("Password", type="password", key="admin_password")
+        submit_admin = st.form_submit_button("Login as Admin →", type="primary", use_container_width=True)
 
+    if submit_admin:
+        success = login_user(admin_username.strip().lower(), admin_password, expected_role="admin")
+        if success:
+            st.success("Admin login successful! Redirecting...")
+            st.session_state.role = "admin"
+            # time.sleep(0.8)
+            st.switch_page("pages/👤_Admin_Management.py")  # Admin starts here
+        else:
+            st.error("Login failed – check credentials or role")
+
+# ── CLIENT / PIONEER ─────────────────────────────
 with tab_client:
-    with st.form("client_form", clear_on_submit=True):
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
-        if st.form_submit_button("Login as Client →", type="primary", use_container_width=True):
-            login_user(username.strip().lower(), password, expected_role="client")
+    with st.form(key="client_login_form", clear_on_submit=True):
+        st.markdown("<p style='text-align:center; opacity:0.8;'>Client / Pioneer access</p>", unsafe_allow_html=True)
+        client_username = st.text_input("Username", placeholder="Your username", key="client_username")
+        client_password = st.text_input("Password", type="password", key="client_password")
+        submit_client = st.form_submit_button("Login as Client →", type="primary", use_container_width=True)
+
+    if submit_client:
+        success = login_user(client_username.strip().lower(), client_password, expected_role="client")
+        if success:
+            st.success("Welcome back! Redirecting to your dashboard...")
+            st.session_state.role = "client"
+            # time.sleep(0.8)
+            st.switch_page("pages/🏠_Dashboard.py")  # ← FIXED HERE (correct path)
+        else:
+            st.error("Login failed – check credentials or role")
 
 st.markdown("</div>", unsafe_allow_html=True)
 
-# Final stop – hindi na lalabas ang dashboard content dito
+# ────────────────────────────────────────────────
+# STOP IF NOT AUTHENTICATED
+# ────────────────────────────────────────────────
 if not is_authenticated():
     st.stop()
