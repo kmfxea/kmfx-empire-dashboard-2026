@@ -1,297 +1,352 @@
 # pages/👤_My_Profile.py
 import streamlit as st
-import bcrypt
+import plotly.graph_objects as go
 from datetime import datetime
-import uuid
 import qrcode
 from io import BytesIO
+import requests
+
 from utils.auth import require_auth
 from utils.sidebar import render_sidebar
 from utils.supabase_client import supabase
-from utils.helpers import log_action
+from utils.helpers import upload_to_supabase, log_action
 
-# ────────────────────────────────────────────────
-# SIDEBAR + AUTH (must be first)
 # ────────────────────────────────────────────────
 render_sidebar()
 require_auth(min_role="client")
 
 # ────────────────────────────────────────────────
-# THEME COLORS (exact match with Dashboard)
+# THEME (match Dashboard)
 # ────────────────────────────────────────────────
 accent_primary = "#00ffaa"
 accent_gold    = "#ffd700"
-accent_glow    = "#00ffaa40"
-accent_hover   = "#00ffcc"
+accent_dark    = "#0a0d14"
+text_light     = "#ffffff"
+text_dark      = "#0f172a"
+
+# Assume dark theme by default (you can make it dynamic later)
+theme = "dark"
+front_bg   = "linear-gradient(135deg, #000000, #1f1f1f)"
+back_bg    = "linear-gradient(135deg, #1f1f1f, #000000)"
+border_col = accent_gold
+shadow     = "0 20px 50px rgba(0,255,170,0.25)"
+mag_strip  = "#333"
 
 # ────────────────────────────────────────────────
-# WELCOME + BALLOONS ON FRESH LOGIN
+# SCROLL TO TOP + WELCOME
 # ────────────────────────────────────────────────
 if st.session_state.get("just_logged_in", False):
     st.balloons()
-    st.success(f"Welcome to your profile, {st.session_state.get('full_name', 'Trader')}! 👑")
+    st.success(f"Welcome to your profile, {st.session_state.get('full_name', 'Elite Member')}! 👑")
     st.session_state.pop("just_logged_in", None)
 
-# ────────────────────────────────────────────────
-# SCROLL-TO-TOP (same script as Dashboard)
-# ────────────────────────────────────────────────
 st.markdown("""
 <script>
-function forceScrollToTop() {
-    window.scrollTo({top: 0, behavior: 'smooth'});
-    document.body.scrollTop = 0;
-    document.documentElement.scrollTop = 0;
-    const main = parent.document.querySelector(".main .block-container");
-    if (main) main.scrollTop = 0;
-}
+function forceScrollToTop() { window.scrollTo({top: 0, behavior: 'smooth'}); }
 const observer = new MutationObserver(() => {
     setTimeout(forceScrollToTop, 300);
     setTimeout(forceScrollToTop, 1200);
-    setTimeout(forceScrollToTop, 2500);
 });
-const target = parent.document.querySelector(".main") || document.body;
-observer.observe(target, { childList: true, subtree: true, attributes: true });
+observer.observe(document.body, { childList: true, subtree: true });
 setTimeout(forceScrollToTop, 800);
-setTimeout(forceScrollToTop, 2000);
-setTimeout(forceScrollToTop, 4000);
 </script>
 """, unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# HEADER
-# ────────────────────────────────────────────────
 st.header("👤 My Profile")
-st.markdown("**Your personal command center** • Manage details, accounts & security")
+st.caption("Your KMFX EA Elite Membership • Realtime • Full Transparency")
+
+my_name     = st.session_state.full_name
+my_username = st.session_state.username
 
 # ────────────────────────────────────────────────
-# LOAD USER DATA
+# CACHE DATA (10s refresh for realtime feel)
 # ────────────────────────────────────────────────
-@st.cache_data(ttl=45)
-def get_user(username):
-    try:
-        res = supabase.table("users").select("*").eq("username", username.lower()).single().execute()
-        return res.data if res.data else None
-    except:
-        return None
+@st.cache_data(ttl=10)
+def fetch_my_data():
+    user_res = supabase.table("users").select("*").eq("username", my_username).single().execute()
+    my_user = user_res.data or {}
 
-user = get_user(st.session_state.username)
+    acc_res = supabase.table("ftmo_accounts").select("*").execute()
+    accounts = acc_res.data or []
 
-if not user:
-    st.error("Cannot load profile. Please log out and log in again.")
-    st.stop()
+    my_accounts = []
+    my_id_str = str(my_user.get("id", ""))
+    for acc in accounts:
+        parts_v2 = acc.get("participants_v2", []) or []
+        parts_old = acc.get("participants", []) or []
+        if any(
+            p.get("display_name") == my_name or 
+            str(p.get("user_id")) == my_id_str or 
+            p.get("name") == my_name 
+            for p in parts_v2 + parts_old
+        ):
+            my_accounts.append(acc)
+
+    wd_res = supabase.table("withdrawals").select("*").eq("client_name", my_name).order("date_requested", desc=True).execute()
+    withdrawals = wd_res.data or []
+
+    files_res = supabase.table("client_files").select("*").eq("assigned_client", my_name).order("upload_date", desc=True).execute()
+    proofs = files_res.data or []
+
+    return my_user, my_accounts, withdrawals, proofs
+
+my_user, my_accounts, my_withdrawals, my_proofs = fetch_my_data()
+
+if st.button("🔄 Refresh Profile Now", type="secondary", use_container_width=True):
+    st.cache_data.clear()
+    st.rerun()
+
+st.caption("🔄 Auto-refreshes every 10 seconds • All data realtime")
 
 # ────────────────────────────────────────────────
-# TABS (3 clean sections)
+# PREMIUM FLIP CARD (almost identical to old one)
 # ────────────────────────────────────────────────
-tab_profile, tab_accounts, tab_security = st.tabs([
-    "Personal Details",
-    "My Accounts & Shares",
-    "Security & Password"
-])
+my_title   = my_user.get("title", "Member").upper()
+card_title = f"{my_title} CARD" if my_title != "NONE" else "MEMBER CARD"
+balance    = my_user.get("balance", 0.0)
 
-# ────────────────────────────────
-# TAB 1: Personal Details (glass card style)
-# ────────────────────────────────
-with tab_profile:
-    st.subheader("Your Information")
-
-    # Main info card
-    st.markdown(f"""
-    <div class="glass-card" style="padding:2rem; border-radius:12px; text-align:center; max-width:700px; margin:0 auto 2rem;">
-        <h2 style="margin:0 0 1.5rem; color:{accent_primary};">{user.get('full_name', 'Trader')}</h2>
-        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:1.5rem;">
-            <div>
-                <h4 style="opacity:0.7; margin:0 0 0.4rem;">Username</h4>
-                <p style="font-size:1.3rem; margin:0; font-weight:600;">{user['username']}</p>
+st.markdown(f"""
+<div style="perspective: 1500px; max-width: 600px; margin: 3rem auto; width: 100%;">
+  <div class="flip-card">
+    <div class="flip-card-inner">
+      <!-- Front -->
+      <div class="flip-card-front">
+        <div style="background: {front_bg}; backdrop-filter: blur(20px); border-radius: 20px; padding: 2rem; min-height: 380px; box-shadow: {shadow}; color: {text_light}; border: 2px solid {border_col}; display: flex; flex-direction: column; justify-content: space-between;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="margin:0; font-size: clamp(2.2rem, 6vw, 3.2rem); color: {accent_gold}; letter-spacing: 5px; text-shadow: 0 0 15px {accent_gold};">KMFX EA</h2>
+            <h3 style="margin:0; font-size: clamp(1.3rem, 4vw, 1.8rem); color: {accent_gold};">{card_title}</h3>
+          </div>
+          <div style="text-align: center; flex-grow: 1; display: flex; align-items: center; justify-content: center;">
+            <h1 style="margin:0; font-size: clamp(2rem, 7vw, 3rem); letter-spacing: 4px;">{my_name.upper()}</h1>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+            <div style="font-size: clamp(1rem, 3vw, 1.3rem); opacity: 0.9;">Elite Empire Member</div>
+            <div style="text-align: right;">
+              <p style="margin:0; opacity: 0.9;">Available Balance</p>
+              <h2 style="margin:0; color: {accent_primary}; text-shadow: 0 0 20px {accent_primary};">${balance:,.2f}</h2>
             </div>
-            <div>
-                <h4 style="opacity:0.7; margin:0 0 0.4rem;">Role</h4>
-                <p style="font-size:1.3rem; margin:0; color:{accent_gold};">{user['role'].title()}</p>
-            </div>
-            <div>
-                <h4 style="opacity:0.7; margin:0 0 0.4rem;">Balance</h4>
-                <p style="font-size:1.3rem; margin:0; color:{accent_primary};">${user.get('balance', 0):,.2f}</p>
-            </div>
+          </div>
+          <p style="text-align:center; margin:1rem 0 0; opacity:0.7; font-size:0.95rem;">Built by Faith • Shared for Generations • 2026 👑</p>
         </div>
+      </div>
+      <!-- Back -->
+      <div class="flip-card-back">
+        <div style="background: {back_bg}; backdrop-filter: blur(20px); border-radius: 20px; padding: 2rem; min-height: 380px; box-shadow: {shadow}; color: {text_light}; border: 2px solid {border_col};">
+          <h2 style="text-align:center; color: {accent_gold}; margin:0 0 1.2rem;">Membership Details</h2>
+          <div style="height:40px; background:#333; border-radius:10px; margin-bottom:1.5rem;"></div>
+          <div style="font-size:1.05rem; line-height:1.8;">
+            <strong style="color:{accent_gold};">Full Name:</strong> {my_name}<br>
+            <strong style="color:{accent_gold};">Title:</strong> {my_title}<br>
+            <strong style="color:{accent_gold};">Username:</strong> {my_username}<br>
+            <strong style="color:{accent_gold};">Email:</strong> {my_user.get('email','—')}<br>
+            <strong style="color:{accent_gold};">Contact:</strong> {my_user.get('contact_no','—') or my_user.get('phone','—')}<br>
+            <strong style="color:{accent_gold};">Address:</strong> {my_user.get('address','—')}<br>
+            <strong style="color:{accent_gold};">Balance:</strong> <span style="color:{accent_primary}; font-weight:bold;">${balance:,.2f}</span><br>
+            <strong style="color:{accent_gold};">Shared Accounts:</strong> {len(my_accounts)} active
+          </div>
+          <p style="text-align:center; margin-top:1.5rem; opacity:0.7;">KMFX Elite Access • 2026</p>
+        </div>
+      </div>
     </div>
-    """, unsafe_allow_html=True)
+  </div>
+</div>
 
-    # Editable fields in glass-card form
-    with st.form("edit_profile"):
-        st.markdown("**Update Personal Information**")
-        cols = st.columns(2)
-        with cols[0]:
-            full_name_new = st.text_input("Full Name", value=user.get("full_name", ""))
-            phone_new     = st.text_input("Phone Number", value=user.get("phone", ""))
-            email_new     = st.text_input("Email", value=user.get("email", ""))
-        with cols[1]:
-            address_new   = st.text_input("Address", value=user.get("address", ""))
-            dob_new       = st.date_input(
-                "Date of Birth",
-                value=user.get("dob"),
-                min_value=datetime(1950, 1, 1),
-                max_value=datetime.now()
-            )
+<style>
+  .flip-card {{ background:transparent; width:100%; height:auto; min-height:380px; perspective:1200px; }}
+  .flip-card-inner {{ position:relative; width:100%; height:100%; text-align:center; transition: transform 0.9s cubic-bezier(0.68,-0.55,0.265,1.55); transform-style:preserve-3d; }}
+  .flip-card:hover .flip-card-inner {{ transform: rotateY(180deg); }}
+  .flip-card-front, .flip-card-back {{ position:absolute; width:100%; height:100%; -webkit-backface-visibility:hidden; backface-visibility:hidden; border-radius:20px; }}
+  .flip-card-back {{ transform: rotateY(180deg); }}
+  @media (max-width: 768px) {{ .flip-card {{ min-height:340px; }} }}
+</style>
 
-        if st.form_submit_button("Save Changes", type="primary", use_container_width=True):
-            updates = {}
-            if full_name_new != user.get("full_name"): updates["full_name"] = full_name_new
-            if phone_new     != user.get("phone"):     updates["phone"]     = phone_new
-            if email_new     != user.get("email"):     updates["email"]     = email_new
-            if address_new   != user.get("address"):   updates["address"]   = address_new
-            if str(dob_new)  != str(user.get("dob")):  updates["dob"]       = str(dob_new) if dob_new else None
+<p style="text-align:center; opacity:0.8; margin-top:1rem;">Hover or tap card to flip ↺</p>
+""", unsafe_allow_html=True)
 
-            if updates:
-                try:
-                    supabase.table("users").update(updates).eq("id", user["id"]).execute()
-                    log_action("Profile Updated", f"{updates}")
-                    st.success("Information updated successfully!")
-                    st.rerun()
-                except Exception as ex:
-                    st.error(f"Update failed: {ex}")
-            else:
-                st.info("No changes detected.")
+# ────────────────────────────────────────────────
+# QR CODE SECTION
+# ────────────────────────────────────────────────
+st.subheader("🔑 Quick Login QR Code")
 
-# ────────────────────────────────
-# TAB 2: Accounts & Shares
-# ────────────────────────────────
-with tab_accounts:
-    st.subheader("Accounts You Are Involved In")
+qr_token = my_user.get("qr_token")
+app_base_url = "https://kmfxeaftmo.streamlit.app"  # ← update if needed
 
-    try:
-        all_acc = supabase.table("ftmo_accounts").select("*").execute().data or []
-        my_acc = []
-        uname = user["username"]
-
-        for acc in all_acc:
-            contrib = acc.get("contributors_v2") or acc.get("contributors", [])
-            partic = acc.get("participants_v2") or acc.get("participants", [])
-            if any(uname in str(x) for x in contrib + partic):
-                my_acc.append(acc)
-
-        if not my_acc:
-            st.info("You are not associated with any accounts yet.")
-        else:
-            for acc in my_acc:
-                st.markdown(f"""
-                <div class="glass-card" style="padding:1.6rem; margin-bottom:1.2rem; border-radius:12px;">
-                    <h3 style="margin:0 0 1rem; color:{accent_primary};">{acc.get('name', 'Unnamed Account')}</h3>
-                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px,1fr)); gap:1rem;">
-                        <div><strong>Phase:</strong> {acc.get('current_phase', '—')}</div>
-                        <div><strong>Equity:</strong> ${acc.get('current_equity',0):,.2f}</div>
-                        <div><strong>Withdrawable:</strong> ${acc.get('withdrawable_balance',0):,.2f}</div>
-                        <div><strong>Split:</strong> {acc.get('ftmo_split',80)}%</div>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
-
-    except Exception as ex:
-        st.error(f"Could not load accounts: {ex}")
-
-    # Simple profit share summary
-    st.subheader("Profit Share Received")
-    try:
-        dists = supabase.table("profit_distributions")\
-                .select("timestamp, share_amount")\
-                .eq("participant_user_id", user["id"])\
-                .order("timestamp", desc=True)\
-                .limit(10)\
-                .execute().data or []
-
-        if dists:
-            total = sum(d.get("share_amount", 0) for d in dists)
-            st.metric("Total Received", f"${total:,.2f}")
-            with st.expander("Last distributions"):
-                st.dataframe(
-                    [{"Date": d["timestamp"][:10], "Amount": f"${d['share_amount']:,.2f}"} for d in dists],
-                    use_container_width=True,
-                    hide_index=True
-                )
-        else:
-            st.info("No profit distributions received yet.")
-    except:
-        st.caption("Profit history temporarily unavailable.")
-
-# ────────────────────────────────
-# TAB 3: Security
-# ────────────────────────────────
-with tab_security:
-    st.subheader("Security Settings")
-
-    # QR Code Section
-    qr_token = user.get("qr_token")
-    if not qr_token:
-        qr_token = str(uuid.uuid4())
-        supabase.table("users").update({"qr_token": qr_token}).eq("id", user["id"]).execute()
-        st.rerun()
-
-    qr_content = f"https://kmfxea.streamlit.app/?qr={qr_token}"  # ← update to your real domain!
-
+if qr_token:
+    qr_content = f"{app_base_url}/?qr={qr_token}"
     qr = qrcode.QRCode(version=1, box_size=10, border=4)
     qr.add_data(qr_content)
     qr.make(fit=True)
-    img = qr.make_image(fill_color="black", back_color="white")
+    img = qr.make_image(fill_color=accent_primary, back_color="#000000")
 
     buf = BytesIO()
     img.save(buf, format="PNG")
+    qr_bytes = buf.getvalue()
 
-    col_qr, col_info = st.columns([1, 2])
-    with col_qr:
-        st.image(buf.getvalue(), use_column_width=True, caption="Quick Login QR")
-    with col_info:
-        st.markdown("**Scan to log in instantly**")
-        st.caption(f"Token (partial): `{qr_token[:8]}…`")
-        if st.button("🔄 Regenerate QR Code", type="primary"):
-            new_token = str(uuid.uuid4())
-            supabase.table("users").update({"qr_token": new_token}).eq("id", user["id"]).execute()
-            log_action("QR Regenerated", user.get("full_name", ""))
-            st.success("New QR generated → refresh page")
-            st.rerun()
-
-    st.divider()
-
-    # Change Password
-    st.subheader("Change Password")
-    with st.form("change_password"):
-        old_pw  = st.text_input("Current Password", type="password")
-        new_pw  = st.text_input("New Password", type="password")
-        conf_pw = st.text_input("Confirm New Password", type="password")
-
-        if st.form_submit_button("Update Password", type="primary"):
-            if not old_pw or not new_pw or not conf_pw:
-                st.error("All fields are required.")
-            elif new_pw != conf_pw:
-                st.error("Passwords do not match.")
-            elif len(new_pw) < 8:
-                st.error("New password must be at least 8 characters.")
-            elif not bcrypt.checkpw(old_pw.encode(), user["password"].encode()):
-                st.error("Current password is incorrect.")
-            else:
-                hashed = bcrypt.hashpw(new_pw.encode(), bcrypt.gensalt()).decode()
-                supabase.table("users").update({"password": hashed}).eq("id", user["id"]).execute()
-                log_action("Password Changed", user.get("full_name", ""))
-                st.success("Password updated! Logging out for security...")
-                for k in ["authenticated", "username", "full_name", "role"]:
-                    st.session_state.pop(k, None)
-                st.switch_page("pages/01_Login.py")  # ← adjust if login page name is different
+    col1, col2 = st.columns([1, 2])
+    with col1:
+        st.image(qr_bytes, use_column_width=True, caption="Scan to login instantly")
+    with col2:
+        st.code(qr_content, language=None)
+        st.download_button(
+            "⬇ Download QR Code",
+            qr_bytes,
+            file_name=f"{my_name.replace(' ','_')}_KMFX_QR.png",
+            mime="image/png",
+            use_container_width=True
+        )
+        st.success("Works on any device • Instant profile access")
+else:
+    st.info("No QR token generated yet. Contact admin/owner to create one.")
+    if st.button("Request QR Token Generation"):
+        st.info("Request sent (you can also message owner directly).")
 
 # ────────────────────────────────────────────────
-# MOTIVATIONAL FOOTER (same style as Dashboard)
+# SHARED ACCOUNTS + TREES
+# ────────────────────────────────────────────────
+st.subheader(f"Your Shared Accounts ({len(my_accounts)} active)")
+
+if my_accounts:
+    for acc in my_accounts:
+        parts = acc.get("participants_v2") or acc.get("participants", [])
+        my_part = next((p for p in parts if p.get("display_name") == my_name or str(p.get("user_id")) == str(my_user.get("id")) or p.get("name") == my_name), None)
+        my_pct = my_part.get("percentage", 0) if my_part else 0
+        projected = (acc.get("current_equity", 0) * my_pct / 100)
+
+        with st.expander(f"{acc.get('name')} • Your share: {my_pct:.1f}% • {acc.get('current_phase')}"):
+            cols = st.columns(2)
+            cols[0].metric("Account Equity", f"${acc.get('current_equity',0):,.0f}")
+            cols[0].metric("Your Projected Value", f"${projected:,.2f}")
+            cols[1].metric("Withdrawable", f"${acc.get('withdrawable_balance',0):,.0f}")
+
+            # Simple Sankey
+            labels = ["Profits"]
+            vals = []
+            for p in parts:
+                name = p.get("display_name") or p.get("name", "—")
+                pct = p.get("percentage", 0)
+                labels.append(f"{name} ({pct:.1f}%)")
+                vals.append(pct)
+
+            if vals:
+                fig = go.Figure(go.Sankey(
+                    node=dict(pad=15, thickness=20, label=labels, color=[accent_primary] + [accent_gold]*len(vals)),
+                    link=dict(source=[0]*len(vals), target=list(range(1,len(labels))), value=vals)
+                ))
+                fig.update_layout(height=380, margin=dict(t=10,l=0,r=0,b=10))
+                st.plotly_chart(fig, use_container_width=True)
+else:
+    st.info("No shared accounts assigned yet.")
+
+# ────────────────────────────────────────────────
+# WITHDRAWALS
+# ────────────────────────────────────────────────
+st.subheader("💳 Withdrawal History & Requests")
+
+if my_withdrawals:
+    for w in my_withdrawals:
+        color = {"Pending":"#ffa502", "Approved":accent_primary, "Paid":"#2ed573", "Rejected":"#ff4757"}.get(w["status"], "#666")
+        st.markdown(f"""
+        <div style="padding:1.4rem; border-left:5px solid {color}; background:rgba(255,255,255,0.05); border-radius:8px; margin-bottom:1rem;">
+            <h4 style="margin:0;">${w['amount']:,.0f} — {w['status']}</h4>
+            <small>Method: {w['method']} • Requested: {w['date_requested']}</small>
+        </div>
+        """, unsafe_allow_html=True)
+else:
+    st.info("No withdrawal requests yet.")
+
+with st.expander("➕ Request New Withdrawal"):
+    if balance <= 0:
+        st.info("No available balance to withdraw.")
+    else:
+        with st.form("wd_request"):
+            amt = st.number_input("Amount (USD)", min_value=1.0, max_value=balance, step=50.0)
+            method = st.selectbox("Method", ["USDT", "Bank Transfer", "Wise", "PayPal", "GCash", "Other"])
+            details = st.text_area("Details (address / account info)")
+            proof_file = st.file_uploader("Proof (required)", ["png","jpg","jpeg","pdf"])
+
+            if st.form_submit_button("Submit Request", type="primary"):
+                if amt > balance:
+                    st.error("Amount exceeds balance")
+                elif not proof_file:
+                    st.error("Proof document is required")
+                else:
+                    try:
+                        url, path = upload_to_supabase(proof_file, "client_files", "proofs")
+                        supabase.table("client_files").insert({
+                            "original_name": proof_file.name,
+                            "file_url": url,
+                            "storage_path": path,
+                            "upload_date": datetime.now().date().isoformat(),
+                            "sent_by": my_name,
+                            "category": "Withdrawal Proof",
+                            "assigned_client": my_name
+                        }).execute()
+
+                        supabase.table("withdrawals").insert({
+                            "client_name": my_name,
+                            "client_user_id": my_user["id"],
+                            "amount": amt,
+                            "method": method,
+                            "details": details,
+                            "status": "Pending",
+                            "date_requested": datetime.now().date().isoformat()
+                        }).execute()
+
+                        st.success("Withdrawal request submitted with proof!")
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Submission failed: {e}")
+
+# ────────────────────────────────────────────────
+# PROOFS VAULT
+# ────────────────────────────────────────────────
+st.subheader("📁 Your Proof Vault (Permanent Storage)")
+
+if my_proofs:
+    cols = st.columns(3)
+    for i, proof in enumerate(my_proofs):
+        with cols[i % 3]:
+            file_url = proof.get("file_url")
+            if proof.get("storage_path"):
+                try:
+                    signed = supabase.storage.from_("client_files").create_signed_url(proof["storage_path"], 3600 * 2)
+                    file_url = signed.signed_url
+                except:
+                    pass
+
+            if file_url and proof["original_name"].lower().endswith(('.png','.jpg','.jpeg')):
+                st.image(file_url, use_column_width=True, caption=proof["original_name"])
+            else:
+                st.markdown(f"**{proof['original_name']}**")
+                st.caption(f"{proof.get('category','—')} • {proof['upload_date']}")
+
+            if file_url:
+                try:
+                    resp = requests.get(file_url, timeout=8)
+                    if resp.status_code == 200:
+                        st.download_button(
+                            "⬇ Download",
+                            resp.content,
+                            file_name=proof["original_name"],
+                            use_container_width=True
+                        )
+                except:
+                    st.caption("Download unavailable")
+else:
+    st.info("No uploaded proofs/documents yet.")
+
+# ────────────────────────────────────────────────
+# FOOTER
 # ────────────────────────────────────────────────
 st.markdown(f"""
-<div class="glass-card" style="padding:4rem 2rem; text-align:center; margin:5rem auto; max-width:1100px;
-            border-radius:24px; border:2px solid {accent_primary}40;
-            background:linear-gradient(135deg, rgba(0,255,170,0.08), rgba(255,215,0,0.05));
-            box-shadow:0 20px 50px rgba(0,255,170,0.15);">
-    <h1 style="font-size:3.2rem; background:linear-gradient(90deg,{accent_primary},{accent_gold});
-               -webkit-background-clip:text; -webkit-text-fill-color:transparent;">
-        Your Profile • Your Empire
+<div style="padding:4rem 1rem; text-align:center; margin:5rem auto; max-width:1000px; border-radius:24px; border:2px solid {accent_primary}30; background:linear-gradient(135deg, rgba(0,255,170,0.06), rgba(0,0,0,0.4)); box-shadow:0 15px 40px rgba(0,255,170,0.12);">
+    <h1 style="font-size:2.8rem; background:linear-gradient(90deg,{accent_primary},{accent_gold}); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:1.5rem;">
+        Your Empire • Your Rules
     </h1>
-    <p style="font-size:1.4rem; opacity:0.9; margin:1.5rem 0;">
-        Secure • Personalized • Always Growing
+    <p style="font-size:1.3rem; opacity:0.9; margin:1.5rem 0;">
+        Realtime • Transparent • Motivated Forever
     </p>
-    <h2 style="color:{accent_gold}; font-size:2.2rem; margin:1rem 0;">
-        Built by Faith, Shared for Generations 👑
-    </h2>
+    <h2 style="color:{accent_gold}; font-size:2rem;">KMFX Elite • Built by Faith 👑 2026</h2>
 </div>
 """, unsafe_allow_html=True)
