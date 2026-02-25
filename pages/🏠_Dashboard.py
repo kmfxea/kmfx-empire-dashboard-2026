@@ -300,16 +300,21 @@ if accounts:
 else:
     st.info("No live accounts yet • Launch one in FTMO Accounts page")
 
-# ─── NEW: LATEST UPDATES SECTION ───
+# ─── LATEST UPDATES SECTION (FIXED FOR YOUR SCHEMA) ───
 st.subheader("Latest Updates")
 
-# Latest Announcements
+# 1. Latest Announcements – use 'date' column
 @st.cache_data(ttl=60)
 def get_latest_announcements(limit=3):
     try:
-        ann = supabase.table("announcements").select("title, message, created_at").order("created_at", desc=True).limit(limit).execute().data or []
+        ann = supabase.table("announcements") \
+            .select("title, message, date") \
+            .order("date", desc=True) \
+            .limit(limit) \
+            .execute().data or []
         return ann
-    except:
+    except Exception as e:
+        st.warning(f"Announcements fetch failed: {str(e)}")
         return []
 
 latest_ann = get_latest_announcements()
@@ -317,20 +322,27 @@ latest_ann = get_latest_announcements()
 if latest_ann:
     st.markdown("#### 📢 Latest Announcements")
     for a in latest_ann:
-        st.markdown(f"**{a['title']}** • {a['created_at'][:10]}")
-        st.caption(a['message'][:150] + "..." if len(a['message']) > 150 else a['message'])
+        st.markdown(f"**{a['title']}** • {a.get('date', '—')}")
+        preview = a['message'][:150] + "..." if len(a['message']) > 150 else a['message']
+        st.caption(preview)
     if st.button("View All Announcements", use_container_width=True):
         st.switch_page("pages/📢_Announcements.py")
 else:
-    st.info("No recent announcements")
+    st.info("No recent announcements yet")
 
-# Latest Testimonials
+# 2. Latest Testimonials – use 'status' TEXT instead of 'approved' boolean
 @st.cache_data(ttl=60)
 def get_latest_testimonials(limit=3):
     try:
-        tes = supabase.table("testimonials").select("client_name, message, created_at").eq("approved", True).order("created_at", desc=True).limit(limit).execute().data or []
+        tes = supabase.table("testimonials") \
+            .select("client_name, message, date_submitted") \
+            .eq("status", "Approved") \
+            .order("date_submitted", desc=True) \
+            .limit(limit) \
+            .execute().data or []
         return tes
-    except:
+    except Exception as e:
+        st.warning(f"Testimonials fetch failed: {str(e)}")
         return []
 
 latest_tes = get_latest_testimonials()
@@ -340,34 +352,49 @@ if latest_tes:
     tes_cols = st.columns(3)
     for i, t in enumerate(latest_tes):
         with tes_cols[i % 3]:
-            st.markdown(f"**{t['client_name']}** • {t['created_at'][:10]}")
-            st.caption(t['message'][:100] + "..." if len(t['message']) > 100 else t['message'])
+            st.markdown(f"**{t['client_name']}** • {t.get('date_submitted', '—')}")
+            preview = t['message'][:100] + "..." if len(t['message']) > 100 else t['message']
+            st.caption(preview)
     if st.button("View All Testimonials", use_container_width=True):
         st.switch_page("pages/📸_Testimonials.py")
 else:
     st.info("No approved testimonials yet")
 
-# Unread Messages Preview
+# 3. Unread Messages Preview – use 'to_client' instead of 'to_username'
 @st.cache_data(ttl=30)
 def get_unread_messages_preview():
     try:
         my_username = st.session_state.get("username", "")
-        unread_count = supabase.table("messages").select("count", count="exact").eq("to_username", my_username).eq("is_read", False).execute().count or 0
-        latest = supabase.table("messages").select("from_username, message, created_at").eq("to_username", my_username).eq("is_read", False).order("created_at", desc=True).limit(2).execute().data or []
+        # Count messages sent to you (to_client = your username)
+        unread_count = supabase.table("messages") \
+            .select("count", count="exact") \
+            .eq("to_client", my_username) \
+            .execute().count or 0
+
+        latest = supabase.table("messages") \
+            .select("from_client, from_admin, message, timestamp") \
+            .eq("to_client", my_username) \
+            .order("timestamp", desc=True) \
+            .limit(2) \
+            .execute().data or []
+
         return unread_count, latest
-    except:
+    except Exception as e:
+        st.warning(f"Messages preview failed: {str(e)}")
         return 0, []
 
 unread_count, latest_msgs = get_unread_messages_preview()
 
 if unread_count > 0:
-    st.markdown(f"#### 💬 You have **{unread_count} unread message{'s' if unread_count > 1 else ''}**")
+    st.markdown(f"#### 💬 You have **{unread_count} message{'s' if unread_count > 1 else ''}**")
     for m in latest_msgs:
-        st.markdown(f"**From {m['from_username']}**: {m['message'][:80]}...")
+        sender = m.get("from_client") or m.get("from_admin") or "Unknown"
+        preview = m['message'][:80] + "..." if len(m['message']) > 80 else m['message']
+        st.markdown(f"**From {sender}**: {preview}")
     if st.button("Open Messages Inbox", type="primary", use_container_width=True):
         st.switch_page("pages/💬_Messages.py")
 else:
-    st.info("No unread messages")
+    st.info("No messages yet")
 
 # ─── CLIENT BALANCES (OWNER/ADMIN ONLY) ───
 if st.session_state.get("role", "").lower() in ["owner", "admin"]:
