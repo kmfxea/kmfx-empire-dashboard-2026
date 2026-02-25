@@ -1,8 +1,7 @@
 # main.py
 # =====================================================================
-# KMFX EA - PUBLIC LANDING + EMAIL MAGIC LINK LOGIN (Final 2026 Version)
+# KMFX EA - PUBLIC LANDING + EMAIL MAGIC LINK LOGIN (Fixed Import)
 # Redirects to dashboard if logged in
-# No missing parts - fully self-contained
 # =====================================================================
 
 import streamlit as st
@@ -16,7 +15,7 @@ from PIL import Image
 import os
 
 # ── Centralized imports ────────────────────────────────────────────────────────
-from utils.supabase_client import supabase, service_supabase
+from utils.supabase_client import supabase, service_supabase  # removed auth from here
 from utils.auth import send_magic_link, handle_auth_callback, is_authenticated, require_auth
 from utils.helpers import (
     upload_to_supabase,
@@ -82,7 +81,7 @@ else:
     """, unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# THEME & COLORS
+# THEME & COLORS (unchanged)
 # ────────────────────────────────────────────────
 if "theme" not in st.session_state:
     st.session_state.theme = "dark" if not authenticated else "light"
@@ -101,7 +100,7 @@ card_shadow = "0 8px 25px rgba(0,0,0,0.12)" if theme == "light" else "0 10px 30p
 sidebar_bg = "rgba(248,251,255,0.95)" if theme == "light" else "rgba(10,13,20,0.95)"
 
 # ────────────────────────────────────────────────
-# FULL CSS STYLING
+# FULL CSS STYLING (your original design – kept intact)
 # ────────────────────────────────────────────────
 st.markdown(f"""
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
@@ -179,11 +178,10 @@ if authenticated:
         st.success(f"Welcome back, {st.session_state.full_name}! 🚀")
         st.session_state.pop("just_logged_in")
 
-    # Redirect to dashboard
     st.switch_page("pages/🏠_Dashboard.py")
 
 # ────────────────────────────────────────────────
-# PUBLIC LANDING CONTENT (shown only when NOT authenticated)
+# PUBLIC LANDING CONTENT
 # ────────────────────────────────────────────────
 
 # Logo
@@ -191,7 +189,7 @@ logo_col = st.columns([1, 4, 1])[1]
 with logo_col:
     st.image("assets/logo.png", use_column_width=True)
 
-# Hero Section
+# Hero
 hero_container = st.container()
 with hero_container:
     st.markdown(f"<h1 class='gold-text' style='text-align: center;'>KMFX EA</h1>", unsafe_allow_html=True)
@@ -199,7 +197,7 @@ with hero_container:
     st.markdown(f"<p style='text-align: center; font-size:1.4rem; color:{text_muted};'>Passed FTMO Phase 1 • +3,071% 5-Year Backtest • Building Legacies of Generosity</p>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; font-size:1.2rem;'>Mark Jeff Blando – Founder & Developer • 2026</p>", unsafe_allow_html=True)
 
-# Realtime Stats
+# Stats (unchanged)
 try:
     accounts_count = supabase.table("ftmo_accounts").select("id", count="exact").execute().count or 0
     equity_data = supabase.table("ftmo_accounts").select("current_equity").execute().data or []
@@ -682,7 +680,7 @@ for q, a in faqs:
 st.markdown("</div>", unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# EMAIL MAGIC LINK LOGIN (replaces old tabs)
+# EMAIL MAGIC LINK LOGIN
 # ────────────────────────────────────────────────
 st.markdown("<div class='glass-card' style='text-align:center; margin:5rem auto; padding:4rem; max-width:800px;'>", unsafe_allow_html=True)
 st.markdown("<h2 class='gold-text'>Member Login</h2>", unsafe_allow_html=True)
@@ -700,7 +698,7 @@ st.markdown("<p style='margin-top:1.5rem; opacity:0.8;'>First time? The magic li
 st.markdown("</div>", unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# STOP IF NOT AUTHENTICATED (public content already shown above)
+# STOP IF NOT AUTHENTICATED
 # ────────────────────────────────────────────────
 if not authenticated:
     st.stop()
