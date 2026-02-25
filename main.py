@@ -16,7 +16,7 @@ from PIL import Image
 import os
 
 # ── Centralized imports ────────────────────────────────────────────────────────
-from utils.supabase_client import supabase, service_supabase, auth
+from utils.supabase_client import supabase, service_supabase
 from utils.auth import send_magic_link, handle_auth_callback, is_authenticated, require_auth
 from utils.helpers import (
     upload_to_supabase,
