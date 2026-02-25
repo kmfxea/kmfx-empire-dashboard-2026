@@ -3,8 +3,10 @@ import streamlit as st
 
 def render_sidebar():
     """
-    Role-based sidebar – laging fresh, walang caching o flag na magpapasira
+    Role-based sidebar navigation – clean, no double icons, emojis only in labels
+    Always renders fresh – no flags or caching tricks
     """
+    # Get current user info safely
     role = st.session_state.get("role", "guest").lower().strip()
     full_name = st.session_state.get("full_name", "Guest")
 
@@ -13,62 +15,51 @@ def render_sidebar():
     st.sidebar.caption(f"Role: {role.title() if role != 'guest' else 'Not logged in'}")
     st.sidebar.markdown("---")
 
-    # Navigation links based on role
-    common_pages = [
-        ("🏠 Dashboard", "pages/🏠_Dashboard.py"),
-        ("👤 My Profile", "pages/👤_My_Profile.py"),
-    ]
+    # ── COMMON PAGES (available to all logged-in users) ───────────────────────
+    st.sidebar.page_link("pages/🏠_Dashboard.py", label="🏠 Dashboard")
+    st.sidebar.page_link("pages/👤_My_Profile.py", label="👤 My Profile")
 
-    client_admin_owner_pages = [
-        ("💰 Profit Sharing", "pages/💰_Profit_Sharing.py"),
-        ("💳 Withdrawals", "pages/💳_Withdrawals.py"),
-        ("🌱 Growth Fund", "pages/🌱_Growth_Fund.py"),
-        ("🤖 EA Versions", "pages/🤖_EA_Versions.py"),
-        ("🔔 Notifications", "pages/🔔_Notifications.py"),
-        ("📸 Testimonials", "pages/📸_Testimonials.py"),
-    ]
-
-    admin_owner_pages = [
-        ("📊 FTMO Accounts", "pages/📊_FTMO_Accounts.py"),
-        ("📜 Audit Logs", "pages/📜_Audit_Logs.py"),
-        ("📢 Announcements", "pages/📢_Announcements.py"),
-        ("📈 Reports Export", "pages/📈_Reports_Export.py"),
-        ("📁 File Vault", "pages/📁_File_Vault.py"),
-        ("💬 Messages", "pages/💬_Messages.py"),
-    ]
-
-    owner_only_pages = [
-        ("🔑 License Generator", "pages/🔑_License_Generator.py"),
-        ("👤 Admin Management", "pages/👤_Admin_Management.py"),
-        ("🔮 Simulator", "pages/🔮_Simulator.py"),
-    ]
-
-    # Render common pages for all logged-in users
-    for label, page in common_pages:
-        st.sidebar.page_link(page, label=label, icon=label.split()[0])
-
-    # Client + Admin + Owner
+    # ── CLIENT + ADMIN + OWNER PAGES ──────────────────────────────────────────
     if role in ["client", "admin", "owner"]:
-        for label, page in client_admin_owner_pages:
-            st.sidebar.page_link(page, label=label, icon=label.split()[0])
+        st.sidebar.page_link("pages/💰_Profit_Sharing.py", label="💰 Profit Sharing")
+        st.sidebar.page_link("pages/💳_Withdrawals.py", label="💳 Withdrawals")
+        st.sidebar.page_link("pages/🌱_Growth_Fund.py", label="🌱 Growth Fund")
+        st.sidebar.page_link("pages/🤖_EA_Versions.py", label="🤖 EA Versions")
+        st.sidebar.page_link("pages/🔔_Notifications.py", label="🔔 Notifications")
+        st.sidebar.page_link("pages/📸_Testimonials.py", label="📸 Testimonials")
 
-    # Admin + Owner
+    # ── ADMIN + OWNER ONLY PAGES ──────────────────────────────────────────────
     if role in ["admin", "owner"]:
-        for label, page in admin_owner_pages:
-            st.sidebar.page_link(page, label=label, icon=label.split()[0])
+        st.sidebar.page_link("pages/📊_FTMO_Accounts.py", label="📊 FTMO Accounts")
+        st.sidebar.page_link("pages/📜_Audit_Logs.py", label="📜 Audit Logs")
+        st.sidebar.page_link("pages/📢_Announcements.py", label="📢 Announcements")
+        st.sidebar.page_link("pages/📈_Reports_Export.py", label="📈 Reports Export")
+        st.sidebar.page_link("pages/📁_File_Vault.py", label="📁 File Vault")
+        st.sidebar.page_link("pages/💬_Messages.py", label="💬 Messages")
 
-    # Owner only
+    # ── OWNER ONLY TOOLS ──────────────────────────────────────────────────────
     if role == "owner":
         st.sidebar.markdown("---")
         st.sidebar.subheader("👑 Owner Tools")
-        for label, page in owner_only_pages:
-            st.sidebar.page_link(page, label=label, icon=label.split()[0])
+        st.sidebar.page_link("pages/🔑_License_Generator.py", label="🔑 License Generator")
+        st.sidebar.page_link("pages/👤_Admin_Management.py", label="👤 Admin Management")
+        st.sidebar.page_link("pages/🔮_Simulator.py", label="🔮 Simulator")
 
-    # Logout button (simple & reliable)
+    # ── LOGOUT SECTION ────────────────────────────────────────────────────────
     st.sidebar.markdown("---")
     if st.sidebar.button("🚪 Logout", type="primary", use_container_width=True):
-        # Clear session
-        for key in ["authenticated", "username", "full_name", "role", "theme", "just_logged_in"]:
-            st.session_state.pop(key, None)
+        # Clear ALL auth-related session state keys
+        keys_to_clear = [
+            "authenticated", "username", "full_name", "role",
+            "theme", "just_logged_in", "_sidebar_rendered"
+        ]
+        for key in keys_to_clear:
+            if key in st.session_state:
+                del st.session_state[key]
+
+        # Set flag for success message in main.py
         st.session_state["logging_out"] = True
+
+        # Force redirect to public landing
         st.switch_page("main.py")
+        st.rerun()  # Extra force refresh to ensure clean state
