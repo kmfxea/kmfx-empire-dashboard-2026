@@ -86,25 +86,59 @@ def login_user(username: str, password: str, expected_role: str = None) -> bool:
         st.error(f"Login error: {str(e)}")
         return False
 
-# ────────────────────────────────────────────────
-# FUTURE MAGIC LINK / OTP SUPPORT (ready for switch)
-# ────────────────────────────────────────────────
-
 def send_magic_link(email: str) -> bool:
     """
-    Send Supabase magic link (email login) – call when ready to switch
+    Send Supabase magic link (or OTP) – improved version with better feedback & debug
     """
+    email = email.strip().lower()
+    if not email or "@" not in email:
+        st.error("Please enter a valid email address.")
+        return False
+
     try:
-        auth.sign_in_with_otp({
-            "email": email.strip().lower(),
+        # You can switch to OTP code instead of link by changing template in Supabase dashboard
+        # For now we keep magic link, but add better messages
+        response = auth.sign_in_with_otp({
+            "email": email,
             "options": {
-                "email_redirect_to": "https://kmfxea.streamlit.app"
+                # IMPORTANT: MUST match EXACTLY one of the allowed redirect URLs in Supabase dashboard
+                # Recommended: use the root URL without trailing slash
+                "email_redirect_to": "https://kmfxea.streamlit.app",
+                
+                # Optional but helpful: tell Supabase this is a login (not signup)
+                # Helps avoid "confirm signup" confusion for existing users
+                "shouldCreateUser": True,           # auto-create if new
             }
         })
-        st.success(f"Magic link sent to {email}! Check inbox/spam.")
+
+        # Supabase returns data with some useful info
+        if response.data:
+            st.success(f"Magic link sent to **{email}**! Check inbox & spam folder.")
+            st.info("→ Click the link in the email to sign in. It should redirect you back here automatically.")
+        else:
+            st.warning("Message sent, but no confirmation from server. Check your email anyway.")
+
+        # Optional: show last sent time (helps debugging)
+        st.session_state["last_magic_email"] = email
+        st.session_state["last_magic_time"] = datetime.datetime.now().strftime("%H:%M:%S")
+
         return True
+
     except Exception as e:
-        st.error(f"Failed to send magic link: {str(e)}")
+        error_str = str(e).lower()
+
+        if "rate limit" in error_str or "too many requests" in error_str:
+            st.error("Rate limit reached. Please wait 30–60 seconds and try again.")
+        elif "invalid" in error_str and "email" in error_str:
+            st.error("Invalid email format. Please check and try again.")
+        elif "network" in error_str or "timeout" in error_str:
+            st.error("Network issue connecting to Supabase. Please check your internet and try again.")
+        else:
+            st.error(f"Failed to send magic link: {str(e)}")
+            # For debugging – show in expander so it's not scary for users
+            with st.expander("Technical details (for support)"):
+                st.code(str(e))
+
         return False
 
 def handle_auth_callback():
