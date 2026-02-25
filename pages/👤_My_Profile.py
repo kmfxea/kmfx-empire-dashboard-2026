@@ -59,6 +59,10 @@ my_name     = st.session_state.full_name
 my_username = st.session_state.username
 current_role = st.session_state.get("role", "guest").lower()
 
+# Navigation state (for safe page switching)
+if "navigate_to" not in st.session_state:
+    st.session_state.navigate_to = None
+
 # ─── CLIENT PROFILE ───
 if current_role == "client":
     st.markdown("**Your KMFX EA Elite Membership** • Realtime flip card, earnings, participation, withdrawals • Full transparency")
@@ -69,7 +73,7 @@ if current_role == "client":
             user_resp = supabase.table("users").select("*").eq("username", my_username).single().execute()
             user = user_resp.data or {}
 
-            # Your shared accounts (via participants_v2 or participants)
+            # Your shared accounts
             accs_resp = supabase.table("ftmo_accounts").select("*").execute()
             accounts = accs_resp.data or []
             my_accs = []
@@ -157,7 +161,7 @@ if current_role == "client":
     <p style="text-align:center; opacity:0.8; margin-top:1rem;">Hover or tap card to flip ↺</p>
     """, unsafe_allow_html=True)
 
-    # ─── QUICK LOGIN QR + REGENERATE ───
+    # ─── QUICK LOGIN QR ───
     st.subheader("🔑 Quick Login QR Code")
     qr_token = user.get("qr_token")
     app_url = "https://kmfxea.streamlit.app"
@@ -213,7 +217,6 @@ if current_role == "client":
                 cols[0].metric("Your Projected", f"${projected:,.2f}")
                 cols[1].metric("Withdrawable", f"${acc.get('withdrawable_balance',0):,.0f}")
 
-                # Mini Sankey for this account
                 labels = ["Profits"]
                 vals = []
                 for p in participants:
@@ -270,7 +273,6 @@ if current_role == "client":
                                     bucket="client_files",
                                     folder="withdrawals"
                                 )
-                                # Save proof permanently
                                 supabase.table("client_files").insert({
                                     "original_name": proof.name,
                                     "file_url": url,
@@ -282,7 +284,6 @@ if current_role == "client":
                                     "notes": f"Proof for ${amt:,.2f} withdrawal request"
                                 }).execute()
 
-                                # Create withdrawal
                                 supabase.table("withdrawals").insert({
                                     "client_name": my_name,
                                     "client_user_id": user.get("id"),
@@ -307,10 +308,10 @@ if current_role == "client":
                 file_url = p.get("file_url")
                 if p.get("storage_path"):
                     try:
-                        signed = supabase.storage.from_("client_files").create_signed_url(p["storage_path"], expires_in=7200)  # 2 hours
+                        signed = supabase.storage.from_("client_files").create_signed_url(p["storage_path"], expires_in=7200)
                         file_url = signed.signed_url
                     except:
-                        pass  # fallback to public URL
+                        pass
 
                 if file_url:
                     if p["original_name"].lower().endswith(('.png','.jpg','.jpeg','.gif')):
@@ -360,7 +361,6 @@ else:
 
     gf_balance, empire, clients, recent_profits = fetch_owner_overview()
 
-    # Glass card grid – same style as dashboard metrics
     st.markdown(f"""
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.2rem; margin: 2rem 0;">
         <div class="glass-card" style="text-align:center; padding:1.5rem; border-radius:12px;">
@@ -386,12 +386,31 @@ else:
     </div>
     """, unsafe_allow_html=True)
 
-    # Quick actions for owner/admin
+    # ─── FIXED QUICK ACTIONS (session state navigation) ───
     st.subheader("⚡ Quick Actions")
+
     cols = st.columns(3)
-    cols[0].button("Manage FTMO Accounts", type="primary", use_container_width=True, on_click=lambda: st.switch_page("pages/📊_FTMO_Accounts.py"))
-    cols[1].button("Record Profit", type="primary", use_container_width=True, on_click=lambda: st.switch_page("pages/💰_Profit_Sharing.py"))
-    cols[2].button("Growth Fund", type="primary", use_container_width=True, on_click=lambda: st.switch_page("pages/🌱_Growth_Fund.py"))
+
+    with cols[0]:
+        if st.button("Manage FTMO Accounts", type="primary", use_container_width=True):
+            st.session_state.navigate_to = "pages/📊_FTMO_Accounts.py"
+            st.rerun()
+
+    with cols[1]:
+        if st.button("Record Profit", type="primary", use_container_width=True):
+            st.session_state.navigate_to = "pages/💰_Profit_Sharing.py"
+            st.rerun()
+
+    with cols[2]:
+        if st.button("Growth Fund", type="primary", use_container_width=True):
+            st.session_state.navigate_to = "pages/🌱_Growth_Fund.py"
+            st.rerun()
+
+    # Execute navigation AFTER buttons (outside callback)
+    if st.session_state.navigate_to:
+        page = st.session_state.navigate_to
+        st.session_state.navigate_to = None  # Reset
+        st.switch_page(page)
 
     # Recent profits
     st.subheader("Recent Profits (Last 5)")
@@ -401,7 +420,7 @@ else:
     else:
         st.info("No recent profits recorded yet.")
 
-# ─── MOTIVATIONAL FOOTER (same as all pages) ───
+# ─── MOTIVATIONAL FOOTER ───
 st.markdown(f"""
 <div class="glass-card" style="padding:4rem 2rem; text-align:center; margin:5rem auto; max-width:1100px;
     border-radius:24px; border:2px solid {accent_primary}40;
