@@ -170,31 +170,32 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# QR AUTO-LOGIN – FIXED VERSION (2026)
+# QR AUTO-LOGIN – FIXED & SECURE VERSION
+# Uses service_role to bypass RLS + clears token after use
 # ────────────────────────────────────────────────
 params = st.query_params
 qr_token = params.get("qr", [None])[0]
 
 if qr_token and not authenticated:
     try:
-        # === IMPORTANT FIX: Use SERVICE_ROLE client to bypass RLS ===
-        # This must be initialized with service_role key (not anon key)
-        # Add this in utils/supabase_client.py or here:
-        from supabase import create_client
-
+        # === USE SERVICE ROLE CLIENT (bypasses RLS) ===
         service_key = st.secrets.get("SUPABASE_SERVICE_ROLE_KEY")
         if not service_key:
-            raise ValueError("Missing SUPABASE_SERVICE_ROLE_KEY in secrets! Cannot verify QR securely.")
+            st.error("Missing SUPABASE_SERVICE_ROLE_KEY in secrets! QR verification failed.")
+            st.query_params.clear()
+            st.stop()
 
+        # Create temporary service client (safe for this block)
+        from supabase import create_client
         service_supabase = create_client(
             supabase_url=st.secrets["SUPABASE_URL"],
             supabase_key=service_key
         )
 
-        # Query using service_role (ignores RLS completely)
+        # Query user with exact token match
         resp = service_supabase.table("users").select(
-            "id, username, full_name, role, qr_token"  # only needed fields
-        ).eq("qr_token", qr_token.strip()).execute()  # .strip() for safety
+            "id, username, full_name, role"
+        ).eq("qr_token", qr_token.strip()).execute()
 
         if not resp.data:
             st.error("Invalid or revoked QR code. Please generate a new one.")
@@ -202,26 +203,23 @@ if qr_token and not authenticated:
         else:
             user = resp.data[0]
 
-            # Optional: Check expiration (if you added qr_expires_at column)
-            # if user.get("qr_expires_at") and datetime.fromisoformat(user["qr_expires_at"]) < datetime.utcnow():
-            #     st.error("QR code has expired. Generate a new one.")
-            #     st.query_params.clear()
-            #     st.stop()
+            # Clear token after success (makes it one-time use – security best practice)
+            service_supabase.table("users").update(
+                {"qr_token": None}
+            ).eq("id", user["id"]).execute()
 
-            # Success: Set session
+            # Set session state
             st.session_state.authenticated = True
-            st.session_state.username = user["username"].lower()
+            st.session_state.username = user["username"]
             st.session_state.full_name = user["full_name"] or user["username"]
             st.session_state.role = user["role"]
             st.session_state.theme = "light"
             st.session_state.just_logged_in = True
 
-            # Clear token after successful login (one-time use – highly recommended)
-            service_supabase.table("users").update(
-                {"qr_token": None}
-            ).eq("id", user["id"]).execute()
-
+            # Log success
+            from utils.helpers import log_action
             log_action("QR Login Success", f"User: {user['full_name']} | Role: {user['role']}")
+
             st.success("QR Login successful! Redirecting...")
             st.query_params.clear()
             st.rerun()
