@@ -5,7 +5,7 @@ from datetime import datetime
 import qrcode
 from io import BytesIO
 import requests
-
+import uuid
 from utils.auth import require_auth
 from utils.sidebar import render_sidebar
 from utils.supabase_client import supabase
