@@ -11,6 +11,12 @@ from utils.auth import require_auth
 from utils.sidebar import render_sidebar
 from utils.supabase_client import supabase
 from utils.helpers import upload_to_supabase
+# ────────────────────────────────────────────────
+# THEME COLORS (must be defined before use)
+# ────────────────────────────────────────────────
+accent_primary = "#00ffaa"
+accent_gold    = "#ffd700"
+accent_green   = "#00ffaa"   # if you use it
 
 render_sidebar()
 require_auth(min_role="client")
@@ -338,12 +344,13 @@ else:
 # ====================== MOTIVATIONAL FOOTER ======================
 st.markdown(f"""
 <div class='glass-card' style='padding:3rem; text-align:center; margin:3rem 0;'>
-    <h1 style="background:linear-gradient(90deg,{accent_primary},#ffd700); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">
+    <h1 style="background:linear-gradient(90deg,{accent_primary},{accent_gold}); 
+               -webkit-background-clip:text; -webkit-text-fill-color:transparent;">
         Your Empire Journey
     </h1>
     <p style="font-size:1.3rem; margin:2rem 0;">
         Realtime earnings • Full v2 participation • Permanent proofs • Instant QR • Motivated & aligned forever.
     </p>
-    <h2 style="color:#ffd700;">👑 KMFX Pro • Elite Member Portal 2026</h2>
+    <h2 style="color:{accent_gold};">👑 KMFX Pro • Elite Member Portal 2026</h2>
 </div>
 """, unsafe_allow_html=True)
