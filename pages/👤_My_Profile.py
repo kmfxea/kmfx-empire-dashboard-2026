@@ -165,15 +165,18 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# QR CODE SECTION
+# QR CODE SECTION – mas prominent at may clear regenerate flow
 # ────────────────────────────────────────────────
 st.subheader("🔑 Quick Login QR Code")
+st.caption("Gamitin ito para mag-login agad sa phone o tablet nang walang password")
 
 qr_token = my_user.get("qr_token")
-app_base_url = "https://kmfxeaftmo.streamlit.app"  # ← update if needed
+app_base_url = "https://kmfxeaftmo.streamlit.app"  # baguhin kung iba ang domain mo
 
 if qr_token:
     qr_content = f"{app_base_url}/?qr={qr_token}"
+
+    # Generate QR image
     qr = qrcode.QRCode(version=1, box_size=10, border=4)
     qr.add_data(qr_content)
     qr.make(fit=True)
@@ -183,23 +186,51 @@ if qr_token:
     img.save(buf, format="PNG")
     qr_bytes = buf.getvalue()
 
-    col1, col2 = st.columns([1, 2])
-    with col1:
-        st.image(qr_bytes, use_column_width=True, caption="Scan to login instantly")
-    with col2:
-        st.code(qr_content, language=None)
+    # Layout: QR sa kaliwa, info + buttons sa kanan
+    col_qr, col_info = st.columns([2, 3])
+
+    with col_qr:
+        st.image(qr_bytes, use_column_width=True)
+
+    with col_info:
+        st.markdown(f"**Current QR Token (partial):** `{qr_token[:8]}...{qr_token[-4:]}`")
+        st.caption("Huwag i-share ang buong token o QR code na ito.")
+
         st.download_button(
-            "⬇ Download QR Code",
-            qr_bytes,
-            file_name=f"{my_name.replace(' ','_')}_KMFX_QR.png",
+            label="⬇ I-download ang QR PNG",
+            data=qr_bytes,
+            file_name=f"KMFX_Login_{my_name.replace(' ','_')}.png",
             mime="image/png",
             use_container_width=True
         )
-        st.success("Works on any device • Instant profile access")
+
+        # REGENERATE BUTTON – with confirmation
+        st.markdown("---")
+        st.warning("**Kailangan mo bang palitan ang QR code?**  
+                   Gagawin ito kung na-expose ang lumang QR o nawala ang access mo.")
+
+        if st.button("🔄 Regenerate New QR Code", type="primary", use_container_width=True):
+            with st.spinner("Generating new secure QR..."):
+                new_token = str(uuid.uuid4())
+                try:
+                    supabase.table("users").update({"qr_token": new_token}).eq("id", my_user["id"]).execute()
+                    log_action("QR Regenerated", f"User: {my_name} | Old token partial: {qr_token[:8]}... | New: {new_token[:8]}...")
+                    st.success("Bagong QR code na nabuo! Refresh para makita ang bago.")
+                    st.rerun()  # importante para ma-update agad ang page
+                except Exception as e:
+                    st.error(f"May problema sa pag-update: {str(e)}")
+                    st.info("Subukan ulit o i-refresh ang page.")
+
 else:
-    st.info("No QR token generated yet. Contact admin/owner to create one.")
-    if st.button("Request QR Token Generation"):
-        st.info("Request sent (you can also message owner directly).")
+    # Walang QR pa
+    st.info("Wala pang Quick Login QR code para sa account mo.")
+    if st.button("🆕 Generate My First QR Code", type="primary"):
+        with st.spinner("Creating your secure QR..."):
+            new_token = str(uuid.uuid4())
+            supabase.table("users").update({"qr_token": new_token}).eq("id", my_user["id"]).execute()
+            log_action("First QR Generated", f"User: {my_name}")
+            st.success("Unang QR code mo na nabuo!")
+            st.rerun()
 
 # ────────────────────────────────────────────────
 # SHARED ACCOUNTS + TREES
