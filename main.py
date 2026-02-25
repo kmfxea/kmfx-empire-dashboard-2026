@@ -3,7 +3,6 @@
 # KMFX EA - PUBLIC LANDING + LOGIN PAGE
 # Multi-page entry point: redirects to dashboard if logged-in
 # =====================================================================
-
 import streamlit as st
 import datetime
 import bcrypt
@@ -18,6 +17,7 @@ import uuid
 from PIL import Image
 import os
 
+# ── Centralized imports from utils ───────────────────────────────────────
 from utils.supabase_client import supabase
 from utils.auth import login_user, is_authenticated
 from utils.helpers import (
@@ -27,11 +27,20 @@ from utils.helpers import (
     start_keep_alive_if_needed
 )
 
-# Optional keep-alive
+# Optional keep-alive for Streamlit Cloud
 start_keep_alive_if_needed()
 
 # ────────────────────────────────────────────────
-# Determine authentication state FIRST
+# Handle logout success message FIRST (before anything renders)
+# ────────────────────────────────────────────────
+if st.session_state.pop("logging_out", False):
+    st.success("You have been logged out successfully! 👋")
+    # Clean up any leftover flags
+    for k in ["just_logged_in", "_sidebar_rendered"]:
+        st.session_state.pop(k, None)
+
+# ────────────────────────────────────────────────
+# Determine authentication state EARLY
 # ────────────────────────────────────────────────
 authenticated = is_authenticated()
 
@@ -52,7 +61,7 @@ else:
         layout="wide",
         initial_sidebar_state="collapsed"
     )
-    # Modern sidebar hiding for public page
+    # Hide sidebar completely on public landing
     st.markdown("""
     <style>
         [data-testid="collapsedControl"] { display: none !important; }
@@ -70,48 +79,24 @@ else:
     </style>
     """, unsafe_allow_html=True)
 
-# main.py (important snippet - add / replace in the early section)
-
-if authenticated:
-    st.switch_page("pages/🏠_Dashboard.py")
-else:
-    if st.session_state.pop("logging_out", False):
-        msg = st.session_state.pop("logout_message", None)
-        if msg:
-            st.success(msg)
-        # Also make sure sidebar flag is gone
-        st.session_state.pop("_sidebar_rendered", None)
-
-    # Optional: hide sidebar completely on public page
-    st.markdown("""
-    <style>
-        section[data-testid="stSidebar"] {
-            visibility: hidden !important;
-            width: 0 !important;
-            min-width: 0 !important;
-        }
-    </style>
-    """, unsafe_allow_html=True)
 # ────────────────────────────────────────────────
-# THEME & COLORS (simplified - no forced switch)
+# THEME & COLORS
 # ────────────────────────────────────────────────
 if "theme" not in st.session_state:
     st.session_state.theme = "dark" if not authenticated else "light"
 
 theme = st.session_state.theme
-
 accent_primary = "#00ffaa"
 accent_gold   = "#ffd700"
 accent_glow   = "#00ffaa40"
 accent_hover  = "#00ffcc"
-
-bg_color     = "#f8fbff" if theme == "light" else "#0a0d14"
-card_bg      = "rgba(255,255,255,0.75)" if theme == "light" else "rgba(15,20,30,0.70)"
-border_color = "rgba(0,0,0,0.08)"  if theme == "light" else "rgba(100,100,100,0.15)"
-text_primary = "#0f172a"           if theme == "light" else "#ffffff"
-text_muted   = "#64748b"           if theme == "light" else "#aaaaaa"
-card_shadow  = "0 8px 25px rgba(0,0,0,0.12)" if theme == "light" else "0 10px 30px rgba(0,0,0,0.5)"
-sidebar_bg   = "rgba(248,251,255,0.95)" if theme == "light" else "rgba(10,13,20,0.95)"
+bg_color      = "#f8fbff" if theme == "light" else "#0a0d14"
+card_bg       = "rgba(255,255,255,0.75)" if theme == "light" else "rgba(15,20,30,0.70)"
+border_color  = "rgba(0,0,0,0.08)" if theme == "light" else "rgba(100,100,100,0.15)"
+text_primary  = "#0f172a" if theme == "light" else "#ffffff"
+text_muted    = "#64748b" if theme == "light" else "#aaaaaa"
+card_shadow   = "0 8px 25px rgba(0,0,0,0.12)" if theme == "light" else "0 10px 30px rgba(0,0,0,0.5)"
+sidebar_bg    = "rgba(248,251,255,0.95)" if theme == "light" else "rgba(10,13,20,0.95)"
 
 # ────────────────────────────────────────────────
 # FULL CSS STYLING
@@ -155,7 +140,6 @@ st.markdown(f"""
         font-weight: 600;
         letter-spacing: 0.5px;
     }}
-    /* ... rest of your CSS remains the same ... */
     button[kind="primary"] {{
         background: {accent_primary} !important;
         color: #000000 !important;
@@ -190,21 +174,20 @@ st.markdown(f"""
 # ────────────────────────────────────────────────
 params = st.query_params
 qr_token = params.get("qr", [None])[0]
-
 if qr_token and not authenticated:
     try:
         resp = supabase.table("users").select("*").eq("qr_token", qr_token).execute()
         if resp.data:
             user = resp.data[0]
             st.session_state.authenticated = True
-            st.session_state.username      = user["username"].lower()
-            st.session_state.full_name     = user["full_name"] or user["username"]
-            st.session_state.role          = user["role"]
-            st.session_state.theme         = "light"
+            st.session_state.username = user["username"].lower()
+            st.session_state.full_name = user["full_name"] or user["username"]
+            st.session_state.role = user["role"]
+            st.session_state.theme = "light"
             st.session_state.just_logged_in = True
             log_action("QR Login Success", f"User: {user['full_name']} | Role: {user['role']}")
             st.query_params.clear()
-            st.switch_page("pages/🏠_Dashboard.py")
+            st.rerun()  # Force rerun so main.py sees authenticated=True
         else:
             st.error("Invalid or revoked QR code")
             st.query_params.clear()
@@ -213,39 +196,49 @@ if qr_token and not authenticated:
         st.query_params.clear()
 
 # ────────────────────────────────────────────────
+# AUTHENTICATED REDIRECT + WELCOME MESSAGE
+# ────────────────────────────────────────────────
+if authenticated:
+    # Show welcome message only on fresh login
+    if st.session_state.get("just_logged_in"):
+        st.success(f"Welcome back, {st.session_state.full_name}! 🚀")
+        st.session_state.pop("just_logged_in")
+    
+    # Redirect to dashboard
+    st.switch_page("pages/🏠_Dashboard.py")
+
+# ────────────────────────────────────────────────
 # PUBLIC LANDING CONTENT (only shown if NOT authenticated)
 # ────────────────────────────────────────────────
-if not authenticated:
+# Logo
+logo_col = st.columns([1, 4, 1])[1]
+with logo_col:
+    st.image("assets/logo.png", use_column_width=True)
 
-    # Logo
-    logo_col = st.columns([1, 4, 1])[1]
-    with logo_col:
-        st.image("assets/logo.png", use_column_width=True)
+# Hero
+hero_container = st.container()
+with hero_container:
+    st.markdown(f"<h1 class='gold-text' style='text-align: center;'>KMFX EA</h1>", unsafe_allow_html=True)
+    st.markdown(f"<h2 style='text-align: center; color:{text_primary};'>Automated Gold Trading for Financial Freedom</h2>", unsafe_allow_html=True)
+    st.markdown(f"<p style='text-align: center; font-size:1.4rem; color:{text_muted};'>Passed FTMO Phase 1 • +3,071% 5-Year Backtest • Building Legacies of Generosity</p>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; font-size:1.2rem;'>Mark Jeff Blando – Founder & Developer • 2026</p>", unsafe_allow_html=True)
 
-    # Hero
-    hero_container = st.container()
-    with hero_container:
-        st.markdown(f"<h1 class='gold-text' style='text-align: center;'>KMFX EA</h1>", unsafe_allow_html=True)
-        st.markdown(f"<h2 style='text-align: center; color:{text_primary};'>Automated Gold Trading for Financial Freedom</h2>", unsafe_allow_html=True)
-        st.markdown(f"<p style='text-align: center; font-size:1.4rem; color:{text_muted};'>Passed FTMO Phase 1 • +3,071% 5-Year Backtest • Building Legacies of Generosity</p>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; font-size:1.2rem;'>Mark Jeff Blando – Founder & Developer • 2026</p>", unsafe_allow_html=True)
+# Realtime Stats
+try:
+    accounts_count = supabase.table("ftmo_accounts").select("id", count="exact").execute().count or 0
+    equity_data = supabase.table("ftmo_accounts").select("current_equity").execute().data or []
+    total_equity = sum(acc.get("current_equity", 0) for acc in equity_data)
+    gf_data = supabase.table("growth_fund_transactions").select("type, amount").execute().data or []
+    gf_balance = sum(t["amount"] if t["type"] == "In" else -t["amount"] for t in gf_data)
+    members_count = supabase.table("users").select("id", count="exact").eq("role", "client").execute().count or 0
+except Exception:
+    accounts_count = total_equity = gf_balance = members_count = 0
 
-    # Realtime Stats
-    try:
-        accounts_count = supabase.table("ftmo_accounts").select("id", count="exact").execute().count or 0
-        equity_data = supabase.table("ftmo_accounts").select("current_equity").execute().data or []
-        total_equity = sum(acc.get("current_equity", 0) for acc in equity_data)
-        gf_data = supabase.table("growth_fund_transactions").select("type, amount").execute().data or []
-        gf_balance = sum(t["amount"] if t["type"] == "In" else -t["amount"] for t in gf_data)
-        members_count = supabase.table("users").select("id", count="exact").eq("role", "client").execute().count or 0
-    except Exception:
-        accounts_count = total_equity = gf_balance = members_count = 0
-
-    stat_cols = st.columns(4)
-    with stat_cols[0]: st.metric("Active Accounts", accounts_count)
-    with stat_cols[1]: st.metric("Total Equity", f"${total_equity:,.0f}")
-    with stat_cols[2]: st.metric("Growth Fund", f"${gf_balance:,.0f}")
-    with stat_cols[3]: st.metric("Members", members_count)
+stat_cols = st.columns(4)
+with stat_cols[0]: st.metric("Active Accounts", accounts_count)
+with stat_cols[1]: st.metric("Total Equity", f"${total_equity:,.0f}")
+with stat_cols[2]: st.metric("Growth Fund", f"${gf_balance:,.0f}")
+with stat_cols[3]: st.metric("Members", members_count)
 
 # Portfolio Story (centered)
 st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
@@ -713,7 +706,7 @@ for q, a in faqs:
 st.markdown("</div>", unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# SECURE MEMBER LOGIN – ROLE-AWARE + FIXED REDIRECTS
+# SECURE MEMBER LOGIN – ROLE-AWARE TABS
 # ────────────────────────────────────────────────
 st.markdown("<div class='glass-card' style='text-align:center; margin:5rem auto; padding:4rem; max-width:800px;'>", unsafe_allow_html=True)
 st.markdown("<h2 class='gold-text'>Already a Pioneer or Member?</h2>", unsafe_allow_html=True)
@@ -721,64 +714,49 @@ st.markdown("<p style='font-size:1.4rem; opacity:0.9;'>Access your elite dashboa
 
 tab_owner, tab_admin, tab_client = st.tabs(["👑 Owner Login", "🛠️ Admin Login", "👥 Client Login"])
 
-# ── OWNER ────────────────────────────────────────
+# OWNER LOGIN
 with tab_owner:
     with st.form(key="owner_login_form", clear_on_submit=True):
         st.markdown("<p style='text-align:center; opacity:0.8;'>Owner-only access</p>", unsafe_allow_html=True)
         owner_username = st.text_input("Username", placeholder="e.g. kingminted", key="owner_username")
         owner_password = st.text_input("Password", type="password", key="owner_password")
         submit_owner = st.form_submit_button("Login as Owner →", type="primary", use_container_width=True)
-
     if submit_owner:
         success = login_user(owner_username.strip().lower(), owner_password, expected_role="owner")
         if success:
             st.success("Owner login successful! Redirecting...")
-            st.session_state.role = "owner"
-            # time.sleep(0.8)  # uncomment if you want a small delay to see message
-            st.switch_page("pages/👤_Admin_Management.py")  # Owner starts here
-        else:
-            st.error("Login failed – check credentials or role")
+            st.rerun()  # Let main.py handle the redirect
 
-# ── ADMIN ────────────────────────────────────────
+# ADMIN LOGIN
 with tab_admin:
     with st.form(key="admin_login_form", clear_on_submit=True):
         st.markdown("<p style='text-align:center; opacity:0.8;'>Admin access</p>", unsafe_allow_html=True)
         admin_username = st.text_input("Username", placeholder="Your admin username", key="admin_username")
         admin_password = st.text_input("Password", type="password", key="admin_password")
         submit_admin = st.form_submit_button("Login as Admin →", type="primary", use_container_width=True)
-
     if submit_admin:
         success = login_user(admin_username.strip().lower(), admin_password, expected_role="admin")
         if success:
             st.success("Admin login successful! Redirecting...")
-            st.session_state.role = "admin"
-            # time.sleep(0.8)
-            st.switch_page("pages/👤_Admin_Management.py")  # Admin starts here
-        else:
-            st.error("Login failed – check credentials or role")
+            st.rerun()
 
-# ── CLIENT / PIONEER ─────────────────────────────
+# CLIENT LOGIN
 with tab_client:
     with st.form(key="client_login_form", clear_on_submit=True):
         st.markdown("<p style='text-align:center; opacity:0.8;'>Client / Pioneer access</p>", unsafe_allow_html=True)
         client_username = st.text_input("Username", placeholder="Your username", key="client_username")
         client_password = st.text_input("Password", type="password", key="client_password")
         submit_client = st.form_submit_button("Login as Client →", type="primary", use_container_width=True)
-
     if submit_client:
         success = login_user(client_username.strip().lower(), client_password, expected_role="client")
         if success:
             st.success("Welcome back! Redirecting to your dashboard...")
-            st.session_state.role = "client"
-            # time.sleep(0.8)
-            st.switch_page("pages/🏠_Dashboard.py")  # ← FIXED HERE (correct path)
-        else:
-            st.error("Login failed – check credentials or role")
+            st.rerun()
 
 st.markdown("</div>", unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# STOP IF NOT AUTHENTICATED
+# STOP IF NOT AUTHENTICATED (public content already rendered above)
 # ────────────────────────────────────────────────
-if not is_authenticated():
+if not authenticated:
     st.stop()

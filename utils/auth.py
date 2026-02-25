@@ -9,34 +9,37 @@ import bcrypt
 from utils.supabase_client import supabase
 
 def is_authenticated() -> bool:
-    """Check if user is currently logged in"""
+    """
+    Check if user is currently logged in via session state.
+    Returns True if authenticated, False otherwise.
+    """
     return st.session_state.get("authenticated", False)
 
 def require_auth(min_role: str = "client"):
     """
-    Protect pages:
-    - Redirect to main.py if not authenticated
-    - Show error + stop if role is insufficient
+    Protect authenticated pages:
+    - Redirect to main.py if not logged in
+    - Stop execution if current role is below required level
     """
     if not is_authenticated():
         st.switch_page("main.py")
         st.stop()
 
-    current_role = st.session_state.get("role", "guest")
+    current_role = st.session_state.get("role", "guest").lower()
     role_levels = {"guest": 0, "client": 1, "admin": 2, "owner": 3}
-
-    if role_levels.get(current_role, 0) < role_levels.get(min_role, 1):
+    
+    if role_levels.get(current_role, 0) < role_levels.get(min_role.lower(), 1):
         st.error(f"Access denied. Minimum role required: **{min_role.title()}**")
         st.stop()
 
-def login_user(username: str, password: str, expected_role: str = None):
+def login_user(username: str, password: str, expected_role: str = None) -> bool:
     """
     Core login function:
     - Verifies username/password with bcrypt
     - Checks role match if expected_role is provided
     - Sets session state on success
     - Logs action
-    - Redirects to dashboard
+    - Triggers rerun so main.py can handle redirect + welcome message
     """
     try:
         # Fetch user (case-insensitive username)
@@ -58,7 +61,7 @@ def login_user(username: str, password: str, expected_role: str = None):
         actual_role = user["role"]
 
         # Enforce tab-specific role (owner tab only for owners, etc.)
-        if expected_role and actual_role != expected_role:
+        if expected_role and actual_role.lower() != expected_role.lower():
             st.error(f"This login tab is for **{expected_role.title()}** accounts only.")
             return False
 
@@ -68,14 +71,15 @@ def login_user(username: str, password: str, expected_role: str = None):
         st.session_state.full_name = user["full_name"] or username
         st.session_state.role = actual_role
         st.session_state.theme = "light"           # auto light mode after login
-        st.session_state.just_logged_in = True     # trigger welcome message
+        st.session_state.just_logged_in = True      # flag for welcome message in main.py
 
         # Log successful login
         from utils.helpers import log_action
         log_action("Login Successful", f"User: {username} | Role: {actual_role}")
 
-        # Redirect to dashboard (fixed path)
-        st.switch_page("pages/🏠_Dashboard.py")
+        # IMPORTANT: Force rerun so main.py sees authenticated=True
+        # and can show welcome + redirect to dashboard
+        st.rerun()
 
         return True
 

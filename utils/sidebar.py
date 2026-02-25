@@ -3,95 +3,72 @@ import streamlit as st
 
 def render_sidebar():
     """
-    Role-based sidebar navigation for KMFX Empire
+    Role-based sidebar – laging fresh, walang caching o flag na magpapasira
     """
-    # ── Force reset sidebar flag right after login (prevents empty sidebar bug) ──
-    if st.session_state.get("just_logged_in", False):
-        st.session_state.pop("_sidebar_rendered", None)
-        st.session_state["just_logged_in"] = False  # consume the flag
-
-    # ── Read role & name EARLY ───────────────────────────────────────────────
     role = st.session_state.get("role", "guest").lower().strip()
     full_name = st.session_state.get("full_name", "Guest")
 
-    # ── Double-render prevention ─────────────────────────────────────────────
-    if st.session_state.get("_sidebar_rendered", False):
-        return
-
-    st.session_state["_sidebar_rendered"] = True
-
-    # ── User Info Header ─────────────────────────────────────────────────────
+    # User header
     st.sidebar.markdown(f"**👑 {full_name}**")
     st.sidebar.caption(f"Role: {role.title() if role != 'guest' else 'Not logged in'}")
-
-    if role == "guest":
-        st.sidebar.warning("No role detected – please log in again")
-        return  # Early exit if something is wrong
-
-    st.sidebar.markdown("### KMFX Empire")
     st.sidebar.markdown("---")
 
-    # ── COMMON PAGES (all logged-in users) ───────────────────────────────────
-    st.sidebar.page_link("pages/🏠_Dashboard.py", label="Dashboard", icon="🏠")
-    st.sidebar.page_link("pages/👤_My_Profile.py", label="My Profile", icon="👤")
+    # Navigation links based on role
+    common_pages = [
+        ("🏠 Dashboard", "pages/🏠_Dashboard.py"),
+        ("👤 My Profile", "pages/👤_My_Profile.py"),
+    ]
 
-    # ── CLIENT + ADMIN + OWNER ───────────────────────────────────────────────
+    client_admin_owner_pages = [
+        ("💰 Profit Sharing", "pages/💰_Profit_Sharing.py"),
+        ("💳 Withdrawals", "pages/💳_Withdrawals.py"),
+        ("🌱 Growth Fund", "pages/🌱_Growth_Fund.py"),
+        ("🤖 EA Versions", "pages/🤖_EA_Versions.py"),
+        ("🔔 Notifications", "pages/🔔_Notifications.py"),
+        ("📸 Testimonials", "pages/📸_Testimonials.py"),
+    ]
+
+    admin_owner_pages = [
+        ("📊 FTMO Accounts", "pages/📊_FTMO_Accounts.py"),
+        ("📜 Audit Logs", "pages/📜_Audit_Logs.py"),
+        ("📢 Announcements", "pages/📢_Announcements.py"),
+        ("📈 Reports Export", "pages/📈_Reports_Export.py"),
+        ("📁 File Vault", "pages/📁_File_Vault.py"),
+        ("💬 Messages", "pages/💬_Messages.py"),
+    ]
+
+    owner_only_pages = [
+        ("🔑 License Generator", "pages/🔑_License_Generator.py"),
+        ("👤 Admin Management", "pages/👤_Admin_Management.py"),
+        ("🔮 Simulator", "pages/🔮_Simulator.py"),
+    ]
+
+    # Render common pages for all logged-in users
+    for label, page in common_pages:
+        st.sidebar.page_link(page, label=label, icon=label.split()[0])
+
+    # Client + Admin + Owner
     if role in ["client", "admin", "owner"]:
-        st.sidebar.page_link("pages/💰_Profit_Sharing.py", label="Profit Sharing", icon="💰")
-        st.sidebar.page_link("pages/💳_Withdrawals.py", label="Withdrawals", icon="💳")
-        st.sidebar.page_link("pages/🌱_Growth_Fund.py", label="Growth Fund", icon="🌱")
-        st.sidebar.page_link("pages/🤖_EA_Versions.py", label="EA Versions", icon="🤖")
-        st.sidebar.page_link("pages/🔔_Notifications.py", label="Notifications", icon="🔔")
-        st.sidebar.page_link("pages/📸_Testimonials.py", label="Testimonials", icon="📸")
+        for label, page in client_admin_owner_pages:
+            st.sidebar.page_link(page, label=label, icon=label.split()[0])
 
-    # ── ADMIN + OWNER ONLY ───────────────────────────────────────────────────
+    # Admin + Owner
     if role in ["admin", "owner"]:
-        st.sidebar.page_link("pages/📊_FTMO_Accounts.py", label="FTMO Accounts", icon="📊")
-        st.sidebar.page_link("pages/📜_Audit_Logs.py", label="Audit Logs", icon="📜")
-        st.sidebar.page_link("pages/📢_Announcements.py", label="Announcements", icon="📢")
-        st.sidebar.page_link("pages/📈_Reports_Export.py", label="Reports Export", icon="📈")
-        st.sidebar.page_link("pages/📁_File_Vault.py", label="File Vault", icon="📁")
-        st.sidebar.page_link("pages/💬_Messages.py", label="Messages", icon="💬")
+        for label, page in admin_owner_pages:
+            st.sidebar.page_link(page, label=label, icon=label.split()[0])
 
-    # ── OWNER ONLY ───────────────────────────────────────────────────────────
+    # Owner only
     if role == "owner":
         st.sidebar.markdown("---")
         st.sidebar.subheader("👑 Owner Tools")
-        st.sidebar.page_link("pages/🔑_License_Generator.py", label="License Generator", icon="🔑")
-        st.sidebar.page_link("pages/👤_Admin_Management.py", label="Admin Management", icon="👤")
-        st.sidebar.page_link("pages/🔮_Simulator.py", label="Simulator", icon="🔮")
+        for label, page in owner_only_pages:
+            st.sidebar.page_link(page, label=label, icon=label.split()[0])
 
-# ── LOGOUT SECTION ───────────────────────────────────────────────────────
+    # Logout button (simple & reliable)
     st.sidebar.markdown("---")
-    st.sidebar.markdown("### Account")
-
-if st.sidebar.button(
-    "🚪 Logout",
-    type="primary",
-    use_container_width=True,
-    key="logout_button_unique",  # stable key para hindi mag-recreate lagi
-    help="End session and return to public landing"
-):
-    # 1. Set flag para alam ng main.py na logout
-    st.session_state["logging_out"] = True
-    
-    # 2. Clear lahat ng auth keys
-    for key in [
-        "authenticated", "username", "full_name", "role",
-        "just_logged_in", "theme", "_sidebar_rendered"
-    ]:
-        if key in st.session_state:
-            del st.session_state[key]
-    
-    # 3. Optional message na dadalhin sa main.py
-    st.session_state["logout_msg"] = "You have been logged out successfully."
-    
-    # 4. IMPORTANT: Huwag st.rerun() dito — gamitin natin st.switch_page sa ibang paraan
-    #    Pero para siguradong mag-trigger ng navigation:
-    st.session_state["_force_redirect"] = "main.py"
-    
-    # Small delay para ma-render muna ang message (optional pero nakakatulong sa UX)
-    import time
-    time.sleep(0.4)
-    
-    st.switch_page("main.py")
+    if st.sidebar.button("🚪 Logout", type="primary", use_container_width=True):
+        # Clear session
+        for key in ["authenticated", "username", "full_name", "role", "theme", "just_logged_in"]:
+            st.session_state.pop(key, None)
+        st.session_state["logging_out"] = True
+        st.switch_page("main.py")
