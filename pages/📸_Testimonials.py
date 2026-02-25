@@ -71,7 +71,7 @@ def fetch_testimonials_full():
         # Image URLs: public first, then fresh signed
         all_testis = approved + pending
         for t in all_testis:
-            public_url = t.get("image_url")  # if bucket public
+            public_url = t.get("image_url")  # direct public URL if bucket public
             signed_url = None
 
             if not public_url and t.get("storage_path"):
@@ -80,7 +80,7 @@ def fetch_testimonials_full():
                         t["storage_path"], expires_in=3600 * 24  # 24 hours - fresh on load
                     )
                     signed_url = signed.signed_url
-                    # Debug (comment out after testing)
+                    # Temporary debug - comment out after testing
                     # st.write(f"Generated signed URL for {t['client_name']}: {signed_url}")
                 except Exception as sign_err:
                     st.warning(f"Signed URL failed for {t['client_name']}: {str(sign_err)}")
@@ -164,15 +164,17 @@ if approved:
             """, unsafe_allow_html=True)
 
             if display_url:
-                # Reliable bytes load (fixes most Streamlit image issues)
                 try:
                     r = requests.get(display_url, timeout=5)
                     if r.status_code == 200:
                         st.image(r.content, use_column_width=True, caption=t["client_name"])
                     else:
                         st.caption(f"Image unavailable (status {r.status_code})")
-                except:
+                        # Debug
+                        st.write("Failed URL:", display_url)
+                except Exception as load_err:
                     st.caption("Image load error")
+                    st.write("Load error:", str(load_err))
             else:
                 st.markdown("<div style='height:180px; background:rgba(50,55,65,0.5); border-radius:10px; display:flex; align-items:center; justify-content:center; color:#aaa;'>No Photo</div>", unsafe_allow_html=True)
 
@@ -197,8 +199,10 @@ if current_role in ["owner", "admin"] and pending:
                         st.image(r.content, use_column_width=True, caption="Submitted Photo")
                     else:
                         st.caption(f"Image unavailable (status {r.status_code})")
-                except:
+                        st.write("Failed URL:", display_url)
+                except Exception as load_err:
                     st.caption("Image load error")
+                    st.write("Load error:", str(load_err))
             else:
                 st.caption("No photo uploaded")
             st.markdown(p["message"])
