@@ -1,82 +1,109 @@
-# pages/17_👤_Admin_Management.py
+# pages/👤_Admin_Management.py
 import streamlit as st
 import uuid
 import qrcode
 from io import BytesIO
-import bcrypt
-from datetime import datetime
+import bcrypt  # assuming you have bcrypt for password hashing
 
+# ────────────────────────────────────────────────
+# AUTH + SIDEBAR + REQUIRE AUTH (must be first)
+# ────────────────────────────────────────────────
 from utils.auth import require_auth
+from utils.sidebar import render_sidebar
 from utils.supabase_client import supabase
-from utils.helpers import log_action
 
-require_auth(min_role="owner")  # Strict owner-only
+render_sidebar()
+require_auth(min_role="owner")  # strict — owner only
 
-st.header("Empire Team Management 👤")
-st.markdown("**Owner-exclusive: Full team control • Register with complete details & titles (synced to all dropdowns/trees as 'Name (Title)') • Realtime balances • Secure edit/delete • QR login token generate/regenerate/revoke • Joined date • Advanced search/filter**")
+# ─── THEME (consistent across app) ───
+accent_primary = "#00ffaa"
+accent_gold    = "#ffd700"
+accent_glow    = "#00ffaa40"
 
-current_role = st.session_state.get("role", "guest")
+# ─── SCROLL-TO-TOP (same as Dashboard) ───
+st.markdown("""
+<script>
+function forceScrollToTop() {
+    window.scrollTo({top: 0, behavior: 'smooth'});
+    document.body.scrollTop = 0;
+    document.documentElement.scrollTop = 0;
+    const main = parent.document.querySelector(".main .block-container");
+    if (main) main.scrollTop = 0;
+}
+const observer = new MutationObserver(() => {
+    setTimeout(forceScrollToTop, 300);
+    setTimeout(forceScrollToTop, 1200);
+    setTimeout(forceScrollToTop, 2500);
+});
+const target = parent.document.querySelector(".main") || document.body;
+observer.observe(target, { childList: true, subtree: true, attributes: true });
+setTimeout(forceScrollToTop, 800);
+setTimeout(forceScrollToTop, 2000);
+</script>
+""", unsafe_allow_html=True)
 
-# ────────────────────────────────────────────────
-# REALTIME CACHE (30s TTL)
-# ────────────────────────────────────────────────
-@st.cache_data(ttl=30)
+st.header("👤 Empire Team Management")
+st.markdown("**Owner-exclusive control** • Register/edit team members with full details & titles (auto-syncs to all dropdowns/trees as 'Name (Title)') • Realtime balances • Secure QR login tokens • Joined dates • Advanced search/filter • Elite team metrics")
+
+current_role = st.session_state.get("role", "guest").lower()
+if current_role != "owner":
+    st.error("🔒 Team Management is **OWNER-ONLY** for empire security.")
+    st.stop()
+
+# ─── FULL REALTIME CACHE (30s TTL) ───
+@st.cache_data(ttl=30, show_spinner="Syncing empire team...")
 def fetch_users_full():
     try:
-        users_resp = supabase.table("users").select("*").order("created_at", desc=True).execute()
-        return users_resp.data or []
+        users = supabase.table("users").select("*").order("created_at", desc=True).execute().data or []
+        return users
     except Exception as e:
-        st.error(f"Team data fetch error: {str(e)}")
+        st.error(f"Team sync error: {str(e)}")
         return []
 
 users = fetch_users_full()
 
-if st.button("🔄 Refresh Team Management Now", use_container_width=True, type="secondary"):
+if st.button("🔄 Refresh Team Management Now", type="secondary", use_container_width=True):
     st.cache_data.clear()
     st.rerun()
 
-st.caption("🔄 Team auto-refresh every 30s • Titles & details sync instantly across empire")
+st.caption("🔄 Team auto-refreshes every 30s • All changes (titles, details, balances) instantly sync across empire")
 
-# ────────────────────────────────────────────────
-# TEAM SUMMARY METRICS
-# ────────────────────────────────────────────────
-team = [u for u in users if u["username"] != "kingminted"]  # Exclude owner
-clients = [u for u in team if u["role"] == "client"]
-admins = [u for u in team if u["role"] == "admin"]
-total_balance = sum(u.get("balance", 0.0) for u in clients)
+# ─── TEAM SUMMARY METRICS ───
+team = [u for u in users if u.get("username") != "kingminted"]  # Exclude owner if needed
+clients = [u for u in team if u.get("role") == "client"]
+admins  = [u for u in team if u.get("role") == "admin"]
+total_balance = sum(u.get("balance", 0) for u in clients)
 
-col_m1, col_m2, col_m3, col_m4 = st.columns(4)
-col_m1.metric("Total Team Members", len(team))
-col_m2.metric("Clients", len(clients))
-col_m3.metric("Admins", len(admins))
-col_m4.metric("Total Client Balances", f"${total_balance:,.2f}")
+cols = st.columns(4)
+cols[0].metric("Total Team Members", len(team))
+cols[1].metric("Clients", len(clients))
+cols[2].metric("Admins", len(admins))
+cols[3].metric("Total Client Balances", f"${total_balance:,.2f}")
 
-# ────────────────────────────────────────────────
-# REGISTER NEW TEAM MEMBER
-# ────────────────────────────────────────────────
+# ─── REGISTER NEW TEAM MEMBER ───
 st.subheader("➕ Register New Team Member")
 with st.form("add_user_form", clear_on_submit=True):
     col_u1, col_u2 = st.columns(2)
     with col_u1:
-        username = st.text_input("Username *", placeholder="e.g. michael2026")
-        full_name = st.text_input("Full Name *", placeholder="e.g. Michael Reyes")
+        username   = st.text_input("Username *", placeholder="e.g. michael2026")
+        full_name  = st.text_input("Full Name *", placeholder="e.g. Michael Reyes")
     with col_u2:
         initial_pwd = st.text_input("Initial Password *", type="password")
-        urole = st.selectbox("Role *", ["client", "admin"])
+        urole       = st.selectbox("Role *", ["client", "admin"])
 
-    st.markdown("### Additional Details (Recommended)")
+    st.markdown("### Additional Details (Optional but Recommended)")
     col_info1, col_info2 = st.columns(2)
     with col_info1:
-        accounts = st.text_input("MT5 Account Logins (comma-separated)", placeholder="e.g. 333723156,12345678")
-        email = st.text_input("Email", placeholder="e.g. michael@example.com")
+        accounts = st.text_input("MT5 Account Logins (comma-separated)", placeholder="e.g. 333723156, 12345678")
+        email    = st.text_input("Email", placeholder="e.g. michael@example.com")
     with col_info2:
         contact_no = st.text_input("Contact No.", placeholder="e.g. 09128197085")
-        address = st.text_area("Address", placeholder="e.g. Rodriguez 1, Rodriguez Dampalit, Malabon City")
+        address    = st.text_area("Address", placeholder="e.g. Rodriguez 1, Rodriguez Dampalit, Malabon City")
 
     title = st.selectbox(
-        "Title/Label (Displayed as 'Name (Title)')",
+        "Title/Label (Optional - shows as 'Name (Title)' in trees/dropdowns)",
         ["None", "Pioneer", "Distributor", "VIP", "Elite Trader", "Contributor"],
-        help="Syncs instantly to all empire dropdowns & trees"
+        help="Displays as 'Full Name (Title)' in all empire dropdowns, trees, and lists"
     )
 
     submitted = st.form_submit_button("🚀 Register Member", type="primary", use_container_width=True)
@@ -85,33 +112,31 @@ with st.form("add_user_form", clear_on_submit=True):
         if not username.strip() or not full_name.strip() or not initial_pwd:
             st.error("Username, full name, and initial password required")
         else:
-            try:
-                hashed = bcrypt.hashpw(initial_pwd.encode(), bcrypt.gensalt()).decode()
-                supabase.table("users").insert({
-                    "username": username.strip().lower(),
-                    "password": hashed,
-                    "full_name": full_name.strip(),
-                    "role": urole,
-                    "balance": 0.0,
-                    "title": title if title != "None" else None,
-                    "accounts": accounts.strip() or None,
-                    "email": email.strip() or None,
-                    "contact_no": contact_no.strip() or None,
-                    "address": address.strip() or None,
-                    "created_at": datetime.now().isoformat()
-                }).execute()
+            with st.spinner("Registering new member..."):
+                try:
+                    hashed = bcrypt.hashpw(initial_pwd.encode(), bcrypt.gensalt()).decode()
+                    insert_data = {
+                        "username": username.strip().lower(),
+                        "password": hashed,
+                        "full_name": full_name.strip(),
+                        "role": urole,
+                        "balance": 0.0,
+                        "title": title if title != "None" else None,
+                        "accounts": accounts.strip() or None,
+                        "email": email.strip() or None,
+                        "contact_no": contact_no.strip() or None,
+                        "address": address.strip() or None
+                    }
+                    supabase.table("users").insert(insert_data).execute()
 
-                log_action("Team Member Registered", f"{full_name.strip()} ({title if title != 'None' else ''}) as {urole}")
-                st.success(f"{full_name.strip()} registered successfully & synced empire-wide!")
-                st.balloons()
-                st.cache_data.clear()
-                st.rerun()
-            except Exception as e:
-                st.error(f"Registration failed: {str(e)}")
+                    st.success(f"**{full_name.strip()}** successfully registered & synced empire-wide!")
+                    st.balloons()
+                    st.cache_data.clear()
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Registration failed: {str(e)}")
 
-# ────────────────────────────────────────────────
-# CURRENT TEAM LIST + EDIT/DELETE/QR
-# ────────────────────────────────────────────────
+# ─── CURRENT TEAM LIST ───
 st.subheader("👥 Current Empire Team")
 if team:
     # Search & Filter
@@ -126,24 +151,25 @@ if team:
         s = search_user.lower()
         filtered_team = [
             u for u in filtered_team
-            if s in u["full_name"].lower()
-            or s in u["username"].lower()
+            if s in u.get("full_name", "").lower()
+            or s in u.get("username", "").lower()
             or s in str(u.get("email", "")).lower()
             or s in str(u.get("contact_no", "")).lower()
             or s in str(u.get("accounts", "")).lower()
         ]
-    if filter_role != "All":
-        filtered_team = [u for u in filtered_team if u["role"] == filter_role]
 
-    st.caption(f"Showing {len(filtered_team)} member{'' if len(filtered_team) == 1 else 's'}")
+    if filter_role != "All":
+        filtered_team = [u for u in filtered_team if u.get("role") == filter_role]
+
+    st.caption(f"Showing {len(filtered_team)} member{'s' if len(filtered_team) != 1 else ''}")
 
     for u in filtered_team:
         title_display = f" ({u.get('title', '')})" if u.get('title') else ""
         balance = u.get("balance", 0.0)
-        joined = u.get("created_at", "Unknown")[:10] if u.get("created_at") else "Unknown"
+        joined   = u.get("created_at", "Unknown")[:10] if u.get("created_at") else "Unknown"
 
         with st.expander(
-            f"**{u['full_name']}{title_display}** (@{u['username']}) • {u['role'].title()} • Balance ${balance:,.2f} • Joined {joined}",
+            f"**{u['full_name']}{title_display}** (@{u['username']}) • {u['role'].title()} • Balance **${balance:,.2f}** • Joined {joined}",
             expanded=False
         ):
             # Details
@@ -159,10 +185,10 @@ if team:
             st.markdown("### 🔑 Quick Login QR Code")
             current_qr_token = u.get("qr_token")
             app_url = "https://kmfxeaftmo.streamlit.app"  # Update if your app URL changes
-
             qr_url = f"{app_url}/?qr={current_qr_token}" if current_qr_token else None
 
             if current_qr_token:
+                # Generate QR image
                 buf = BytesIO()
                 qr = qrcode.QRCode(version=1, box_size=12, border=5)
                 qr.add_data(qr_url)
@@ -171,9 +197,9 @@ if team:
                 img.save(buf, format="PNG")
                 qr_bytes = buf.getvalue()
 
-                col_qr1, col_qr2, col_qr3 = st.columns([1, 2, 2])
+                col_qr1, col_qr2 = st.columns([1, 3])
                 with col_qr1:
-                    st.image(qr_bytes, caption="QR Login Code", use_column_width=True)
+                    st.image(qr_bytes, caption="Scan for Instant Login", use_column_width=True)
                 with col_qr2:
                     st.code(qr_url, language="text")
                     st.download_button(
@@ -183,31 +209,28 @@ if team:
                         "image/png",
                         use_container_width=True
                     )
-                with col_qr3:
-                    st.info("Scan for instant login on any device")
-                    col_regen, col_revoke = st.columns(2)
-                    with col_regen:
-                        if st.button("🔄 Regenerate Token", key=f"regen_{u['id']}"):
-                            new_token = str(uuid.uuid4())
-                            supabase.table("users").update({"qr_token": new_token}).eq("id", u["id"]).execute()
-                            log_action("QR Token Regenerated", f"For {u['full_name']}")
-                            st.success("New token generated • Old revoked")
-                            st.cache_data.clear()
-                            st.rerun()
-                    with col_revoke:
-                        if st.button("❌ Revoke Token", key=f"revoke_{u['id']}", type="secondary"):
-                            supabase.table("users").update({"qr_token": None}).eq("id", u["id"]).execute()
-                            log_action("QR Token Revoked", f"For {u['full_name']}")
-                            st.success("Token revoked")
-                            st.cache_data.clear()
-                            st.rerun()
+
+                col_regen, col_revoke = st.columns(2)
+                with col_regen:
+                    if st.button("🔄 Regenerate Token", key=f"regen_{u['id']}"):
+                        new_token = str(uuid.uuid4())
+                        supabase.table("users").update({"qr_token": new_token}).eq("id", u["id"]).execute()
+                        st.success("New token generated • Old one revoked")
+                        st.balloons()
+                        st.cache_data.clear()
+                        st.rerun()
+                with col_revoke:
+                    if st.button("❌ Revoke Token", key=f"revoke_{u['id']}", type="secondary"):
+                        supabase.table("users").update({"qr_token": None}).eq("id", u["id"]).execute()
+                        st.success("Token revoked • QR login disabled")
+                        st.cache_data.clear()
+                        st.rerun()
             else:
                 st.info("No QR login token generated yet")
                 if st.button("🚀 Generate QR Token", key=f"gen_{u['id']}"):
                     new_token = str(uuid.uuid4())
                     supabase.table("users").update({"qr_token": new_token}).eq("id", u["id"]).execute()
-                    log_action("QR Token Generated", f"For {u['full_name']}")
-                    st.success("Token generated • Refresh to view")
+                    st.success("Token generated • Refresh to view QR")
                     st.cache_data.clear()
                     st.rerun()
 
@@ -219,102 +242,99 @@ if team:
                     st.session_state.edit_user_id = u["id"]
                     st.session_state.edit_user_data = u.copy()
                     st.rerun()
-
             with col_act2:
-                st.warning("⚠️ Delete is permanent • Licenses, shares, and history will be affected")
+                st.warning("⚠️ Delete is permanent • All licenses, shares, and data will be lost")
                 if st.button("🗑️ Delete Member", key=f"del_confirm_{u['id']}", type="secondary"):
                     try:
                         supabase.table("users").delete().eq("id", u["id"]).execute()
-                        log_action("Team Member Deleted", f"{u['full_name']}{title_display}")
-                        st.success("Member permanently removed")
+                        st.success(f"**{u['full_name']}** permanently removed")
                         st.cache_data.clear()
                         st.rerun()
                     except Exception as e:
                         st.error(f"Delete failed: {str(e)}")
 
-            # Edit Form (inside expander)
+            # Edit Form (in expander when triggered)
             if st.session_state.get("edit_user_id") == u["id"]:
                 edit_data = st.session_state.edit_user_data
                 with st.form(key=f"edit_form_{u['id']}", clear_on_submit=True):
                     col_e1, col_e2 = st.columns(2)
                     with col_e1:
-                        new_username = st.text_input("Username *", value=edit_data["username"])
-                        new_full_name = st.text_input("Full Name *", value=edit_data["full_name"])
+                        new_username  = st.text_input("Username *", value=edit_data.get("username", ""))
+                        new_full_name = st.text_input("Full Name *", value=edit_data.get("full_name", ""))
                     with col_e2:
                         new_pwd = st.text_input("New Password (leave blank to keep)", type="password")
                         new_role = st.selectbox("Role *", ["client", "admin"],
-                                                index=0 if edit_data["role"] == "client" else 1)
+                                                index=0 if edit_data.get("role") == "client" else 1)
 
                     st.markdown("### Details")
                     col_einfo1, col_einfo2 = st.columns(2)
                     with col_einfo1:
                         new_accounts = st.text_input("MT5 Accounts", value=edit_data.get("accounts") or "")
-                        new_email = st.text_input("Email", value=edit_data.get("email") or "")
+                        new_email    = st.text_input("Email", value=edit_data.get("email") or "")
                     with col_einfo2:
                         new_contact = st.text_input("Contact No.", value=edit_data.get("contact_no") or "")
                         new_address = st.text_area("Address", value=edit_data.get("address") or "")
 
                     title_options = ["None", "Pioneer", "Distributor", "VIP", "Elite Trader", "Contributor"]
-                    current_title_idx = title_options.index(edit_data.get("title", "None")) if edit_data.get("title") in title_options else 0
+                    current_title_idx = title_options.index(edit_data.get("title")) if edit_data.get("title") in title_options else 0
                     new_title = st.selectbox("Title/Label", title_options, index=current_title_idx)
 
                     col_save, col_cancel = st.columns(2)
                     with col_save:
-                        save_submitted = st.form_submit_button("💾 Save Changes", type="primary")
-                    with col_cancel:
-                        cancel_submitted = st.form_submit_button("Cancel")
+                        if st.form_submit_button("💾 Save Changes", type="primary"):
+                            if not new_username.strip() or not new_full_name.strip():
+                                st.error("Username and full name required")
+                            else:
+                                try:
+                                    update_data = {
+                                        "username": new_username.strip().lower(),
+                                        "full_name": new_full_name.strip(),
+                                        "role": new_role,
+                                        "title": new_title if new_title != "None" else None,
+                                        "accounts": new_accounts.strip() or None,
+                                        "email": new_email.strip() or None,
+                                        "contact_no": new_contact.strip() or None,
+                                        "address": new_address.strip() or None
+                                    }
+                                    if new_pwd.strip():
+                                        hashed_new = bcrypt.hashpw(new_pwd.encode(), bcrypt.gensalt()).decode()
+                                        update_data["password"] = hashed_new
 
-                    if cancel_submitted:
-                        if "edit_user_id" in st.session_state:
-                            del st.session_state.edit_user_id
-                        if "edit_user_data" in st.session_state:
-                            del st.session_state.edit_user_data
-                        st.rerun()
-
-                    if save_submitted:
-                        if not new_username.strip() or not new_full_name.strip():
-                            st.error("Username and full name required")
-                        else:
-                            try:
-                                update_data = {
-                                    "username": new_username.strip().lower(),
-                                    "full_name": new_full_name.strip(),
-                                    "role": new_role,
-                                    "title": new_title if new_title != "None" else None,
-                                    "accounts": new_accounts.strip() or None,
-                                    "email": new_email.strip() or None,
-                                    "contact_no": new_contact.strip() or None,
-                                    "address": new_address.strip() or None
-                                }
-                                if new_pwd.strip():
-                                    hashed_new = bcrypt.hashpw(new_pwd.encode(), bcrypt.gensalt()).decode()
-                                    update_data["password"] = hashed_new
-
-                                supabase.table("users").update(update_data).eq("id", u["id"]).execute()
-                                log_action("Team Member Edited", f"{new_full_name} ({new_title if new_title != 'None' else ''})")
-                                st.success("Member updated successfully!")
-                                if "edit_user_id" in st.session_state:
+                                    supabase.table("users").update(update_data).eq("id", u["id"]).execute()
+                                    st.success("Member updated successfully!")
                                     del st.session_state.edit_user_id
-                                if "edit_user_data" in st.session_state:
                                     del st.session_state.edit_user_data
-                                st.cache_data.clear()
-                                st.rerun()
-                            except Exception as e:
-                                st.error(f"Update failed: {str(e)}")
+                                    st.cache_data.clear()
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(f"Update failed: {str(e)}")
+
+                    with col_cancel:
+                        if st.form_submit_button("Cancel"):
+                            del st.session_state.edit_user_id
+                            del st.session_state.edit_user_data
+                            st.rerun()
 else:
     st.info("No team members yet • Start building your empire!")
 
-# ────────────────────────────────────────────────
-# MOTIVATIONAL FOOTER
-# ────────────────────────────────────────────────
+# ─── MOTIVATIONAL FOOTER (sync style) ───
 st.markdown(f"""
-<div class='glass-card' style='padding:4rem 2rem; text-align:center; margin:4rem 0; border: 2px solid #00ffaa; border-radius: 30px;'>
-    <h1 style="background: linear-gradient(90deg, #00ffaa, #ffd700); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 3rem;">
+<div style="padding:4rem 2rem; text-align:center; margin:5rem auto; max-width:1100px;
+    border-radius:24px; border:2px solid {accent_primary}40;
+    background:linear-gradient(135deg, rgba(0,255,170,0.08), rgba(255,215,0,0.05));
+    box-shadow:0 20px 50px rgba(0,255,170,0.15);">
+    <h1 style="font-size:3.2rem; background:linear-gradient(90deg,{accent_primary},{accent_gold});
+               -webkit-background-clip:text; -webkit-text-fill-color:transparent;">
         Owner Team Control Center
     </h1>
-    <p style="font-size: 1.4rem; opacity: 0.9; max-width: 900px; margin: 2rem auto;">
-        Realtime team metrics • Instant title sync • Secure QR management • Full edit/delete • Empire team elite & secure forever.
+    <p style="font-size:1.4rem; opacity:0.9; margin:1.5rem 0;">
+        Full member CRUD • Titles sync empire-wide • Secure QR login • Realtime balances • Elite team oversight
     </p>
-    <h2 style="color: #ffd700; font-size: 2.2rem;">👑 KMFX Team Management • Fully Fixed & Elite 2026</h2>
+    <h2 style="color:{accent_gold}; font-size:2.2rem; margin:1rem 0;">
+        Built by Faith • Led for Generations 👑
+    </h2>
+    <p style="opacity:0.8; font-style:italic;">
+        KMFX Pro • Cloud Edition 2026 • Mark Jeff Blando
+    </p>
 </div>
 """, unsafe_allow_html=True)
