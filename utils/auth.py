@@ -107,7 +107,7 @@ def send_magic_link(email: str) -> bool:
         st.error(f"Failed to send magic link: {str(e)}")
         return False
 
-def handle_magic_link_callback():
+def handle_auth_callback():
     """
     Call this on every page load (in main.py) to complete magic link login
     """
