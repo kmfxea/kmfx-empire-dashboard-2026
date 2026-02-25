@@ -12,9 +12,9 @@ from utils.supabase_client import supabase
 from utils.helpers import upload_to_supabase, log_action
 
 render_sidebar()
-require_auth(min_role="client")  # everyone sees the feed, only owner/admin can post/delete/pin
+require_auth(min_role="client")  # everyone sees feed, owner/admin can post/delete/pin
 
-# ─── THEME (consistent across app) ───
+# ─── THEME ───
 accent_primary = "#00ffaa"
 accent_gold = "#ffd700"
 accent_glow = "#00ffaa40"
@@ -53,31 +53,38 @@ def fetch_announcements_realtime():
         ann_resp = supabase.table("announcements").select("*").order("date", desc=True).execute()
         announcements = ann_resp.data or []
 
-        # Attachments with signed URLs (long expiry)
+        # Attachments – fresh signed URLs (or public if bucket is public)
         for ann in announcements:
             att_resp = supabase.table("announcement_files").select(
-                "id, original_name, storage_path"
+                "id, original_name, storage_path, file_url"
             ).eq("announcement_id", ann["id"]).execute()
             attachments = []
             for att in att_resp.data or []:
+                image_url = att.get("file_url")  # public URL if bucket is public
                 signed_url = None
-                if att.get("storage_path"):
+
+                # If no public URL, generate fresh signed URL
+                if not image_url and att.get("storage_path"):
                     try:
                         signed = supabase.storage.from_("announcements").create_signed_url(
-                            att["storage_path"], expires_in=3600 * 24 * 30  # 30 days
+                            att["storage_path"], expires_in=3600 * 24  # 24 hours - fresh every load
                         )
                         signed_url = signed.signed_url
-                    except:
-                        pass
+                        # Debug (comment out after testing)
+                        # st.write(f"Generated signed URL for {att['original_name']}: {signed_url}")
+                    except Exception as sign_err:
+                        st.warning(f"Signed URL failed for {att['original_name']}: {str(sign_err)}")
+
                 attachments.append({
                     "id": att["id"],
                     "original_name": att["original_name"],
                     "storage_path": att["storage_path"],
+                    "public_url": image_url,
                     "signed_url": signed_url
                 })
             ann["attachments"] = attachments
 
-        # Comments (grouped by announcement_id)
+        # Comments grouped
         comm_resp = supabase.table("announcement_comments").select("*").order("timestamp", desc=True).execute()
         comments_map = {}
         for c in comm_resp.data or []:
@@ -96,7 +103,7 @@ if st.button("🔄 Refresh Feed Now", type="secondary", use_container_width=True
     st.cache_data.clear()
     st.rerun()
 
-st.caption("🔄 Feed auto-refreshes every 10s • Images & attachments fully visible • Pin to top default OFF")
+st.caption("🔄 Feed auto-refreshes every 10s • Images & attachments fully visible")
 
 # ─── POST NEW ANNOUNCEMENT (OWNER/ADMIN ONLY) ───
 if current_role in ["owner", "admin"]:
@@ -187,15 +194,15 @@ if filtered:
             st.caption(f"{ann.get('category', 'General')} • by {ann['posted_by']} • {ann['date']}")
             st.markdown(ann['message'])
 
-            # Attachments: Images first (inline visible)
+            # Attachments: Try public URL first, then fresh signed URL
             images = [att for att in ann.get("attachments", []) if att["original_name"].lower().endswith(('.png','.jpg','.jpeg','.gif'))]
             if images:
                 img_cols = st.columns(min(4, len(images)))
                 for i, att in enumerate(images):
-                    signed = att.get("signed_url")
-                    if signed:
+                    image_url = att.get("public_url") or att.get("signed_url")
+                    if image_url:
                         with img_cols[i % 4]:
-                            st.image(signed, use_column_width=True, caption=att["original_name"])
+                            st.image(image_url, use_column_width=True, caption=att["original_name"])
                     else:
                         st.caption(f"Image failed to load: {att['original_name']}")
 
@@ -204,10 +211,10 @@ if filtered:
             if non_images:
                 st.markdown("**Attached Files:**")
                 for att in non_images:
-                    signed = att.get("signed_url")
-                    if signed:
+                    file_url = att.get("public_url") or att.get("signed_url")
+                    if file_url:
                         try:
-                            r = requests.get(signed, timeout=10)
+                            r = requests.get(file_url, timeout=10)
                             if r.status_code == 200:
                                 st.download_button(
                                     label=att["original_name"],
@@ -252,7 +259,7 @@ if filtered:
                             st.cache_data.clear()
                             st.rerun()
 
-            # Admin controls (pin/delete)
+            # Admin controls
             if current_role in ["owner", "admin"]:
                 col_pin, col_del = st.columns(2)
                 with col_pin:
@@ -263,14 +270,14 @@ if filtered:
                 with col_del:
                     if st.button("🗑️ Delete Announcement", key=f"del_{ann['id']}", type="secondary"):
                         try:
-                            # Clean storage attachments
+                            # Clean storage
                             for att in ann.get("attachments", []):
                                 if att.get("storage_path"):
                                     try:
                                         supabase.storage.from_("announcements").remove([att["storage_path"]])
                                     except:
                                         pass
-                            # Delete DB entries
+                            # Delete DB
                             supabase.table("announcement_files").delete().eq("announcement_id", ann["id"]).execute()
                             supabase.table("announcement_comments").delete().eq("announcement_id", ann["id"]).execute()
                             supabase.table("announcements").delete().eq("id", ann["id"]).execute()

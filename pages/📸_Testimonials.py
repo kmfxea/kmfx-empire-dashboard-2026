@@ -1,5 +1,6 @@
 # pages/📸_Testimonials.py
 import streamlit as st
+import requests
 from datetime import date
 
 # ────────────────────────────────────────────────
@@ -13,7 +14,7 @@ from utils.helpers import upload_to_supabase, log_action
 render_sidebar()
 require_auth(min_role="client")  # clients submit, everyone views approved, owner/admin approves
 
-# ─── THEME (consistent across app) ───
+# ─── THEME ───
 accent_primary = "#00ffaa"
 accent_gold = "#ffd700"
 accent_glow = "#00ffaa40"
@@ -49,14 +50,14 @@ current_role = st.session_state.get("role", "guest").lower()
 @st.cache_data(ttl=10, show_spinner="Syncing testimonials...")
 def fetch_testimonials_full():
     try:
-        # Approved testimonials
+        # Approved
         approved = supabase.table("testimonials") \
             .select("id, client_name, message, image_url, storage_path, date_submitted, status") \
             .eq("status", "Approved") \
             .order("date_submitted", desc=True) \
             .execute().data or []
 
-        # Pending testimonials
+        # Pending
         pending = supabase.table("testimonials") \
             .select("id, client_name, message, image_url, storage_path, date_submitted, status") \
             .eq("status", "Pending") \
@@ -67,19 +68,24 @@ def fetch_testimonials_full():
         users = supabase.table("users").select("full_name, balance").execute().data or []
         user_map = {u["full_name"]: u.get("balance", 0) for u in users}
 
-        # Signed URLs for ALL images (30 days expiry)
+        # Image URLs: public first, then fresh signed
         all_testis = approved + pending
         for t in all_testis:
+            public_url = t.get("image_url")  # if bucket public
             signed_url = None
-            if t.get("storage_path"):
+
+            if not public_url and t.get("storage_path"):
                 try:
                     signed = supabase.storage.from_("testimonials").create_signed_url(
-                        t["storage_path"], expires_in=3600 * 24 * 30  # 30 days
+                        t["storage_path"], expires_in=3600 * 24  # 24 hours - fresh on load
                     )
                     signed_url = signed.signed_url
-                except:
-                    pass
-            t["signed_url"] = signed_url or t.get("image_url")
+                    # Debug (comment out after testing)
+                    # st.write(f"Generated signed URL for {t['client_name']}: {signed_url}")
+                except Exception as sign_err:
+                    st.warning(f"Signed URL failed for {t['client_name']}: {str(sign_err)}")
+
+            t["display_url"] = public_url or signed_url
 
         return approved, pending, user_map
     except Exception as e:
@@ -92,7 +98,7 @@ if st.button("🔄 Refresh Testimonials Now", type="secondary", use_container_wi
     st.cache_data.clear()
     st.rerun()
 
-st.caption("🔄 Testimonials auto-refresh every 10s • Photos permanent & fully visible via signed URLs")
+st.caption("🔄 Testimonials auto-refresh every 10s • Photos permanent & fully visible")
 
 # ─── CLIENT SUBMISSION ───
 if current_role == "client":
@@ -144,7 +150,7 @@ if approved:
     for idx, t in enumerate(filtered_approved):
         with cols[idx % 3]:
             balance = user_map.get(t["client_name"], 0)
-            signed_url = t.get("signed_url")
+            display_url = t.get("display_url")
             st.markdown(f"""
             <div style="
                 background:rgba(30,35,45,0.7);
@@ -156,10 +162,20 @@ if approved:
                 border:1px solid rgba(100,100,100,0.25);
             ">
             """, unsafe_allow_html=True)
-            if signed_url:
-                st.image(signed_url, use_column_width=True, caption=t["client_name"])
+
+            if display_url:
+                # Try direct URL first
+                try:
+                    r = requests.get(display_url, timeout=5)
+                    if r.status_code == 200:
+                        st.image(r.content, use_column_width=True, caption=t["client_name"])
+                    else:
+                        st.caption(f"Image unavailable (status {r.status_code})")
+                except:
+                    st.caption("Image load error")
             else:
                 st.markdown("<div style='height:180px; background:rgba(50,55,65,0.5); border-radius:10px; display:flex; align-items:center; justify-content:center; color:#aaa;'>No Photo</div>", unsafe_allow_html=True)
+
             st.markdown(f"**{t['client_name']}** (Balance: **${balance:,.2f}**)")
             st.markdown(t["message"].replace("\n", "<br>"), unsafe_allow_html=True)
             st.caption(f"Submitted: {t['date_submitted']}")
@@ -172,10 +188,17 @@ if current_role in ["owner", "admin"] and pending:
     st.subheader("⏳ Pending Approval")
     for p in pending:
         balance = user_map.get(p["client_name"], 0)
-        signed_url = p.get("signed_url")
+        display_url = p.get("display_url")
         with st.expander(f"{p['client_name']} • {p['date_submitted']} • Balance ${balance:,.2f}", expanded=False):
-            if signed_url:
-                st.image(signed_url, use_column_width=True, caption="Submitted Photo")
+            if display_url:
+                try:
+                    r = requests.get(display_url, timeout=5)
+                    if r.status_code == 200:
+                        st.image(r.content, use_column_width=True, caption="Submitted Photo")
+                    else:
+                        st.caption(f"Image unavailable (status {r.status_code})")
+                except:
+                    st.caption("Image load error")
             else:
                 st.caption("No photo uploaded")
             st.markdown(p["message"])
@@ -184,7 +207,6 @@ if current_role in ["owner", "admin"] and pending:
                 if st.button("Approve & Auto-Announce", key=f"app_{p['id']}"):
                     try:
                         supabase.table("testimonials").update({"status": "Approved"}).eq("id", p["id"]).execute()
-                        # Auto-create announcement
                         supabase.table("announcements").insert({
                             "title": f"🌟 New Testimonial from {p['client_name']}!",
                             "message": p["message"],
