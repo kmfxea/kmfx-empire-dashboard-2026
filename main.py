@@ -1,9 +1,8 @@
 # main.py
 # =====================================================================
-# KMFX EA - PUBLIC LANDING + EMAIL MAGIC LINK LOGIN (Fixed Import)
+# KMFX EA - PUBLIC LANDING + EMAIL MAGIC LINK LOGIN (Latest Fixed Version)
 # Redirects to dashboard if logged in
 # =====================================================================
-
 import streamlit as st
 import datetime
 import threading
@@ -15,9 +14,14 @@ from PIL import Image
 import os
 
 # ── Centralized imports ────────────────────────────────────────────────────────
-from utils.supabase_client import supabase, service_supabase, auth  # ← added auth (needed for magic link)
-
+from utils.supabase_client import supabase, service_supabase, auth
 from utils.auth import send_magic_link, handle_auth_callback, is_authenticated, require_auth
+from utils.helpers import (
+    start_keep_alive_if_needed,
+    make_same_size,         # used in journey images
+    # log_action,           # uncomment if you start using it
+    # upload_to_supabase,   # uncomment if needed later
+)
 
 # Keep-alive for Streamlit Cloud
 start_keep_alive_if_needed()
@@ -76,11 +80,10 @@ else:
     """, unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# THEME & COLORS (unchanged)
+# THEME & COLORS
 # ────────────────────────────────────────────────
 if "theme" not in st.session_state:
     st.session_state.theme = "dark" if not authenticated else "light"
-
 theme = st.session_state.theme
 accent_primary = "#00ffaa"
 accent_gold = "#ffd700"
@@ -95,7 +98,7 @@ card_shadow = "0 8px 25px rgba(0,0,0,0.12)" if theme == "light" else "0 10px 30p
 sidebar_bg = "rgba(248,251,255,0.95)" if theme == "light" else "rgba(10,13,20,0.95)"
 
 # ────────────────────────────────────────────────
-# FULL CSS STYLING (your original design – kept intact)
+# FULL CSS STYLING
 # ────────────────────────────────────────────────
 st.markdown(f"""
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
@@ -172,13 +175,11 @@ if authenticated:
     if st.session_state.get("just_logged_in"):
         st.success(f"Welcome back, {st.session_state.full_name}! 🚀")
         st.session_state.pop("just_logged_in")
-
     st.switch_page("pages/🏠_Dashboard.py")
 
 # ────────────────────────────────────────────────
 # PUBLIC LANDING CONTENT
 # ────────────────────────────────────────────────
-
 # Logo
 logo_col = st.columns([1, 4, 1])[1]
 with logo_col:
@@ -192,7 +193,7 @@ with hero_container:
     st.markdown(f"<p style='text-align: center; font-size:1.4rem; color:{text_muted};'>Passed FTMO Phase 1 • +3,071% 5-Year Backtest • Building Legacies of Generosity</p>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; font-size:1.2rem;'>Mark Jeff Blando – Founder & Developer • 2026</p>", unsafe_allow_html=True)
 
-# Stats (unchanged)
+# Stats
 try:
     accounts_count = supabase.table("ftmo_accounts").select("id", count="exact").execute().count or 0
     equity_data = supabase.table("ftmo_accounts").select("current_equity").execute().data or []
