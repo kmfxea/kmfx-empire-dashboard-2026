@@ -20,13 +20,13 @@ accent_gold    = "#ffd700"
 accent_glow    = "#00ffaa40"
 accent_hover   = "#00ffcc"
 
-# ─── WELCOME + BALLOONS ───
+# ─── WELCOME + BALLOONS ON FRESH LOGIN ───
 if st.session_state.get("just_logged_in", False):
     st.balloons()
     st.success(f"Welcome back, {st.session_state.full_name}! 🚀 Empire scaling mode activated.")
     st.session_state.pop("just_logged_in", None)
 
-# ─── SCROLL-TO-TOP ───
+# ─── SCROLL-TO-TOP SCRIPT ───
 st.markdown("""
 <script>
 function forceScrollToTop() {
@@ -52,11 +52,11 @@ setTimeout(forceScrollToTop, 2000);
 st.header("Elite Empire Command Center 🚀")
 st.markdown("**Realtime, fully automatic empire overview** • Every transaction syncs instantly • Trees update live • Empire scales itself")
 
-# ─── DATA FETCH (with name lookup fix) ───
+# ─── OPTIMIZED DATA FETCH ───
 @st.cache_data(ttl=30, show_spinner="Loading empire overview...")
 def fetch_empire_summary():
     try:
-        # Fast totals from MVs
+        # Fast totals from materialized views
         gf_resp = supabase.table("mv_growth_fund_balance").select("balance").execute()
         gf_balance = gf_resp.data[0].get("balance", 0.0) if gf_resp.data else 0.0
 
@@ -69,7 +69,7 @@ def fetch_empire_summary():
         client_resp = supabase.table("mv_client_balances").select("*").execute()
         total_client_balances = client_resp.data[0].get("total_client_balances", 0.0) if client_resp.data else 0.0
 
-        # Raw data
+        # Lightweight raw data
         accounts = supabase.table("ftmo_accounts").select("*").execute().data or []
         profits = supabase.table("profits").select("gross_profit").execute().data or []
         distributions = supabase.table("profit_distributions").select("share_amount, participant_name, is_growth_fund").execute().data or []
@@ -83,8 +83,7 @@ def fetch_empire_summary():
                 name = d.get("participant_name", "Unknown")
                 participant_shares[name] = participant_shares.get(name, 0) + d.get("share_amount", 0)
 
-        # ─── FIXED: Resolve contributor names via user lookup ───
-        # Pre-fetch all users for fast lookup (cache-friendly)
+        # Resolve contributor names
         all_users = supabase.table("users").select("id, full_name").execute().data or []
         user_map = {u["id"]: u["full_name"] for u in all_users}
 
@@ -92,7 +91,6 @@ def fetch_empire_summary():
         for acc in accounts:
             contrib = acc.get("contributors_v2") or acc.get("contributors", [])
             for c in contrib:
-                # Try to get name from user_id if present
                 user_id = c.get("user_id") or c.get("id")
                 name = user_map.get(user_id, c.get("display_name") or c.get("name", "Anonymous"))
                 funded = c.get("units", 0) * (c.get("php_per_unit", 0) or 0)
@@ -206,17 +204,14 @@ with tab_contrib:
     for acc in accounts:
         contrib = acc.get("contributors_v2") or acc.get("contributors", [])
         for c in contrib:
-            # FIXED: Proper name resolution
             user_id = c.get("user_id") or c.get("id")
             name = "Anonymous"
             if user_id:
-                # Quick lookup (you can cache this if needed)
                 user = supabase.table("users").select("full_name").eq("id", user_id).single().execute()
                 if user.data:
                     name = user.data.get("full_name", "Anonymous")
             else:
                 name = c.get("display_name") or c.get("name", "Anonymous")
-
             funded = c.get("units", 0) * (c.get("php_per_unit", 0) or 0)
             funded_by[name] = funded_by.get(name, 0) + funded
 
@@ -241,7 +236,7 @@ with tab_contrib:
     else:
         st.info("No contributors yet • Add in FTMO Accounts page")
 
-# ─── LIVE ACCOUNTS GRID + FIXED MINI TREES ───
+# ─── LIVE ACCOUNTS GRID + MINI TREES ───
 st.subheader("📊 Live Accounts (Realtime Metrics & Trees)")
 if accounts:
     for acc in accounts:
@@ -294,7 +289,6 @@ if accounts:
                         name = c.get("display_name") or c.get("name", "Anonymous")
                     contrib_labels.append(name)
                     contrib_vals.append(c.get("units", 0) * (c.get("php_per_unit", 0) or 0))
-
                 fig_c = go.Figure(go.Sankey(
                     node=dict(pad=15, thickness=20, label=contrib_labels),
                     link=dict(source=[0]*len(contrib_vals), target=list(range(1,len(contrib_labels))), value=contrib_vals)
@@ -305,6 +299,75 @@ if accounts:
                 st.info("No contributors yet")
 else:
     st.info("No live accounts yet • Launch one in FTMO Accounts page")
+
+# ─── NEW: LATEST UPDATES SECTION ───
+st.subheader("Latest Updates")
+
+# Latest Announcements
+@st.cache_data(ttl=60)
+def get_latest_announcements(limit=3):
+    try:
+        ann = supabase.table("announcements").select("title, message, created_at").order("created_at", desc=True).limit(limit).execute().data or []
+        return ann
+    except:
+        return []
+
+latest_ann = get_latest_announcements()
+
+if latest_ann:
+    st.markdown("#### 📢 Latest Announcements")
+    for a in latest_ann:
+        st.markdown(f"**{a['title']}** • {a['created_at'][:10]}")
+        st.caption(a['message'][:150] + "..." if len(a['message']) > 150 else a['message'])
+    if st.button("View All Announcements", use_container_width=True):
+        st.switch_page("pages/📢_Announcements.py")
+else:
+    st.info("No recent announcements")
+
+# Latest Testimonials
+@st.cache_data(ttl=60)
+def get_latest_testimonials(limit=3):
+    try:
+        tes = supabase.table("testimonials").select("client_name, message, created_at").eq("approved", True).order("created_at", desc=True).limit(limit).execute().data or []
+        return tes
+    except:
+        return []
+
+latest_tes = get_latest_testimonials()
+
+if latest_tes:
+    st.markdown("#### 📸 Recent Testimonials")
+    tes_cols = st.columns(3)
+    for i, t in enumerate(latest_tes):
+        with tes_cols[i % 3]:
+            st.markdown(f"**{t['client_name']}** • {t['created_at'][:10]}")
+            st.caption(t['message'][:100] + "..." if len(t['message']) > 100 else t['message'])
+    if st.button("View All Testimonials", use_container_width=True):
+        st.switch_page("pages/📸_Testimonials.py")
+else:
+    st.info("No approved testimonials yet")
+
+# Unread Messages Preview
+@st.cache_data(ttl=30)
+def get_unread_messages_preview():
+    try:
+        my_username = st.session_state.get("username", "")
+        unread_count = supabase.table("messages").select("count", count="exact").eq("to_username", my_username).eq("is_read", False).execute().count or 0
+        latest = supabase.table("messages").select("from_username, message, created_at").eq("to_username", my_username).eq("is_read", False).order("created_at", desc=True).limit(2).execute().data or []
+        return unread_count, latest
+    except:
+        return 0, []
+
+unread_count, latest_msgs = get_unread_messages_preview()
+
+if unread_count > 0:
+    st.markdown(f"#### 💬 You have **{unread_count} unread message{'s' if unread_count > 1 else ''}**")
+    for m in latest_msgs:
+        st.markdown(f"**From {m['from_username']}**: {m['message'][:80]}...")
+    if st.button("Open Messages Inbox", type="primary", use_container_width=True):
+        st.switch_page("pages/💬_Messages.py")
+else:
+    st.info("No unread messages")
 
 # ─── CLIENT BALANCES (OWNER/ADMIN ONLY) ───
 if st.session_state.get("role", "").lower() in ["owner", "admin"]:
