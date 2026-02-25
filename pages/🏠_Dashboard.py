@@ -11,28 +11,22 @@ from utils.auth import require_auth
 from utils.sidebar import render_sidebar
 from utils.supabase_client import supabase
 
-require_auth(min_role="client")  # Minimum client; change to "admin" or "owner" if needed
 render_sidebar()
+require_auth(min_role="client")  # Everyone sees dashboard; owner/admin see extra
 
-# ────────────────────────────────────────────────
-# THEME COLORS (consistent across app)
-# ────────────────────────────────────────────────
+# ─── THEME COLORS (consistent across app) ───
 accent_primary = "#00ffaa"
-accent_gold = "#ffd700"
-accent_glow = "#00ffaa40"
-accent_hover = "#00ffcc"
+accent_gold    = "#ffd700"
+accent_glow    = "#00ffaa40"
+accent_hover   = "#00ffcc"
 
-# ────────────────────────────────────────────────
-# WELCOME + BALLOONS ON FRESH LOGIN
-# ────────────────────────────────────────────────
+# ─── WELCOME + BALLOONS ON FRESH LOGIN ───
 if st.session_state.get("just_logged_in", False):
     st.balloons()
     st.success(f"Welcome back, {st.session_state.full_name}! 🚀 Empire scaling mode activated.")
     st.session_state.pop("just_logged_in", None)
 
-# ────────────────────────────────────────────────
-# SCROLL-TO-TOP SCRIPT (optimized MutationObserver + timeouts)
-# ────────────────────────────────────────────────
+# ─── SCROLL-TO-TOP SCRIPT (optimized) ───
 st.markdown("""
 <script>
 function forceScrollToTop() {
@@ -42,40 +36,29 @@ function forceScrollToTop() {
     const main = parent.document.querySelector(".main .block-container");
     if (main) main.scrollTop = 0;
 }
-
-// Watch for DOM changes (charts, content loading)
 const observer = new MutationObserver(() => {
     setTimeout(forceScrollToTop, 300);
     setTimeout(forceScrollToTop, 1200);
     setTimeout(forceScrollToTop, 2500);
 });
-
-// Target main content area
 const target = parent.document.querySelector(".main") || document.body;
 observer.observe(target, { childList: true, subtree: true, attributes: true });
-
-// Initial scroll attempts
 setTimeout(forceScrollToTop, 800);
 setTimeout(forceScrollToTop, 2000);
-setTimeout(forceScrollToTop, 4000);
 </script>
 """, unsafe_allow_html=True)
 
-# ────────────────────────────────────────────────
-# HEADER + DESCRIPTION
-# ────────────────────────────────────────────────
+# ─── HEADER + DESCRIPTION ───
 st.header("Elite Empire Command Center 🚀")
-st.markdown("**Realtime, fully automatic empire overview**")
+st.markdown("**Realtime, fully automatic empire overview** • Every transaction syncs instantly • Trees update live • Empire scales itself")
 
-# ────────────────────────────────────────────────
-# OPTIMIZED DATA FETCH (cached 30s – uses MV + lightweight raw)
-# ────────────────────────────────────────────────
-@st.cache_data(ttl=30)
+# ─── OPTIMIZED DATA FETCH (cached 30s) ───
+@st.cache_data(ttl=30, show_spinner="Loading empire overview...")
 def fetch_empire_summary():
     try:
         # Fast totals from materialized views
         gf_resp = supabase.table("mv_growth_fund_balance").select("balance").execute()
-        gf_balance = gf_resp.data[0]["balance"] if gf_resp.data else 0.0
+        gf_balance = gf_resp.data[0].get("balance", 0.0) if gf_resp.data else 0.0
 
         empire_resp = supabase.table("mv_empire_summary").select("*").execute()
         empire = empire_resp.data[0] if empire_resp.data else {}
@@ -86,22 +69,19 @@ def fetch_empire_summary():
         client_resp = supabase.table("mv_client_balances").select("*").execute()
         total_client_balances = client_resp.data[0].get("total_client_balances", 0.0) if client_resp.data else 0.0
 
-        # Lightweight raw data for trees & calcs
-        accounts_resp = supabase.table("ftmo_accounts").select("*").execute()
-        accounts = accounts_resp.data or []
+        # Lightweight raw data
+        accounts = supabase.table("ftmo_accounts").select("*").execute().data or []
+        profits = supabase.table("profits").select("gross_profit").execute().data or []
+        distributions = supabase.table("profit_distributions").select("share_amount, participant_name, is_growth_fund").execute().data or []
 
-        profits_resp = supabase.table("profits").select("gross_profit").execute()
-        total_gross = sum(p.get("gross_profit", 0) for p in profits_resp.data or [])
-
-        dist_resp = supabase.table("profit_distributions").select("share_amount, participant_name, is_growth_fund").execute()
-        distributions = dist_resp.data or []
+        total_gross = sum(p.get("gross_profit", 0) for p in profits)
         total_distributed = sum(d.get("share_amount", 0) for d in distributions if not d.get("is_growth_fund", False))
 
         participant_shares = {}
         for d in distributions:
             if not d.get("is_growth_fund", False):
-                name = d["participant_name"]
-                participant_shares[name] = participant_shares.get(name, 0) + d["share_amount"]
+                name = d.get("participant_name", "Unknown")
+                participant_shares[name] = participant_shares.get(name, 0) + d.get("share_amount", 0)
 
         total_funded_php = 0
         for acc in accounts:
@@ -118,16 +98,13 @@ def fetch_empire_summary():
         st.error(f"Dashboard data fetch error: {str(e)}")
         return [], 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, {}, 0
 
-# Fetch data once
 (
     accounts, total_accounts, total_equity, total_withdrawable,
     gf_balance, total_gross, total_distributed,
     total_client_balances, participant_shares, total_funded_php
 ) = fetch_empire_summary()
 
-# ────────────────────────────────────────────────
-# METRICS GRID (glass-card style – fully responsive)
-# ────────────────────────────────────────────────
+# ─── METRICS GRID (responsive glass cards) ───
 st.markdown(f"""
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.2rem; margin: 2rem 0;">
     <div class="glass-card" style="text-align:center; padding:1.5rem; border-radius:12px;">
@@ -165,9 +142,7 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# ────────────────────────────────────────────────
-# QUICK ACTIONS (with switch_page – role-aware)
-# ────────────────────────────────────────────────
+# ─── QUICK ACTIONS (role-aware) ───
 st.subheader("⚡ Quick Actions")
 action_cols = st.columns(3)
 current_role = st.session_state.get("role", "client").lower()
@@ -191,9 +166,7 @@ with action_cols[2]:
     if st.button("🌱 Growth Fund Details", type="primary", use_container_width=True):
         st.switch_page("pages/🌱_Growth_Fund.py")
 
-# ────────────────────────────────────────────────
-# EMPIRE FLOW TREES (Participant + Contributor Sankey)
-# ────────────────────────────────────────────────
+# ─── EMPIRE FLOW TREES ───
 st.subheader("🌳 Empire Flow Trees (Realtime Auto-Sync)")
 tab_part, tab_contrib = st.tabs(["Participant Shares Distribution", "Contributor Funding Flow (PHP)"])
 
@@ -217,7 +190,7 @@ with tab_part:
         fig_part.update_layout(height=600, title="Total Distributed Shares by Participant")
         st.plotly_chart(fig_part, use_container_width=True)
     else:
-        st.info("No profit distributions yet • Record one in Profit Sharing")
+        st.info("No profit distributions yet • Record one in Profit Sharing page")
 
 with tab_contrib:
     funded_by = {}
@@ -247,11 +220,9 @@ with tab_contrib:
         fig_contrib.update_layout(height=600, title="Total Funded by Contributors (PHP)")
         st.plotly_chart(fig_contrib, use_container_width=True)
     else:
-        st.info("No contributors yet • Add in FTMO Accounts")
+        st.info("No contributors yet • Add in FTMO Accounts page")
 
-# ────────────────────────────────────────────────
-# LIVE ACCOUNTS GRID + MINI TREES
-# ────────────────────────────────────────────────
+# ─── LIVE ACCOUNTS GRID + MINI TREES ───
 st.subheader("📊 Live Accounts (Realtime Metrics & Trees)")
 if accounts:
     for acc in accounts:
@@ -284,7 +255,7 @@ if accounts:
                     node=dict(pad=15, thickness=20, label=labels),
                     link=dict(source=[0]*len(vals), target=list(range(1,len(labels))), value=vals)
                 ))
-                fig_p.update_layout(height=350)
+                fig_p.update_layout(height=350, title="Participants Share Flow")
                 st.plotly_chart(fig_p, use_container_width=True)
             else:
                 st.info("No participants assigned yet")
@@ -297,16 +268,14 @@ if accounts:
                     node=dict(pad=15, thickness=20, label=labels),
                     link=dict(source=[0]*len(vals), target=list(range(1,len(labels))), value=vals)
                 ))
-                fig_c.update_layout(height=350)
+                fig_c.update_layout(height=350, title="Contributors Funding Flow (PHP)")
                 st.plotly_chart(fig_c, use_container_width=True)
             else:
                 st.info("No contributors yet")
 else:
     st.info("No live accounts yet • Launch one in FTMO Accounts page")
 
-# ────────────────────────────────────────────────
-# CLIENT BALANCES (OWNER/ADMIN ONLY)
-# ────────────────────────────────────────────────
+# ─── CLIENT BALANCES (OWNER/ADMIN ONLY) ───
 if st.session_state.get("role", "").lower() in ["owner", "admin"]:
     st.subheader("👥 Client Balances (Realtime)")
     try:
@@ -322,14 +291,12 @@ if st.session_state.get("role", "").lower() in ["owner", "admin"]:
     except Exception as e:
         st.warning(f"Client list temporarily unavailable: {str(e)}")
 
-# ────────────────────────────────────────────────
-# MOTIVATIONAL FOOTER (gradient + shadow)
-# ────────────────────────────────────────────────
+# ─── MOTIVATIONAL FOOTER ───
 st.markdown(f"""
 <div class="glass-card" style="padding:4rem 2rem; text-align:center; margin:5rem auto; max-width:1100px;
-            border-radius:24px; border:2px solid {accent_primary}40;
-            background:linear-gradient(135deg, rgba(0,255,170,0.08), rgba(255,215,0,0.05));
-            box-shadow:0 20px 50px rgba(0,255,170,0.15);">
+    border-radius:24px; border:2px solid {accent_primary}40;
+    background:linear-gradient(135deg, rgba(0,255,170,0.08), rgba(255,215,0,0.05));
+    box-shadow:0 20px 50px rgba(0,255,170,0.15);">
     <h1 style="font-size:3.2rem; background:linear-gradient(90deg,{accent_primary},{accent_gold});
                -webkit-background-clip:text; -webkit-text-fill-color:transparent;">
         Fully Automatic • Realtime • Exponential Empire
