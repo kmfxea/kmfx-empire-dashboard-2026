@@ -34,24 +34,29 @@ def require_auth(min_role: str = "client"):
 
 def login_user(username: str, password: str, expected_role: str = None) -> bool:
     """
-    Core login function – FIXED for case-insensitive username
+    Core login function – case-insensitive username search
     """
     try:
         # Clean input
         clean_username = username.strip()
 
-        # FIX: Use .ilike() for case-insensitive search
-        # Also fetch original username to preserve case
+        # Query with case-insensitive match (.ilike)
         response = supabase.table("users").select(
-            "password, full_name, role, username"
+            "password, full_name, role, username"  # include username to preserve original case
         ).ilike("username", clean_username).execute()
 
         if not response.data:
             st.error("Username not found. Please check spelling (case-insensitive).")
             return False
 
-        # Take the first (and should be only) match
+        # If multiple matches (shouldn't happen with UNIQUE constraint), take first
+        if len(response.data) > 1:
+            st.warning("Multiple users found with similar username – using first match.")
+        
         user = response.data[0]
+
+        # Debug: Show what Supabase actually returned (uncomment when testing)
+        # st.write("Debug: Found user →", user["username"], user["role"])
 
         # Verify password
         if not bcrypt.checkpw(password.encode('utf-8'), user["password"].encode('utf-8')):
@@ -60,33 +65,29 @@ def login_user(username: str, password: str, expected_role: str = None) -> bool:
 
         actual_role = user["role"]
 
-        # Enforce tab-specific role
+        # Enforce tab-specific role check
         if expected_role and actual_role.lower() != expected_role.lower():
             st.error(f"This login tab is for **{expected_role.title()}** accounts only.")
             return False
 
-        # Success: set session state with ORIGINAL username case from DB
+        # Success: set session with ORIGINAL case from DB
         st.session_state.authenticated = True
-        st.session_state.username = user["username"]  # preserve original case
+        st.session_state.username = user["username"]           # preserve original case
         st.session_state.full_name = user["full_name"] or user["username"]
         st.session_state.role = actual_role
-        st.session_state.theme = "light"  # auto light mode after login
-        st.session_state.just_logged_in = True  # flag for welcome message
+        st.session_state.theme = "light"
+        st.session_state.just_logged_in = True
 
-        # Log successful login (using original case)
+        # Log with original username
         from utils.helpers import log_action
         log_action("Login Successful", f"User: {user['username']} | Role: {actual_role}")
 
-        # Optional debug (uncomment when testing)
-        # st.write(f"Debug: Logged in as {user['username']} (original case preserved)")
-
-        # Force rerun so main.py sees authenticated=True and redirects
+        # Force rerun so main.py can redirect + show welcome
         st.rerun()
-
         return True
 
     except Exception as e:
         st.error(f"Login error: {str(e)}")
-        # Optional debug
-        # st.write("Full error:", e)
+        # Debug: show full error (uncomment when troubleshooting)
+        # st.write("Full error details:", e)
         return False
