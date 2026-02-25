@@ -8,16 +8,17 @@ from datetime import date
 from utils.auth import require_auth
 from utils.sidebar import render_sidebar
 from utils.supabase_client import supabase
+from utils.helpers import upload_to_supabase, log_action
 
 render_sidebar()
 require_auth(min_role="client")  # clients submit, everyone views approved, owner/admin approves
 
 # ─── THEME (consistent across app) ───
 accent_primary = "#00ffaa"
-accent_gold    = "#ffd700"
-accent_glow    = "#00ffaa40"
+accent_gold = "#ffd700"
+accent_glow = "#00ffaa40"
 
-# ─── SCROLL-TO-TOP (same as Dashboard) ───
+# ─── SCROLL-TO-TOP ───
 st.markdown("""
 <script>
 function forceScrollToTop() {
@@ -40,7 +41,7 @@ setTimeout(forceScrollToTop, 2000);
 """, unsafe_allow_html=True)
 
 st.header("📸 Team Testimonials")
-st.markdown("**Empire motivation hub** • Clients submit success stories + photos (permanent storage + fully visible) • Balance context • Owner approve/reject with auto-announce • Realtime grid • Search • Inspiration for all")
+st.markdown("**Empire motivation hub** • Share your success stories + photos (permanent storage + fully visible) • Owner approve/reject with auto-announce • Realtime grid • Search • Inspiration for all")
 
 current_role = st.session_state.get("role", "guest").lower()
 
@@ -48,12 +49,25 @@ current_role = st.session_state.get("role", "guest").lower()
 @st.cache_data(ttl=10, show_spinner="Syncing testimonials...")
 def fetch_testimonials_full():
     try:
-        approved = supabase.table("testimonials").select("*").eq("status", "Approved").order("date_submitted", desc=True).execute().data or []
-        pending  = supabase.table("testimonials").select("*").eq("status", "Pending").order("date_submitted", desc=True).execute().data or []
-        users    = supabase.table("users").select("full_name, balance").execute().data or []
+        # Approved testimonials
+        approved = supabase.table("testimonials") \
+            .select("id, client_name, message, image_url, storage_path, date_submitted, status") \
+            .eq("status", "Approved") \
+            .order("date_submitted", desc=True) \
+            .execute().data or []
+
+        # Pending testimonials
+        pending = supabase.table("testimonials") \
+            .select("id, client_name, message, image_url, storage_path, date_submitted, status") \
+            .eq("status", "Pending") \
+            .order("date_submitted", desc=True) \
+            .execute().data or []
+
+        # User balance map
+        users = supabase.table("users").select("full_name, balance").execute().data or []
         user_map = {u["full_name"]: u.get("balance", 0) for u in users}
 
-        # Signed URLs for ALL images (long expiry for visibility)
+        # Signed URLs for ALL images (30 days expiry)
         all_testis = approved + pending
         for t in all_testis:
             signed_url = None
@@ -62,7 +76,7 @@ def fetch_testimonials_full():
                     signed = supabase.storage.from_("testimonials").create_signed_url(
                         t["storage_path"], expires_in=3600 * 24 * 30  # 30 days
                     )
-                    signed_url = signed.get("signedURL")
+                    signed_url = signed.signed_url
                 except:
                     pass
             t["signed_url"] = signed_url or t.get("image_url")
@@ -82,14 +96,13 @@ st.caption("🔄 Testimonials auto-refresh every 10s • Photos permanent & full
 
 # ─── CLIENT SUBMISSION ───
 if current_role == "client":
-    my_name   = st.session_state.get("full_name", "")
+    my_name = st.session_state.get("full_name", "")
     my_balance = user_map.get(my_name, 0)
-
     st.subheader(f"Share Your Success Story (Balance: **${my_balance:,.2f}**)")
     with st.expander("➕ Submit Testimonial", expanded=True):
         with st.form("testi_form", clear_on_submit=True):
             story = st.text_area("Your Story *", height=200, placeholder="How KMFX changed my life, profits, journey...")
-            photo = st.file_uploader("Upload Photo * (Permanent + Visible)", type=["png","jpg","jpeg","gif"])
+            photo = st.file_uploader("Upload Photo * (Permanent + Visible)", type=["png", "jpg", "jpeg", "gif"])
             submitted = st.form_submit_button("Submit for Approval", type="primary", use_container_width=True)
 
             if submitted:
@@ -98,7 +111,7 @@ if current_role == "client":
                 else:
                     with st.spinner("Submitting testimonial..."):
                         try:
-                            url, storage_path = upload_to_supabase(  # assuming helper exists
+                            url, storage_path = upload_to_supabase(
                                 file=photo,
                                 bucket="testimonials",
                                 folder="photos"
@@ -111,7 +124,6 @@ if current_role == "client":
                                 "date_submitted": date.today().isoformat(),
                                 "status": "Pending"
                             }).execute()
-
                             st.success("Testimonial submitted permanently! Photo will be visible once approved.")
                             st.balloons()
                             st.cache_data.clear()
@@ -133,28 +145,24 @@ if approved:
         with cols[idx % 3]:
             balance = user_map.get(t["client_name"], 0)
             signed_url = t.get("signed_url")
-
             st.markdown(f"""
             <div style="
-                background:rgba(30,35,45,0.7); 
-                backdrop-filter:blur(12px); 
-                border-radius:16px; 
-                padding:1.4rem; 
-                margin-bottom:1.6rem; 
-                box-shadow:0 6px 20px rgba(0,0,0,0.15); 
+                background:rgba(30,35,45,0.7);
+                backdrop-filter:blur(12px);
+                border-radius:16px;
+                padding:1.4rem;
+                margin-bottom:1.6rem;
+                box-shadow:0 6px 20px rgba(0,0,0,0.15);
                 border:1px solid rgba(100,100,100,0.25);
             ">
             """, unsafe_allow_html=True)
-
             if signed_url:
-                st.image(signed_url, use_container_width=True, caption=t["client_name"])
+                st.image(signed_url, use_column_width=True, caption=t["client_name"])
             else:
                 st.markdown("<div style='height:180px; background:rgba(50,55,65,0.5); border-radius:10px; display:flex; align-items:center; justify-content:center; color:#aaa;'>No Photo</div>", unsafe_allow_html=True)
-
             st.markdown(f"**{t['client_name']}** (Balance: **${balance:,.2f}**)")
             st.markdown(t["message"].replace("\n", "<br>"), unsafe_allow_html=True)
             st.caption(f"Submitted: {t['date_submitted']}")
-
             st.markdown("</div>", unsafe_allow_html=True)
 else:
     st.info("No approved testimonials yet • Inspire the empire with your story!")
@@ -165,27 +173,25 @@ if current_role in ["owner", "admin"] and pending:
     for p in pending:
         balance = user_map.get(p["client_name"], 0)
         signed_url = p.get("signed_url")
-
         with st.expander(f"{p['client_name']} • {p['date_submitted']} • Balance ${balance:,.2f}", expanded=False):
             if signed_url:
-                st.image(signed_url, use_container_width=True, caption="Submitted Photo")
+                st.image(signed_url, use_column_width=True, caption="Submitted Photo")
             else:
                 st.caption("No photo uploaded")
-
             st.markdown(p["message"])
-
             col1, col2 = st.columns(2)
             with col1:
                 if st.button("Approve & Auto-Announce", key=f"app_{p['id']}"):
                     try:
                         supabase.table("testimonials").update({"status": "Approved"}).eq("id", p["id"]).execute()
+                        # Auto-create announcement
                         supabase.table("announcements").insert({
                             "title": f"🌟 New Testimonial from {p['client_name']}!",
                             "message": p["message"],
                             "date": date.today().isoformat(),
                             "posted_by": "System (Auto)",
                             "category": "Testimonial",
-                            "pinned": False  # not pinned to avoid clutter
+                            "pinned": False
                         }).execute()
                         st.success("Approved & announced empire-wide!")
                         st.balloons()
@@ -193,7 +199,6 @@ if current_role in ["owner", "admin"] and pending:
                         st.rerun()
                     except Exception as e:
                         st.error(f"Approve failed: {str(e)}")
-
             with col2:
                 if st.button("Reject & Delete", key=f"rej_{p['id']}", type="secondary"):
                     try:
@@ -206,7 +211,7 @@ if current_role in ["owner", "admin"] and pending:
                     except Exception as e:
                         st.error(f"Reject failed: {str(e)}")
 
-# ─── MOTIVATIONAL FOOTER (sync style) ───
+# ─── MOTIVATIONAL FOOTER ───
 st.markdown(f"""
 <div style="padding:4rem 2rem; text-align:center; margin:5rem auto; max-width:1100px;
     border-radius:24px; border:2px solid {accent_primary}40;

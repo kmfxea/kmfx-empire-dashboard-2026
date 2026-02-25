@@ -9,16 +9,17 @@ from datetime import datetime, date
 from utils.auth import require_auth
 from utils.sidebar import render_sidebar
 from utils.supabase_client import supabase
+from utils.helpers import upload_to_supabase, log_action
 
 render_sidebar()
 require_auth(min_role="client")  # everyone sees the feed, only owner/admin can post/delete/pin
 
 # ─── THEME (consistent across app) ───
 accent_primary = "#00ffaa"
-accent_gold    = "#ffd700"
-accent_glow    = "#00ffaa40"
+accent_gold = "#ffd700"
+accent_glow = "#00ffaa40"
 
-# ─── SCROLL-TO-TOP (same as Dashboard) ───
+# ─── SCROLL-TO-TOP ───
 st.markdown("""
 <script>
 function forceScrollToTop() {
@@ -41,7 +42,7 @@ setTimeout(forceScrollToTop, 2000);
 """, unsafe_allow_html=True)
 
 st.header("📢 Empire Announcements")
-st.markdown("**Central realtime communication** • Broadcast updates • Rich images/attachments (permanent + fully visible) • Likes ❤️ • Threaded comments 💬 • Pinning 📌 • Search & filters • Full team engagement")
+st.markdown("**Central realtime communication** • Broadcast updates • Rich images/attachments • Likes ❤️ • Threaded comments 💬 • Pinning 📌 • Search & filters")
 
 current_role = st.session_state.get("role", "guest").lower()
 
@@ -52,7 +53,7 @@ def fetch_announcements_realtime():
         ann_resp = supabase.table("announcements").select("*").order("date", desc=True).execute()
         announcements = ann_resp.data or []
 
-        # Attachments with signed URLs (long expiry for visibility)
+        # Attachments with signed URLs (long expiry)
         for ann in announcements:
             att_resp = supabase.table("announcement_files").select(
                 "id, original_name, storage_path"
@@ -65,7 +66,7 @@ def fetch_announcements_realtime():
                         signed = supabase.storage.from_("announcements").create_signed_url(
                             att["storage_path"], expires_in=3600 * 24 * 30  # 30 days
                         )
-                        signed_url = signed.get("signedURL")
+                        signed_url = signed.signed_url
                     except:
                         pass
                 attachments.append({
@@ -76,7 +77,7 @@ def fetch_announcements_realtime():
                 })
             ann["attachments"] = attachments
 
-        # Comments
+        # Comments (grouped by announcement_id)
         comm_resp = supabase.table("announcement_comments").select("*").order("timestamp", desc=True).execute()
         comments_map = {}
         for c in comm_resp.data or []:
@@ -112,51 +113,51 @@ if current_role in ["owner", "admin"]:
             accept_multiple_files=True
         )
         pin = st.checkbox("📌 Pin to Top", value=False)
-
         submitted = st.form_submit_button("📢 Post Announcement", type="primary", use_container_width=True)
 
         if submitted:
             if not title.strip() or not message.strip():
                 st.error("Title and message are required")
             else:
-                try:
-                    resp = supabase.table("announcements").insert({
-                        "title": title.strip(),
-                        "message": message.strip(),
-                        "date": date.today().isoformat(),
-                        "posted_by": st.session_state.get("full_name", "Admin"),
-                        "likes": 0,
-                        "category": category,
-                        "pinned": pin
-                    }).execute()
-                    ann_id = resp.data[0]["id"]
+                with st.spinner("Posting announcement..."):
+                    try:
+                        resp = supabase.table("announcements").insert({
+                            "title": title.strip(),
+                            "message": message.strip(),
+                            "date": date.today().isoformat(),
+                            "posted_by": st.session_state.get("full_name", "Admin"),
+                            "likes": 0,
+                            "category": category,
+                            "pinned": pin
+                        }).execute()
+                        ann_id = resp.data[0]["id"]
 
-                    if attachments:
-                        progress = st.progress(0)
-                        for idx, file in enumerate(attachments):
-                            try:
-                                url, storage_path = upload_to_supabase(  # assuming this helper exists
-                                    file=file,
-                                    bucket="announcements",
-                                    folder="attachments"
-                                )
-                                supabase.table("announcement_files").insert({
-                                    "announcement_id": ann_id,
-                                    "original_name": file.name,
-                                    "file_url": url,
-                                    "storage_path": storage_path
-                                }).execute()
-                            except Exception as e:
-                                st.warning(f"Attachment {file.name} failed: {str(e)}")
-                            progress.progress((idx + 1) / len(attachments))
-                        progress.empty()
+                        if attachments:
+                            progress = st.progress(0)
+                            for idx, file in enumerate(attachments):
+                                try:
+                                    url, storage_path = upload_to_supabase(
+                                        file=file,
+                                        bucket="announcements",
+                                        folder="attachments"
+                                    )
+                                    supabase.table("announcement_files").insert({
+                                        "announcement_id": ann_id,
+                                        "original_name": file.name,
+                                        "file_url": url,
+                                        "storage_path": storage_path
+                                    }).execute()
+                                except Exception as upload_err:
+                                    st.warning(f"Attachment {file.name} failed: {str(upload_err)}")
+                                progress.progress((idx + 1) / len(attachments))
+                            progress.empty()
 
-                    st.success("Announcement broadcasted! Visible to entire empire.")
-                    st.balloons()
-                    st.cache_data.clear()
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Post failed: {str(e)}")
+                        st.success("Announcement broadcasted! Visible to entire empire.")
+                        st.balloons()
+                        st.cache_data.clear()
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Post failed: {str(e)}")
 
 # ─── SEARCH & FILTER ───
 st.subheader("🔍 Search & Filter Feed")
@@ -164,7 +165,7 @@ col_s1, col_s2 = st.columns(2)
 with col_s1:
     search = st.text_input("Search title or message", placeholder="e.g. profit update")
 with col_s2:
-    cat_filter = st.selectbox("Category", ["All"] + sorted(set(a.get("category", "General") for a in announcements)))
+    cat_filter = st.selectbox("Category", ["All"] + sorted(set(a.get("category", "General") for a in announcements if a.get("category"))))
 
 filtered = announcements
 if cat_filter != "All":
@@ -184,23 +185,22 @@ if filtered:
         with st.container(border=True):
             st.markdown(f"<h3 style='color:{accent_primary}; margin-bottom:0.5rem;'>{ann['title']}{pinned_tag}</h3>", unsafe_allow_html=True)
             st.caption(f"{ann.get('category', 'General')} • by {ann['posted_by']} • {ann['date']}")
-
             st.markdown(ann['message'])
 
-            # Attachments: Images first (visible via signed URL)
-            images = [att for att in ann["attachments"] if att["original_name"].lower().endswith(('.png','.jpg','.jpeg','.gif'))]
+            # Attachments: Images first (inline visible)
+            images = [att for att in ann.get("attachments", []) if att["original_name"].lower().endswith(('.png','.jpg','.jpeg','.gif'))]
             if images:
                 img_cols = st.columns(min(4, len(images)))
                 for i, att in enumerate(images):
                     signed = att.get("signed_url")
                     if signed:
                         with img_cols[i % 4]:
-                            st.image(signed, use_container_width=True, caption=att["original_name"])
+                            st.image(signed, use_column_width=True, caption=att["original_name"])
                     else:
                         st.caption(f"Image failed to load: {att['original_name']}")
 
             # Other files (downloadable)
-            non_images = [att for att in ann["attachments"] if not att["original_name"].lower().endswith(('.png','.jpg','.jpeg','.gif'))]
+            non_images = [att for att in ann.get("attachments", []) if not att["original_name"].lower().endswith(('.png','.jpg','.jpeg','.gif'))]
             if non_images:
                 st.markdown("**Attached Files:**")
                 for att in non_images:
@@ -232,8 +232,8 @@ if filtered:
                 st.rerun()
 
             # Comments
-            with st.expander(f"💬 Comments ({len(ann['comments'])})"):
-                for c in ann["comments"]:
+            with st.expander(f"💬 Comments ({len(ann.get('comments', []))})"):
+                for c in ann.get("comments", []):
                     ts = c["timestamp"][:16].replace("T", " ")
                     st.markdown(f"**{c['user_name']}** • {ts}")
                     st.markdown(c["message"])
@@ -252,7 +252,7 @@ if filtered:
                             st.cache_data.clear()
                             st.rerun()
 
-            # Admin controls
+            # Admin controls (pin/delete)
             if current_role in ["owner", "admin"]:
                 col_pin, col_del = st.columns(2)
                 with col_pin:
@@ -263,8 +263,8 @@ if filtered:
                 with col_del:
                     if st.button("🗑️ Delete Announcement", key=f"del_{ann['id']}", type="secondary"):
                         try:
-                            # Clean storage
-                            for att in ann["attachments"]:
+                            # Clean storage attachments
+                            for att in ann.get("attachments", []):
                                 if att.get("storage_path"):
                                     try:
                                         supabase.storage.from_("announcements").remove([att["storage_path"]])
@@ -284,7 +284,7 @@ if filtered:
 else:
     st.info("No announcements yet • Empire feed is ready for your broadcast!")
 
-# ─── MOTIVATIONAL FOOTER (sync style) ───
+# ─── MOTIVATIONAL FOOTER ───
 st.markdown(f"""
 <div style="padding:4rem 2rem; text-align:center; margin:5rem auto; max-width:1100px;
     border-radius:24px; border:2px solid {accent_primary}40;
