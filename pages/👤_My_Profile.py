@@ -38,7 +38,7 @@ if st.session_state.get("just_logged_in", False):
     st.session_state.pop("just_logged_in", None)
 
 # ────────────────────────────────────────────────
-# SCROLL-TO-TOP (same optimized script as Dashboard)
+# SCROLL-TO-TOP (same as Dashboard)
 # ────────────────────────────────────────────────
 st.markdown("""
 <script>
@@ -82,11 +82,11 @@ def get_user_data(username: str):
 
 user = get_user_data(st.session_state.username)
 if not user:
-    st.error("Profile data not found. Please try logging in again.")
+    st.error("Profile data not found. Please log out and log in again.")
     st.stop()
 
 # ────────────────────────────────────────────────
-# TABS FOR ADVANCED ORGANIZATION (fixed variable names to avoid NameError)
+# TABS FOR ADVANCED ORGANIZATION
 # ────────────────────────────────────────────────
 tab_overview, tab_accounts, tab_security, tab_settings, tab_activity = st.tabs([
     "Overview", "Accounts & Shares", "Security", "Settings", "Activity"
@@ -119,7 +119,7 @@ with tab_overview:
             </div>
             """, unsafe_allow_html=True)
 
-    # Editable personal info form
+    # Editable personal info
     with st.form("edit_personal"):
         st.markdown("**Edit Personal Details**")
         full_name_edit = st.text_input("Full Name", value=user.get("full_name", ""))
@@ -133,33 +133,39 @@ with tab_overview:
             if full_name_edit != user.get("full_name"): updates["full_name"] = full_name_edit
             if phone_edit != user.get("phone"): updates["phone"] = phone_edit
             if address_edit != user.get("address"): updates["address"] = address_edit
-            if dob_edit != user.get("dob"): updates["dob"] = str(dob_edit)
+            if dob_edit != user.get("dob"): updates["dob"] = str(dob_edit) if dob_edit else None
             if email_edit != user.get("email"): updates["email"] = email_edit
 
             if updates:
-                supabase.table("users").update(updates).eq("id", user["id"]).execute()
-                log_action("Profile Updated", f"User: {user['full_name']} - {updates}")
-                st.success("Details updated!")
-                st.rerun()
+                try:
+                    # Debug
+                    st.write("Debug - Updating user ID:", str(user["id"]))
+                    response = supabase.table("users").update(updates).eq("id", str(user["id"])).execute()
+                    log_action("Profile Updated", f"User: {user['full_name']} - {updates}")
+                    st.success("Personal details updated!")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Update failed: {str(e)}")
+                    st.write("Full error details:", e)
             else:
-                st.info("No changes.")
+                st.info("No changes detected.")
 
     # Profile Picture
     st.markdown("**Profile Picture**")
-    col_pic1, col_pic2 = st.columns([1, 3])
-    with col_pic1:
+    col1, col2 = st.columns([1, 3])
+    with col1:
         if user.get("profile_pic"):
             st.image(user["profile_pic"], width=150, caption="Current")
         else:
             st.info("No picture set")
 
-    with col_pic2:
+    with col2:
         uploaded = st.file_uploader("Upload new picture", type=["jpg", "jpeg", "png"])
         if uploaded and st.button("Upload & Save", type="primary"):
             with st.spinner("Uploading..."):
                 url, _ = upload_to_supabase(uploaded, bucket="profiles", folder="users")
                 if url:
-                    supabase.table("users").update({"profile_pic": url}).eq("id", user["id"]).execute()
+                    supabase.table("users").update({"profile_pic": url}).eq("id", str(user["id"])).execute()
                     log_action("Profile Pic Updated", f"User: {user['full_name']}")
                     st.success("Picture updated!")
                     st.rerun()
@@ -216,10 +222,10 @@ with tab_security:
     qr_token = user.get("qr_token")
     if not qr_token:
         qr_token = str(uuid.uuid4())
-        supabase.table("users").update({"qr_token": qr_token}).eq("id", user["id"]).execute()
+        supabase.table("users").update({"qr_token": qr_token}).eq("id", str(user["id"])).execute()
         log_action("QR Auto-Generated", f"User: {user['full_name']}")
 
-    qr_url = generate_qr_url("https://kmfxea.streamlit.app", qr_token)  # CHANGE TO YOUR ACTUAL APP URL
+    qr_url = generate_qr_url("https://kmfxea.streamlit.app", qr_token)  # ← CHANGE TO YOUR ACTUAL APP URL
     qr_bytes = generate_qr_image(qr_url)
 
     col_qr, col_info = st.columns([3, 2])
@@ -230,7 +236,7 @@ with tab_security:
         st.caption("Never share this token manually – only use the QR.")
         if st.button("🔄 Regenerate QR Code", type="primary", use_container_width=True):
             new_token = str(uuid.uuid4())
-            supabase.table("users").update({"qr_token": new_token}).eq("id", user["id"]).execute()
+            supabase.table("users").update({"qr_token": new_token}).eq("id", str(user["id"])).execute()
             log_action("QR Regenerated", f"User: {user['full_name']}")
             st.success("New QR generated! Refreshing...")
             st.rerun()
@@ -252,7 +258,7 @@ with tab_security:
         else:
             if bcrypt.checkpw(old_password.encode('utf-8'), user["password"].encode('utf-8')):
                 hashed = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-                supabase.table("users").update({"password": hashed}).eq("id", user["id"]).execute()
+                supabase.table("users").update({"password": hashed}).eq("id", str(user["id"])).execute()
                 log_action("Password Changed Successfully", f"User: {user['full_name']}")
                 st.success("Password updated! Logging you out for security...")
                 for key in ["authenticated", "username", "full_name", "role", "theme", "just_logged_in"]:
@@ -280,7 +286,7 @@ with tab_settings:
             "account_updates": acc_notif,
             "announcements": ann_notif
         }
-        supabase.table("users").update({"prefs": new_prefs}).eq("id", user["id"]).execute()
+        supabase.table("users").update({"prefs": new_prefs}).eq("id", str(user["id"])).execute()
         log_action("Preferences Updated", f"User: {user['full_name']}")
         st.success("Preferences saved!")
         st.rerun()
