@@ -1,10 +1,11 @@
 """
 Centralized Supabase clients – anon (normal) + service_role (bypass RLS)
 Usage:
-from utils.supabase_client import supabase, service_supabase
+from utils.supabase_client import supabase, service_supabase, auth
 
 - supabase: normal queries (follows RLS rules)
-- service_supabase: admin/QR verification, bypass RLS (use carefully!)
+- service_supabase: admin/QR verification (bypasses RLS – use carefully!)
+- auth: Supabase auth object (sign_in_with_otp, get_session, etc.)
 """
 from supabase import create_client, Client
 import streamlit as st
@@ -38,8 +39,6 @@ SUPABASE_KEY = eyJhbGciOiJIUzI1NiIs... (your anon/public key from Supabase → S
 
     try:
         client = create_client(url, key)
-        # Optional health check – uncomment to verify connection on init
-        # client.table("users").select("count", count="exact").limit(0).execute()
         return client
     except Exception as e:
         st.error(f"Failed to initialize anon Supabase client: {str(e)}\n\nCheck: URL and anon key are correct?")
@@ -73,6 +72,9 @@ This key bypasses RLS – never expose it in client-side code!
         st.error(f"Failed to initialize service Supabase client: {str(e)}\n\nCheck: service_role key is correct?")
         raise
 
+# ────────────────────────────────────────────────
 # Global exports – import these directly
+# ────────────────────────────────────────────────
 supabase: Client = get_anon_supabase()           # normal queries (follows RLS)
 service_supabase: Client = get_service_supabase()  # for QR/login bypass & admin tasks
+auth = supabase.auth                             # Supabase auth object (magic link, sessions, etc.)
