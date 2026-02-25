@@ -12,21 +12,21 @@ from utils.sidebar import render_sidebar
 from utils.supabase_client import supabase
 
 render_sidebar()
-require_auth(min_role="client")  # Everyone sees dashboard; owner/admin see extra
+require_auth(min_role="client")
 
-# ─── THEME COLORS (consistent across app) ───
+# ─── THEME COLORS ───
 accent_primary = "#00ffaa"
 accent_gold    = "#ffd700"
 accent_glow    = "#00ffaa40"
 accent_hover   = "#00ffcc"
 
-# ─── WELCOME + BALLOONS ON FRESH LOGIN ───
+# ─── WELCOME + BALLOONS ───
 if st.session_state.get("just_logged_in", False):
     st.balloons()
     st.success(f"Welcome back, {st.session_state.full_name}! 🚀 Empire scaling mode activated.")
     st.session_state.pop("just_logged_in", None)
 
-# ─── SCROLL-TO-TOP SCRIPT (optimized) ───
+# ─── SCROLL-TO-TOP ───
 st.markdown("""
 <script>
 function forceScrollToTop() {
@@ -48,15 +48,15 @@ setTimeout(forceScrollToTop, 2000);
 </script>
 """, unsafe_allow_html=True)
 
-# ─── HEADER + DESCRIPTION ───
+# ─── HEADER ───
 st.header("Elite Empire Command Center 🚀")
 st.markdown("**Realtime, fully automatic empire overview** • Every transaction syncs instantly • Trees update live • Empire scales itself")
 
-# ─── OPTIMIZED DATA FETCH (cached 30s) ───
+# ─── DATA FETCH (with name lookup fix) ───
 @st.cache_data(ttl=30, show_spinner="Loading empire overview...")
 def fetch_empire_summary():
     try:
-        # Fast totals from materialized views
+        # Fast totals from MVs
         gf_resp = supabase.table("mv_growth_fund_balance").select("balance").execute()
         gf_balance = gf_resp.data[0].get("balance", 0.0) if gf_resp.data else 0.0
 
@@ -69,7 +69,7 @@ def fetch_empire_summary():
         client_resp = supabase.table("mv_client_balances").select("*").execute()
         total_client_balances = client_resp.data[0].get("total_client_balances", 0.0) if client_resp.data else 0.0
 
-        # Lightweight raw data
+        # Raw data
         accounts = supabase.table("ftmo_accounts").select("*").execute().data or []
         profits = supabase.table("profits").select("gross_profit").execute().data or []
         distributions = supabase.table("profit_distributions").select("share_amount, participant_name, is_growth_fund").execute().data or []
@@ -83,11 +83,20 @@ def fetch_empire_summary():
                 name = d.get("participant_name", "Unknown")
                 participant_shares[name] = participant_shares.get(name, 0) + d.get("share_amount", 0)
 
+        # ─── FIXED: Resolve contributor names via user lookup ───
+        # Pre-fetch all users for fast lookup (cache-friendly)
+        all_users = supabase.table("users").select("id, full_name").execute().data or []
+        user_map = {u["id"]: u["full_name"] for u in all_users}
+
         total_funded_php = 0
         for acc in accounts:
             contrib = acc.get("contributors_v2") or acc.get("contributors", [])
             for c in contrib:
-                total_funded_php += c.get("units", 0) * (c.get("php_per_unit", 0) or 0)
+                # Try to get name from user_id if present
+                user_id = c.get("user_id") or c.get("id")
+                name = user_map.get(user_id, c.get("display_name") or c.get("name", "Anonymous"))
+                funded = c.get("units", 0) * (c.get("php_per_unit", 0) or 0)
+                total_funded_php += funded
 
         return (
             accounts, total_accounts, total_equity, total_withdrawable,
@@ -104,7 +113,7 @@ def fetch_empire_summary():
     total_client_balances, participant_shares, total_funded_php
 ) = fetch_empire_summary()
 
-# ─── METRICS GRID (responsive glass cards) ───
+# ─── METRICS GRID ───
 st.markdown(f"""
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.2rem; margin: 2rem 0;">
     <div class="glass-card" style="text-align:center; padding:1.5rem; border-radius:12px;">
@@ -142,7 +151,7 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# ─── QUICK ACTIONS (role-aware) ───
+# ─── QUICK ACTIONS ───
 st.subheader("⚡ Quick Actions")
 action_cols = st.columns(3)
 current_role = st.session_state.get("role", "client").lower()
@@ -197,7 +206,17 @@ with tab_contrib:
     for acc in accounts:
         contrib = acc.get("contributors_v2") or acc.get("contributors", [])
         for c in contrib:
-            name = c.get("display_name") or c.get("name", "Unknown")
+            # FIXED: Proper name resolution
+            user_id = c.get("user_id") or c.get("id")
+            name = "Anonymous"
+            if user_id:
+                # Quick lookup (you can cache this if needed)
+                user = supabase.table("users").select("full_name").eq("id", user_id).single().execute()
+                if user.data:
+                    name = user.data.get("full_name", "Anonymous")
+            else:
+                name = c.get("display_name") or c.get("name", "Anonymous")
+
             funded = c.get("units", 0) * (c.get("php_per_unit", 0) or 0)
             funded_by[name] = funded_by.get(name, 0) + funded
 
@@ -222,7 +241,7 @@ with tab_contrib:
     else:
         st.info("No contributors yet • Add in FTMO Accounts page")
 
-# ─── LIVE ACCOUNTS GRID + MINI TREES ───
+# ─── LIVE ACCOUNTS GRID + FIXED MINI TREES ───
 st.subheader("📊 Live Accounts (Realtime Metrics & Trees)")
 if accounts:
     for acc in accounts:
@@ -262,11 +281,23 @@ if accounts:
 
         with tab_c:
             if contrib:
-                labels = ["Funded"] + [c.get("display_name") or c.get("name", "?") for c in contrib]
-                vals = [c.get("units", 0) * (c.get("php_per_unit", 0) or 0) for c in contrib]
+                contrib_labels = ["Funded"]
+                contrib_vals = []
+                for c in contrib:
+                    user_id = c.get("user_id") or c.get("id")
+                    name = "Anonymous"
+                    if user_id:
+                        user = supabase.table("users").select("full_name").eq("id", user_id).single().execute()
+                        if user.data:
+                            name = user.data.get("full_name", "Anonymous")
+                    else:
+                        name = c.get("display_name") or c.get("name", "Anonymous")
+                    contrib_labels.append(name)
+                    contrib_vals.append(c.get("units", 0) * (c.get("php_per_unit", 0) or 0))
+
                 fig_c = go.Figure(go.Sankey(
-                    node=dict(pad=15, thickness=20, label=labels),
-                    link=dict(source=[0]*len(vals), target=list(range(1,len(labels))), value=vals)
+                    node=dict(pad=15, thickness=20, label=contrib_labels),
+                    link=dict(source=[0]*len(contrib_vals), target=list(range(1,len(contrib_labels))), value=contrib_vals)
                 ))
                 fig_c.update_layout(height=350, title="Contributors Funding Flow (PHP)")
                 st.plotly_chart(fig_c, use_container_width=True)
