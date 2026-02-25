@@ -169,46 +169,28 @@ st.markdown(f"""
 </style>
 """, unsafe_allow_html=True)
 
-# ────────────────────────────────────────────────
-# QR AUTO-LOGIN – FIXED & SECURE VERSION
-# Uses service_role to bypass RLS + clears token after use
-# ────────────────────────────────────────────────
+# QR AUTO-LOGIN
 params = st.query_params
 qr_token = params.get("qr", [None])[0]
 
 if qr_token and not authenticated:
     try:
-        # === USE SERVICE ROLE CLIENT (bypasses RLS) ===
-        service_key = st.secrets.get("SUPABASE_SERVICE_ROLE_KEY")
-        if not service_key:
-            st.error("Missing SUPABASE_SERVICE_ROLE_KEY in secrets! QR verification failed.")
-            st.query_params.clear()
-            st.stop()
-
-        # Create temporary service client (safe for this block)
-        from supabase import create_client
-        service_supabase = create_client(
-            supabase_url=st.secrets["SUPABASE_URL"],
-            supabase_key=service_key
-        )
-
-        # Query user with exact token match
+        # Use SERVICE client to bypass RLS
         resp = service_supabase.table("users").select(
             "id, username, full_name, role"
         ).eq("qr_token", qr_token.strip()).execute()
 
         if not resp.data:
-            st.error("Invalid or revoked QR code. Please generate a new one.")
+            st.error("Invalid or revoked QR code. Generate a new one.")
             st.query_params.clear()
         else:
             user = resp.data[0]
 
-            # Clear token after success (makes it one-time use – security best practice)
+            # Clear token (one-time use)
             service_supabase.table("users").update(
                 {"qr_token": None}
             ).eq("id", user["id"]).execute()
 
-            # Set session state
             st.session_state.authenticated = True
             st.session_state.username = user["username"]
             st.session_state.full_name = user["full_name"] or user["username"]
@@ -216,11 +198,10 @@ if qr_token and not authenticated:
             st.session_state.theme = "light"
             st.session_state.just_logged_in = True
 
-            # Log success
             from utils.helpers import log_action
             log_action("QR Login Success", f"User: {user['full_name']} | Role: {user['role']}")
 
-            st.success("QR Login successful! Redirecting...")
+            st.success("QR Login successful!")
             st.query_params.clear()
             st.rerun()
 
