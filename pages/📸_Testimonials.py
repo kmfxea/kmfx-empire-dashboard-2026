@@ -164,7 +164,7 @@ if approved:
             """, unsafe_allow_html=True)
 
             if display_url:
-                # Try direct URL first
+                # Reliable bytes load (fixes most Streamlit image issues)
                 try:
                     r = requests.get(display_url, timeout=5)
                     if r.status_code == 200:
