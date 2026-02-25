@@ -17,12 +17,7 @@ import os
 # ── Centralized imports ────────────────────────────────────────────────────────
 from utils.supabase_client import supabase, service_supabase, auth  # ← added auth (needed for magic link)
 
-from utils.auth import (
-    send_magic_link,
-    handle_magic_link_callback as handle_auth_callback,
-    is_authenticated,
-    require_auth,
-)
+from utils.auth import send_magic_link, handle_auth_callback, is_authenticated, require_auth
 
 # Keep-alive for Streamlit Cloud
 start_keep_alive_if_needed()
