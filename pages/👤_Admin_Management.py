@@ -3,7 +3,7 @@ import streamlit as st
 import uuid
 import qrcode
 from io import BytesIO
-import bcrypt  # assuming you have bcrypt for password hashing
+import bcrypt  # assuming bcrypt is used for password hashing
 
 # ────────────────────────────────────────────────
 # AUTH + SIDEBAR + REQUIRE AUTH (must be first)
@@ -66,7 +66,7 @@ if st.button("🔄 Refresh Team Management Now", type="secondary", use_container
     st.cache_data.clear()
     st.rerun()
 
-st.caption("🔄 Team auto-refreshes every 30s • All changes (titles, details, balances) instantly sync across empire")
+st.caption("🔄 Team auto-refreshes every 30s • All changes (titles, details, balances, QR tokens) instantly sync across empire")
 
 # ─── TEAM SUMMARY METRICS ───
 team = [u for u in users if u.get("username") != "kingminted"]  # Exclude owner if needed
@@ -184,7 +184,7 @@ if team:
             # QR Code Management
             st.markdown("### 🔑 Quick Login QR Code")
             current_qr_token = u.get("qr_token")
-            app_url = "https://kmfxeaftmo.streamlit.app"  # Update if your app URL changes
+            app_url = "https://kmfxea.streamlit.app"  # ← Updated to your correct domain
             qr_url = f"{app_url}/?qr={current_qr_token}" if current_qr_token else None
 
             if current_qr_token:
@@ -212,25 +212,26 @@ if team:
 
                 col_regen, col_revoke = st.columns(2)
                 with col_regen:
-                    if st.button("🔄 Regenerate Token", key=f"regen_{u['id']}"):
+                    if st.button("🔄 Regenerate QR Code", key=f"regen_{u['id']}"):
                         new_token = str(uuid.uuid4())
                         supabase.table("users").update({"qr_token": new_token}).eq("id", u["id"]).execute()
-                        st.success("New token generated • Old one revoked")
+                        st.success("New QR token generated • Old one revoked")
                         st.balloons()
                         st.cache_data.clear()
                         st.rerun()
                 with col_revoke:
-                    if st.button("❌ Revoke Token", key=f"revoke_{u['id']}", type="secondary"):
+                    if st.button("❌ Revoke QR Code", key=f"revoke_{u['id']}", type="secondary"):
                         supabase.table("users").update({"qr_token": None}).eq("id", u["id"]).execute()
-                        st.success("Token revoked • QR login disabled")
+                        st.success("QR token revoked • Login code disabled")
                         st.cache_data.clear()
                         st.rerun()
             else:
-                st.info("No QR login token generated yet")
-                if st.button("🚀 Generate QR Token", key=f"gen_{u['id']}"):
+                st.info("No QR login code generated yet")
+                if st.button("🚀 Generate QR Code", key=f"gen_{u['id']}"):
                     new_token = str(uuid.uuid4())
                     supabase.table("users").update({"qr_token": new_token}).eq("id", u["id"]).execute()
-                    st.success("Token generated • Refresh to view QR")
+                    st.success("QR code generated • Refresh to view")
+                    st.balloons()
                     st.cache_data.clear()
                     st.rerun()
 
