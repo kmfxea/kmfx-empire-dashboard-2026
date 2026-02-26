@@ -347,64 +347,99 @@ if not st.session_state.authenticated:
     st.markdown("</div>", unsafe_allow_html=True)
 
     # ── Pioneers Carousel ─────────────────────────────────────────────
+st.markdown(f"""
+<div class="glass-card" style="max-width:1200px; margin:3rem auto; padding:1.8rem 1.5rem;">
+    <h2 style="margin:0 0 1.5rem 0; text-align:center; font-size:2.2rem; padding:0; background:none !important;">
+        {txt('pioneers_title')}
+    </h2>
+    <div class="pioneers-carousel-container" style="position:relative; overflow:hidden; padding:0.5rem 0;">
+        <button class="carousel-arrow left-arrow" onclick="document.querySelector('.pioneers-carousel').scrollBy({{left: -340, behavior: 'smooth'}})">‹</button>
+        <div class="pioneers-carousel" style="display:flex; flex-direction:row; flex-wrap:nowrap; gap:1.8rem; overflow-x:auto; scroll-snap-type:x mandatory; scroll-behavior:smooth; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding:1rem 0;">
+""", unsafe_allow_html=True)
+
+pioneers = [
+    {"name": "Weber", "since": "Dec 2025", "earnings": "+$1,284", "gain": "+128.4%", "quote": "Best decision ever!", "photo": "assets/weber.jpg"},
+    {"name": "Ramil", "since": "Jan 2026", "earnings": "+$2,150", "gain": "+215%", "quote": "Stable daily profits.", "photo": "assets/ramil.jpg"},
+    # Add more pioneers here as needed
+]
+
+for p in pioneers:
+    photo_url = p["photo"] if os.path.exists(p["photo"]) else f"https://via.placeholder.com/140/222/ffd700?text={p['name'][0]}"
     st.markdown(f"""
-    <div class="glass-card" style="max-width:1200px; margin:3.5rem auto; padding:2.5rem 2rem;">
-        <h2 style="margin-bottom:2.2rem; text-align:center;">{txt('pioneers_title')}</h2>
-        <div class="pioneers-carousel-container" style="position:relative; overflow:hidden; padding:1.5rem 0;">
-            <button class="carousel-arrow left-arrow" onclick="document.querySelector('.pioneers-carousel').scrollBy({{left: -320, behavior: 'smooth'}})">‹</button>
-            <div class="pioneers-carousel" style="display:flex; flex-direction:row; flex-wrap:nowrap; gap:2rem; overflow-x:auto; scroll-snap-type:x mandatory; scroll-behavior:smooth; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding:1rem 0;">
-    """, unsafe_allow_html=True)
-
-    pioneers = [
-        {"name": "Weber", "since": "Dec 2025", "earnings": "+$1,284", "gain": "+128.4%", "quote": "Best decision ever!", "photo": "assets/weber.jpg"},
-        {"name": "Ramil", "since": "Jan 2026", "earnings": "+$2,150", "gain": "+215%", "quote": "Stable daily profits.", "photo": "assets/ramil.jpg"},
-        # Add more pioneers here as needed
-    ]
-
-    for p in pioneers:
-        photo_url = p["photo"] if os.path.exists(p["photo"]) else f"https://via.placeholder.com/140/222/ffd700?text={p['name'][0]}"
-        st.markdown(f"""
-        <div class="pioneer-card" style="flex:0 0 280px; width:280px; height:380px; border-radius:24px; overflow:hidden; background:rgba(30,35,55,0.9); border:1px solid rgba(255,215,0,0.2); box-shadow:0 10px 30px rgba(0,0,0,0.45); transition:all 0.35s ease; scroll-snap-align:center;">
-            <img src="{photo_url}" style="width:140px; height:140px; border-radius:50%; border:4px solid {accent_orange}; margin:2.2rem auto 1.5rem; display:block; object-fit:cover; box-shadow:0 6px 20px rgba(255,98,0,0.35);">
-            <div style="font-size:1.45rem; font-weight:700; color:{accent_orange}; margin:0.5rem 0; text-align:center;">{p['name']}</div>
-            <div style="font-size:1rem; color:{text_muted}; text-align:center;">since {p['since']}</div>
-            <div style="margin-top:1.5rem; padding:0 1rem; text-align:center;">
-                <div style="font-size:1.6rem; color:{accent_green}; font-weight:700;">{p['earnings']}</div>
-                <div style="font-size:1.3rem; color:{accent_green};">{p['gain']}</div>
-                <div style="font-style:italic; margin-top:1rem; opacity:0.9;">“{p['quote']}”</div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    st.markdown("""
-            </div>
-            <button class="carousel-arrow right-arrow" onclick="document.querySelector('.pioneers-carousel').scrollBy({left: 320, behavior: 'smooth'})">›</button>
+    <div class="pioneer-card" style="flex:0 0 280px; min-width:280px; height:380px; border-radius:20px; overflow:hidden; background:rgba(30,35,55,0.85); border:1px solid rgba(255,215,0,0.25); box-shadow:0 8px 25px rgba(0,0,0,0.4); transition:all 0.35s ease; scroll-snap-align:center;">
+        <img src="{photo_url}" style="width:130px; height:130px; border-radius:50%; border:4px solid {accent_orange}; margin:1.8rem auto 1.2rem; display:block; object-fit:cover; box-shadow:0 5px 15px rgba(255,98,0,0.3);">
+        <div style="font-size:1.4rem; font-weight:700; color:{accent_orange}; margin:0.4rem 0; text-align:center;">{p['name']}</div>
+        <div style="font-size:0.95rem; color:{text_muted}; text-align:center; opacity:0.9;">since {p['since']}</div>
+        <div style="margin-top:1.2rem; padding:0 1rem; text-align:center;">
+            <div style="font-size:1.55rem; color:{accent_green}; font-weight:700;">{p['earnings']}</div>
+            <div style="font-size:1.25rem; color:{accent_green};">{p['gain']}</div>
+            <div style="font-style:italic; margin-top:0.8rem; opacity:0.85; font-size:0.95rem;">“{p['quote']}”</div>
         </div>
     </div>
-
-    <style>
-        .carousel-arrow {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(30,35,55,0.8);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 48px;
-            height: 48px;
-            font-size: 2rem;
-            cursor: pointer;
-            z-index: 10;
-            backdrop-filter: blur(8px);
-        }
-        .left-arrow { left: 12px; }
-        .right-arrow { right: 12px; }
-        @media (max-width: 768px) {
-            .carousel-arrow { width:42px; height:42px; font-size:1.7rem; }
-        }
-    </style>
     """, unsafe_allow_html=True)
+
+st.markdown("""
+        </div>
+        <button class="carousel-arrow right-arrow" onclick="document.querySelector('.pioneers-carousel').scrollBy({left: 340, behavior: 'smooth'})">›</button>
+    </div>
+</div>
+
+<style>
+    .carousel-arrow {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(30,35,55,0.95) !important;     /* mas makapal na background */
+        color: white;
+        border: 2px solid {accent_gold} !important;     /* makapal na border */
+        border-radius: 50%;
+        width: 54px !important;
+        height: 54px !important;
+        font-size: 2.2rem !important;
+        font-weight: bold !important;
+        cursor: pointer;
+        z-index: 20 !important;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.4) !important;
+        transition: all 0.25s ease;
+    }
+    .carousel-arrow:hover {
+        background: rgba(50,55,75,1) !important;
+        transform: translateY(-50%) scale(1.12);
+        box-shadow: 0 8px 25px rgba(255,215,0,0.35) !important;
+    }
+    .left-arrow { left: 0px; }
+    .right-arrow { right: 0px; }
+    .pioneers-carousel-container {
+        padding: 0 60px !important;  /* space para sa arrows sa gilid */
+    }
+    @media (max-width: 768px) {
+        .carousel-arrow {
+            width: 48px !important;
+            height: 48px !important;
+            font-size: 1.9rem !important;
+        }
+        .pioneers-carousel-container {
+            padding: 0 50px !important;
+        }
+        .pioneer-card {
+            flex: 0 0 260px !important;
+            min-width: 260px !important;
+            height: 360px !important;
+        }
+    }
+    @media (max-width: 480px) {
+        .carousel-arrow {
+            width: 44px !important;
+            height: 44px !important;
+            font-size: 1.8rem !important;
+        }
+        .pioneers-carousel-container {
+            padding: 0 40px !important;
+        }
+    }
+</style>
+""", unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
 # ORIGIN STORY / JOURNEY (condensed version – shown by default)
