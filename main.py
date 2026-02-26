@@ -330,7 +330,7 @@ if not authenticated:
     </div>
     """, height=420)
 
-    # ── Waitlist Form (FINAL FIX: minimal insert to bypass quoting bug, bilingual, great UX) ──
+    # ── Waitlist Form (FINAL FIX: use RPC to bypass quoting bug, bilingual, great UX) ──
 st.markdown("<div class='glass-card' style='padding: 2.5rem; border-radius: 24px;'>", unsafe_allow_html=True)
 
 st.markdown(f"""
@@ -349,7 +349,7 @@ with st.form("waitlist_form", clear_on_submit=True):
             txt("name"),
             placeholder="Juan Dela Cruz" if st.session_state.language == "en" else "Juan Dela Cruz",
             key="waitlist_fullname",
-            help="Pwede ring nickname o full name mo lang (pwede pang idagdag sa dashboard later)"
+            help="Pwede ring nickname o full name mo lang"
         )
     
     with col2:
@@ -368,8 +368,7 @@ with st.form("waitlist_form", clear_on_submit=True):
             if st.session_state.language == "tl"
             else "Example: I'm tired of manual trading and want a stable automated system..."
         ),
-        key="waitlist_message",
-        help="Opsyonal lang — pwede pang idagdag sa dashboard kung gusto mo"
+        key="waitlist_message"
     )
     
     submitted = st.form_submit_button(
@@ -379,7 +378,6 @@ with st.form("waitlist_form", clear_on_submit=True):
         help="We respect your privacy — email mo lang ang iingatan namin."
     )
 
-# Process submission
 if submitted:
     email = email_input.strip().lower()
     
@@ -395,16 +393,12 @@ if submitted:
         )
     else:
         try:
-            # Minimal insert – ONLY email + language (bypasses quoting bug in full_name/message)
-            supabase.table("waitlist").insert({
-                "email": email,
-                "language": st.session_state.language,
-                # full_name and message commented out to avoid error
-                # "full_name": full_name.strip() if full_name else None,
-                # "message": message.strip() if message else None,
+            # Use RPC function – bypasses PostgREST quoting bug completely
+            supabase.rpc("insert_waitlist_safe", {
+                "p_email": email,
+                "p_language": st.session_state.language
             }).execute()
 
-            # Success message
             st.success(
                 "Salamat! Nasa waitlist ka na. Makakatanggap ka ng welcome email shortly 👑" 
                 if st.session_state.language == "tl"
@@ -413,24 +407,22 @@ if submitted:
             st.balloons()
 
             st.caption(
-                "Check your inbox (and spam folder) for the confirmation email. "
-                "Name & message can be added later in the dashboard if needed."
+                "Check your inbox (and spam folder) for the confirmation email."
                 if st.session_state.language == "en"
-                else "Check mo ang inbox mo (at spam folder) para sa welcome email. "
-                "Pwede pang idagdag ang name at message sa dashboard kung gusto."
+                else "Check mo ang inbox mo (at spam folder) para sa welcome email."
             )
 
         except Exception as e:
             error_text = str(e).lower()
             if "duplicate" in error_text or "unique" in error_text:
                 st.info(
-                    "Nasa waitlist na pala ang email mo — salamat sa suporta! Keep following lang."
+                    "Nasa waitlist na pala ang email mo — salamat! Keep following lang."
                     if st.session_state.language == "tl"
                     else "Looks like you're already on the waitlist — thank you! Stay tuned."
                 )
             else:
-                st.error(f"Error saving: {str(e)}")
-                st.code(str(e), language="text")  # shows full details for debugging
+                st.error(f"Error: {str(e)}")
+                st.code(str(e), language="text")  # full error for debug
 
 st.markdown("</div>", unsafe_allow_html=True)
 
