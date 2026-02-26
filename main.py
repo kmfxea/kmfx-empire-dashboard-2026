@@ -1,7 +1,9 @@
 # main.py - KMFX EA Public Landing + Login Page
-# Updated: February 2026 with improved mobile/tablet responsiveness
+# Latest: February 2026 - premium dark/orange glassmorphism, robust mobile, reliable widgets
+
 import streamlit as st
 import yfinance as yf
+import os
 from datetime import datetime, timedelta
 from PIL import Image
 from utils.supabase_client import supabase
@@ -15,9 +17,7 @@ from utils.helpers import (
 
 start_keep_alive_if_needed()
 
-# ────────────────────────────────────────────────
-# SESSION & AUTH CHECK FIRST
-# ────────────────────────────────────────────────
+# ── Auth & Page Config ───────────────────────────────────────────────
 authenticated = is_authenticated()
 
 if authenticated:
@@ -36,122 +36,110 @@ else:
         initial_sidebar_state="collapsed"
     )
 
-# ────────────────────────────────────────────────
-# THEME VARIABLES
-# ────────────────────────────────────────────────
-accent_gold = "#ffd700"
-accent_glow = "#ffd70050"
-accent_primary = "#00ffaa"
-accent_hover = "#ffea80"
-bg_color = "#0d1117"
-card_bg = "rgba(20, 25, 40, 0.88)"
-border_color = "rgba(255,215,0,0.22)"
-text_primary = "#e2e8f0"
-text_muted = "#a0aec0"
-card_shadow = "0 8px 32px rgba(0,0,0,0.55)"
+# ── Theme Variables ──────────────────────────────────────────────────
+accent_gold    = "#ffd700"
+accent_glow    = "#ffd70050"
+accent_orange  = "#ff6200"
+accent_hover  = "#ff8533"
+accent_green   = "#00ffaa"
+bg_color       = "#0d1117"
+card_bg        = "rgba(20, 25, 40, 0.88)"
+border_color   = "rgba(255,215,0,0.22)"
+text_primary   = "#e2e8f0"
+text_muted     = "#a0aec0"
+card_shadow    = "0 10px 35px rgba(0,0,0,0.48)"
 
 st.markdown(f"""
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
-
 <style>
-    /* ── Safe global resets ── */
-    * {{
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-    }}
-
+    * {{ box-sizing: border-box; margin:0; padding:0; }}
     html, body, [class*="css-"] {{
         font-family: 'Inter', system-ui, sans-serif;
         font-size: 16px;
         line-height: 1.6;
         color: {text_primary};
     }}
-
     .stApp {{
-        background: linear-gradient(135deg, {bg_color} 0%, #0f1622 100%);
+        background: linear-gradient(135deg, {bg_color} 0%, #0f1622 100%) !important;
     }}
-
-    /* ── Main container ── */
     .main .block-container {{
         max-width: 1180px;
         padding: 2.5rem 4rem;
         margin: 0 auto;
     }}
-
-    /* ── Typography – orange titles like before + gold glow for accent ── */
     h1, h2, h3, h4 {{
         font-family: 'Playfair Display', serif;
-        color: #ff6200;                 /* ← orange main title color */
+        color: {accent_orange};
         text-align: center;
         text-shadow: 0 0 12px rgba(255,98,0,0.5);
-        margin: 1rem 0 0.8rem;
+        margin: 1.2rem 0 0.8rem;
     }}
-
     h1 {{ font-size: 3.8rem; font-weight: 800; letter-spacing: -0.6px; }}
     h2 {{ font-size: 2.7rem; font-weight: 700; margin: 2.8rem 0 1.6rem; }}
     h3 {{ font-size: 2.1rem; font-weight: 600; }}
-
-    /* ── Gold accent text (for prices, gains, etc.) ── */
-    .gold-text {{
-        color: {accent_gold};
-        text-shadow: 0 0 14px {accent_glow};
-    }}
-
-    /* ── Glass cards (common) ── */
+    .gold-text {{ color: {accent_gold}; text-shadow: 0 0 14px {accent_glow}; }}
     .glass-card {{
-        background: rgba(20,25,40,0.92);
+        background: {card_bg};
         backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
         border-radius: 20px;
-        border: 1px solid rgba(255,215,0,0.18);
+        border: 1px solid {border_color};
         padding: 2.2rem 2.6rem;
-        box-shadow: 0 10px 35px rgba(0,0,0,0.45);
+        box-shadow: {card_shadow};
         margin: 2.5rem auto;
         max-width: 1100px;
+        transition: transform 0.28s ease, box-shadow 0.28s ease;
     }}
-
-    /* ── Primary button ── */
+    .glass-card:hover {{
+        transform: translateY(-6px);
+        box-shadow: 0 18px 48px rgba(0,0,0,0.55);
+    }}
     button[kind="primary"] {{
-        background: linear-gradient(90deg, #00ffaa, #ffea80);
-        color: #000;
-        border: none;
-        border-radius: 12px;
-        padding: 0.9rem 2rem;
-        font-size: 1.1rem;
-        font-weight: 600;
-        box-shadow: 0 5px 18px rgba(0,255,170,0.4);
+        background: linear-gradient(90deg, {accent_green}, #ffea80) !important;
+        color: #000 !important;
+        border: none !important;
+        border-radius: 12px !important;
+        padding: 0.9rem 2rem !important;
+        font-weight: 600 !important;
+        box-shadow: 0 5px 18px rgba(0,255,170,0.4) !important;
     }}
     button[kind="primary"]:hover {{
         transform: translateY(-2px) scale(1.02);
-        box-shadow: 0 10px 30px rgba(0,255,170,0.6);
+        box-shadow: 0 10px 30px rgba(0,255,170,0.6) !important;
     }}
-
-    /* ── RESPONSIVE ── */
+    /* Language toggle */
+    .lang-toggle-container {{
+        position: fixed;
+        top: 1.2rem;
+        right: 1.8rem;
+        z-index: 1000;
+    }}
+    .lang-toggle-btn {{
+        background: linear-gradient(135deg, {accent_orange}, {accent_hover}) !important;
+        color: white !important;
+        border-radius: 999px !important;
+        padding: 0.75rem 1.5rem !important;
+        font-weight: 700 !important;
+        box-shadow: 0 6px 20px rgba(255,98,0,0.5) !important;
+    }}
+    /* Responsive */
     @media (max-width: 992px) {{
         .main .block-container {{ padding: 2rem 3rem; }}
-        h1 {{ font-size: 3.2rem; }}
-        h2 {{ font-size: 2.4rem; }}
+        h1 {{ font-size: 3.2rem; }} h2 {{ font-size: 2.4rem; }}
     }}
-
     @media (max-width: 768px) {{
         .main .block-container {{ padding: 1.6rem 2.2rem; }}
-        h1 {{ font-size: 2.7rem; }}
-        h2 {{ font-size: 2.1rem; }}
-        .glass-card {{ padding: 1.8rem 2rem; }}
+        h1 {{ font-size: 2.7rem; }} h2 {{ font-size: 2.1rem; }}
+        .glass-card {{ padding: 1.8rem 2rem; margin: 2rem 1rem; }}
     }}
-
     @media (max-width: 480px) {{
-        .main .block-container {{ padding: 1.3rem 1.6rem; }}
-        h1 {{ font-size: 2.3rem; }}
-        h2 {{ font-size: 1.9rem; }}
-        .glass-card {{ padding: 1.5rem 1.6rem; margin: 2rem auto; }}
+        h1 {{ font-size: 2.3rem; }} h2 {{ font-size: 1.9rem; }}
+        .glass-card {{ padding: 1.5rem 1.6rem; }}
     }}
 </style>
 """, unsafe_allow_html=True)
 
-# ────────────────────────────────────────────────
-# LANGUAGE TOGGLE – orange background, top-right, fixed & mobile-friendly
-# ────────────────────────────────────────────────
+# ── Language ─────────────────────────────────────────────────────────
 if "language" not in st.session_state:
     st.session_state.language = "en"
 
@@ -185,91 +173,36 @@ texts = {
 def txt(key):
     return texts[st.session_state.language].get(key, key)
 
-# ────────────────────────────────────────────────
-# FULL CSS STYLING
-# ────────────────────────────────────────────────
-st.markdown(f"""
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+st.markdown("""
 <style>
-    html, body, [class*="css-"] {{
-        font-family: 'Poppins', sans-serif !important;
-        font-size: 15px !important;
-    }}
-    .stApp {{
-        background: {bg_color};
-        color: {text_primary};
-    }}
-    h1, h2, h3, h4, h5, h6, p, div, span, label, .stMarkdown {{
-        color: {text_primary} !important;
-    }}
-    small, caption, .caption {{
-        color: {text_muted} !important;
-    }}
-    .glass-card {{
-        background: {card_bg};
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border-radius: 20px;
-        border: 1px solid {border_color};
-        padding: 2.2rem !important;
-        box-shadow: {card_shadow};
-        transition: all 0.3s ease;
-        margin: 2rem auto;
-        max-width: 1100px;
-    }}
-    .glass-card:hover {{
-        box-shadow: 0 15px 40px {accent_glow if theme=='dark' else 'rgba(0,0,0,0.2)'};
-        transform: translateY(-6px);
-        border-color: {accent_primary};
-    }}
-    .gold-text {{
-        color: {accent_gold} !important;
-        font-weight: 600;
-        letter-spacing: 0.5px;
-    }}
-    /* ... rest of your CSS remains the same ... */
-    button[kind="primary"] {{
-        background: {accent_primary} !important;
-        color: #000000 !important;
-        border-radius: 16px !important;
-        box-shadow: 0 6px 20px {accent_glow} !important;
-        padding: 1rem 2rem !important;
-        font-size: 1.2rem !important;
-    }}
-    button[kind="primary"]:hover {{
-        background: {accent_hover} !important;
-        box-shadow: 0 12px 35px {accent_glow} !important;
-        transform: translateY(-3px);
-    }}
-    header[data-testid="stHeader"] {{
-        background-color: {bg_color} !important;
-        backdrop-filter: blur(20px);
-    }}
-    section[data-testid="stSidebar"] {{
-        background: {sidebar_bg} !important;
-        backdrop-filter: blur(20px);
-        border-right: 1px solid {border_color};
-    }}
-    @media (max-width: 768px) {{
-        .public-hero {{ padding: 4rem 1rem 3rem; min-height: 70vh; }}
-        .glass-card {{ padding: 1.5rem !important; max-width: 95% !important; }}
-    }}
+    .lang-toggle-container { position: fixed; top: 1.2rem; right: 1.8rem; z-index: 1000; }
+    .lang-toggle-btn {
+        background: linear-gradient(135deg, #ff6200, #ff8533) !important;
+        color: white !important;
+        border-radius: 999px !important;
+        padding: 0.75rem 1.5rem !important;
+        font-weight: 700 !important;
+        box-shadow: 0 6px 20px rgba(255,98,0,0.5) !important;
+    }
+    @media (max-width: 480px) {
+        .lang-toggle-container { top: 0.9rem; right: 1rem; }
+        .lang-toggle-btn { padding: 0.6rem 1.2rem !important; font-size: 0.95rem !important; }
+    }
 </style>
 """, unsafe_allow_html=True)
 
-
-if st.button("EN / TL", key="lang_toggle", help="Switch to English / Tagalog"):
+st.markdown('<div class="lang-toggle-container">', unsafe_allow_html=True)
+if st.button("EN / TL", key="lang_toggle", help="Switch language"):
     st.session_state.language = "tl" if st.session_state.language == "en" else "en"
     st.rerun()
-
 st.markdown('</div>', unsafe_allow_html=True)
 
-# ────────────────────────────────────────────────
-# LOGO + HERO – ultra-reliable centering on all devices
-# ────────────────────────────────────────────────
-
+# ── Hero ─────────────────────────────────────────────────────────────
 st.markdown('<div style="text-align:center; margin:2.5rem 0 2rem;">', unsafe_allow_html=True)
-st.image("assets/logo.png", use_column_width=False)
+if os.path.exists("assets/logo.png"):
+    st.image("assets/logo.png", use_column_width=False)
+else:
+    st.markdown("**[KMFX EA Logo]**", unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown(f"""
@@ -285,94 +218,86 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# ────────────────────────────────────────────────
-# LIVE GOLD PRICE + REALTIME TRADINGVIEW MINI CHART – back to original ticker, better size & reliability
-# ────────────────────────────────────────────────
-
-@st.cache_data(ttl=30)  # medyo mas matagal para hindi masyadong mag-re-fetch, pero sapat pa rin
+# ── Live Gold Price ──────────────────────────────────────────────────
+@st.cache_data(ttl=300)
 def get_gold_price():
     try:
-        t = yf.Ticker("GC=F").info
-        price = t.get('regularMarketPrice') or t.get('previousClose') or t.get('regularMarketPreviousClose')
-        ch = t.get('regularMarketChangePercent', 0)
-        return round(price, 1) if price else None, ch
-    except Exception as e:
-        # Optional: tahimik na fallback, wag mag-warning sa user para clean
-        return None, 0
+        t = yf.Ticker("GC=F")
+        info = t.info
+        price = (
+            info.get('regularMarketPrice') or
+            info.get('regularMarketPreviousClose') or
+            info.get('previousClose') or
+            info.get('currentPrice')
+        )
+        ch = info.get('regularMarketChangePercent') or 0.0
+        
+        if price is None:
+            hist = t.history(period="2d")
+            if not hist.empty:
+                price = hist['Close'][-1]
+                prev = hist['Close'][-2] if len(hist) > 1 else price
+                ch = ((price - prev) / prev * 100) if prev else 0.0
+        
+        return round(price, 1) if price else None, round(ch, 2)
+    except:
+        return None, 0.0
 
 price, change = get_gold_price()
 
-# ── Prominent pero hindi sobrang laki na price display (mas balanced sa lahat ng screen) ──
 if price:
     st.markdown(f"""
     <div style="
         text-align: center;
-        font-size: 4.2rem;                /* mas maliit kaysa 5.2rem pero prominent pa rin */
+        font-size: clamp(3rem, 9vw, 4.5rem);
         font-weight: 800;
         color: {accent_gold};
-        text-shadow: 0 0 24px {accent_glow}, 0 0 48px {accent_glow};
-        margin: 2rem 0 0.8rem 0;
+        text-shadow: 0 0 24px {accent_glow};
+        margin: 2.2rem 0 0.8rem;
         letter-spacing: -0.5px;
-        line-height: 1.05;
     ">
         ${price:,.1f}
     </div>
-    <p style="
-        text-align: center;
-        font-size: 1.55rem;
-        margin: 0 0 2rem 0;
-        color: {text_primary};
-        opacity: 0.95;
-    ">
-        <span style="
-            color: {'#00ffaa' if change >= 0 else '#ff5555'};
-            font-weight: 700;
-            font-size: 1.65rem;
-        ">
+    <p style="text-align:center; font-size:1.55rem; margin:0 0 2.5rem; opacity:0.95;">
+        <span style="color: {'#00ffaa' if change >= 0 else '#ff5555'}; font-weight:700; font-size:1.65rem;">
             {change:+.2f}%
         </span>
-        <span> • Live Gold (XAU/USD) • GC=F Futures</span>
+         • Live Gold (XAU/USD) • GC=F Futures
     </p>
     """, unsafe_allow_html=True)
 else:
     st.markdown(f"""
-    <div style="
-        text-align: center;
-        font-size: 3.2rem;
-        color: {text_muted};
-        margin: 2.5rem 0;
-        opacity: 0.7;
-    ">
-        Gold Price (Loading or Delayed...)
+    <div style="text-align:center; font-size:3rem; color:{text_muted}; margin:3rem 0; opacity:0.7;">
+        Gold Price (Loading or Market Closed...)
     </div>
     """, unsafe_allow_html=True)
 
-# ── TradingView mini-chart – inayos para mas maganda sa tablet/mobile (hindi clipped) ──
+# ── TradingView Mini Chart (fixed & reliable) ────────────────────────
 st.components.v1.html("""
 <div class="tradingview-widget-container" style="
     width: 100%;
-    height: 45vw;                     /* balanced aspect ratio */
-    min-height: 200px;
-    max-height: 280px;
-    margin: 1.5rem auto 2.8rem auto;
-    position: relative;
-    border-radius: 12px;
+    height: 340px;
+    min-height: 220px;
+    max-height: 380px;
+    margin: 1.8rem auto 3.2rem auto;
+    border-radius: 14px;
     overflow: hidden;
-    box-shadow: 0 6px 24px rgba(0,0,0,0.45);
+    box-shadow: 0 8px 28px rgba(0,0,0,0.5);
+    background: rgba(13,17,23,0.6);
 ">
+  <div class="tradingview-widget-container__widget"></div>
+  <script type="module" src="https://widgets.tradingview-widget.com/w/en/tv-mini-chart.js" async></script>
   <tv-mini-chart
     symbol="OANDA:XAUUSD"
     color-theme="dark"
     locale="en"
-    autosize
+    height="100%"
+    width="100%"
   ></tv-mini-chart>
-  <script type="module" src="https://widgets.tradingview-widget.com/w/en/tv-mini-chart.js" async></script>
 </div>
-""", height=300)  # binigyan ng konting extra space para hindi ma-cut sa edges
+""", height=420)
 
-# ────────────────────────────────────────────────
-# WAITLIST FORM
-# ────────────────────────────────────────────────
+# ── Waitlist Form ────────────────────────────────────────────────────
 st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
 st.markdown(f"<h2 style='margin-bottom:1.8rem;'>{txt('join_waitlist')}</h2>", unsafe_allow_html=True)
 
@@ -382,160 +307,74 @@ with st.form("waitlist_form", clear_on_submit=True):
         full_name = st.text_input(txt("name"), placeholder="Juan Dela Cruz")
     with col2:
         email = st.text_input(txt("email"), placeholder="your@email.com")
-    message = st.text_area(txt("why_join"), height=120, placeholder="Optional: Share your trading goal...")
+    message = st.text_area(txt("why_join"), height=120)
     
     if st.form_submit_button(txt("submit"), type="primary", use_container_width=True):
         if email.strip():
-            # You can add your real Supabase insert logic here later
-            # Example: supabase.table("waitlist").insert({...}).execute()
+            # TODO: Replace with real Supabase insert
+            # supabase.table("waitlist").insert({"name": full_name, "email": email, "message": message}).execute()
             st.success(txt("success"))
         else:
             st.error("Email is required")
-
 st.markdown("</div>", unsafe_allow_html=True)
 
-# ────────────────────────────────────────────────
-# PIONEERS SECTION – horizontal carousel, premium circular cards, smooth UX
-# ────────────────────────────────────────────────
-
+# ── Pioneers Carousel ────────────────────────────────────────────────
 st.markdown(f"""
-<div class="glass-card" style="max-width:1200px; margin:3rem auto; padding:2.5rem 2rem;">
-    <h2 style="text-align:center; margin-bottom:2.2rem;">{txt('pioneers_title')}</h2>
-
-    <div class="pioneers-carousel-container">
+<div class="glass-card" style="max-width:1200px; margin:3.5rem auto; padding:2.5rem 2rem;">
+    <h2 style="margin-bottom:2.2rem;">{txt('pioneers_title')}</h2>
+    <div class="pioneers-carousel-container" style="position:relative; overflow:hidden; padding:1.5rem 0;">
         <button class="carousel-arrow left-arrow" onclick="document.querySelector('.pioneers-carousel').scrollBy({{left: -320, behavior: 'smooth'}})">‹</button>
-
-        <div class="pioneers-carousel">
+        <div class="pioneers-carousel" style="display:flex; flex-direction:row; flex-wrap:nowrap; gap:2rem; overflow-x:auto; scroll-snap-type:x mandatory; scroll-behavior:smooth; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding:1rem 0;">
 """, unsafe_allow_html=True)
 
 pioneers = [
-    {
-        "name": "Weber",
-        "since": "Dec 2025",
-        "earnings": "+$1,284",
-        "gain": "+128.4%",
-        "quote": "Best decision ever!",
-        "photo": "assets/weber.jpg"
-    },
-    {
-        "name": "Ramil",
-        "since": "Jan 2026",
-        "earnings": "+$2,150",
-        "gain": "+215%",
-        "quote": "Stable daily profits.",
-        "photo": "assets/ramil.jpg"
-    },
-    # You can add more here — they extend horizontally automatically
+    {"name": "Weber", "since": "Dec 2025", "earnings": "+$1,284", "gain": "+128.4%", "quote": "Best decision ever!", "photo": "assets/weber.jpg"},
+    {"name": "Ramil", "since": "Jan 2026", "earnings": "+$2,150", "gain": "+215%", "quote": "Stable daily profits.", "photo": "assets/ramil.jpg"},
+    # Add more as needed
 ]
 
 for p in pioneers:
-    photo_url = p.get("photo", f"https://via.placeholder.com/140/222/ffd700?text={p['name'][0]}")
+    photo = p.get("photo", "")
+    photo_url = photo if os.path.exists(photo) else f"https://via.placeholder.com/140/222/ffd700?text={p['name'][0]}"
     st.markdown(f"""
-    <div class="pioneer-card">
-        <div class="card-inner">
-            <div class="card-front">
-                <img src="{photo_url}" class="pioneer-photo" alt="{p['name']}">
-                <div class="pioneer-name">{p['name']}</div>
-                <div class="pioneer-since">since {p['since']}</div>
-            </div>
-            <div class="card-back">
-                <div class="earnings">{p['earnings']}</div>
-                <div class="gain">{p['gain']}</div>
-                <div class="quote">“{p['quote']}”</div>
-            </div>
+    <div class="pioneer-card" style="flex:0 0 280px; width:280px; height:380px; border-radius:24px; overflow:hidden; background:rgba(30,35,55,0.9); border:1px solid rgba(255,215,0,0.2); box-shadow:0 10px 30px rgba(0,0,0,0.45); transition:all 0.35s ease; scroll-snap-align:center;">
+        <img src="{photo_url}" style="width:140px; height:140px; border-radius:50%; border:4px solid {accent_orange}; margin:2.2rem auto 1.5rem; display:block; object-fit:cover; box-shadow:0 6px 20px rgba(255,98,0,0.35);">
+        <div style="font-size:1.45rem; font-weight:700; color:{accent_orange}; margin:0.5rem 0;">{p['name']}</div>
+        <div style="font-size:1rem; color:{text_muted};">since {p['since']}</div>
+        <div style="margin-top:1.5rem; padding:0 1rem;">
+            <div style="font-size:1.6rem; color:{accent_green}; font-weight:700;">{p['earnings']}</div>
+            <div style="font-size:1.3rem; color:{accent_green};">{p['gain']}</div>
+            <div style="font-style:italic; margin-top:1rem; opacity:0.9;">“{p['quote']}”</div>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
 st.markdown("""
+        </div>
+        <button class="carousel-arrow right-arrow" onclick="document.querySelector('.pioneers-carousel').scrollBy({left: 320, behavior: 'smooth'})">›</button>
+    </div>
+</div>
+
 <style>
-    /* Pioneers – horizontal only, perfect circle photos */
-    .pioneers-carousel-container {
-        position: relative;
-        overflow: hidden;
-        padding: 1.5rem 0;
-    }
-
-    .pioneers-carousel {
-        display: flex;
-        flex-direction: row;
-        flex-wrap: nowrap;
-        gap: 2rem;
-        overflow-x: auto;
-        scroll-snap-type: x mandatory;
-        scroll-behavior: smooth;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
-        padding: 1rem 0;
-    }
-
-    .pioneers-carousel::-webkit-scrollbar {
-        display: none;
-    }
-
-    .pioneer-card {
-        flex: 0 0 280px;
-        width: 280px;
-        min-width: 280px;
-        height: 380px;
-        border-radius: 24px;
-        overflow: hidden;
-        background: rgba(30,35,55,0.9);
-        border: 1px solid rgba(255,215,0,0.2);
-        box-shadow: 0 10px 30px rgba(0,0,0,0.45);
-        transition: all 0.35s ease;
-        scroll-snap-align: center;
-    }
-
-    .pioneer-card:hover {
-        transform: translateY(-12px) scale(1.05);
-        box-shadow: 0 20px 50px rgba(255,98,0,0.3);
-    }
-
-    .pioneer-photo {
-        width: 140px;
-        height: 140px;
+    .carousel-arrow {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(30,35,55,0.8);
+        color: white;
+        border: none;
         border-radius: 50%;
-        border: 4px solid #ff6200;           /* orange border para match sa title */
-        margin: 2.2rem auto 1.5rem;
-        display: block;
-        object-fit: cover;
-        box-shadow: 0 6px 20px rgba(255,98,0,0.35);
+        width: 48px;
+        height: 48px;
+        font-size: 2rem;
+        cursor: pointer;
+        z-index: 10;
+        backdrop-filter: blur(8px);
     }
-
-    .pioneer-name {
-        font-size: 1.45rem;
-        font-weight: 700;
-        color: #ff6200;
-        margin: 0.5rem 0;
-    }
-
-    .pioneer-since {
-        font-size: 1rem;
-        color: {text_muted};
-        opacity: 0.9;
-    }
-
-    /* Force horizontal on small screens too */
+    .left-arrow { left: 12px; }
+    .right-arrow { right: 12px; }
     @media (max-width: 768px) {
-        .pioneer-card {
-            flex: 0 0 300px;
-            min-width: 300px;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .pioneer-card {
-            flex: 0 0 90%;
-            min-width: 90%;
-            max-width: 360px;
-            margin: 0 auto 1.5rem;
-        }
-        .pioneer-photo {
-            width: 130px;
-            height: 130px;
-            margin: 2rem auto 1.2rem;
-        }
+        .carousel-arrow { width:42px; height:42px; font-size:1.7rem; }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -1118,11 +957,11 @@ st.markdown("</div>", unsafe_allow_html=True)
 
 # Footer
 st.markdown(f"""
-<div style='text-align:center; margin:5rem 0 3rem; padding-top:2.5rem; border-top:1px solid rgba(255,215,0,0.2); opacity:0.8;'>
+<div style="text-align:center; margin:6rem 0 4rem; padding-top:3rem; border-top:1px solid rgba(255,215,0,0.18); opacity:0.8;">
     <p>KMFX EA • Built by Faith, Powered by Discipline</p>
     <p>© 2026 Mark Jeff Blando • All rights reserved</p>
 </div>
 """, unsafe_allow_html=True)
 
-if not is_authenticated():
+if not authenticated:
     st.stop()
