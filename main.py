@@ -216,83 +216,40 @@ if qr_token and not authenticated:
 # PUBLIC LANDING CONTENT (only shown if NOT authenticated)
 # ────────────────────────────────────────────────
 if not authenticated:
-    # ── Language support (bilingual waitlist form) ──
-if "language" not in st.session_state:
-    st.session_state.language = "en"
+    # ── Language support (for bilingual waitlist form) ──
+    if "language" not in st.session_state:
+        st.session_state.language = "en"
 
-texts = {
-    "en": {
-        "join_waitlist": "Join Waitlist – Early Access",
-        "name": "Full Name",
-        "email": "Email",
-        "why_join": "Why do you want to join KMFX? (optional)",
-        "submit": "Join Waitlist 👑",
-        "success": "Success! You're on the list. Check your email soon 🚀",
-    },
-    "tl": {
-        "join_waitlist": "Sumali sa Waitlist – Maagang Access",
-        "name": "Buong Pangalan",
-        "email": "Email",
-        "why_join": "Bakit gusto mong sumali sa KMFX? (opsyonal)",
-        "submit": "Sumali sa Waitlist 👑",
-        "success": "Tagumpay! Nasa listahan ka na. Check mo ang email mo soon 🚀",
+    texts = {
+        "en": {
+            "join_waitlist": "Join Waitlist – Early Access",
+            "name": "Full Name",
+            "email": "Email",
+            "why_join": "Why do you want to join KMFX? (optional)",
+            "submit": "Join Waitlist 👑",
+            "success": "Success! You're on the list. Check your email soon 🚀",
+            # Add more keys later if you want to translate hero / other texts
+        },
+        "tl": {
+            "join_waitlist": "Sumali sa Waitlist – Maagang Access",
+            "name": "Buong Pangalan",
+            "email": "Email",
+            "why_join": "Bakit gusto mong sumali sa KMFX? (opsyonal)",
+            "submit": "Sumali sa Waitlist 👑",
+            "success": "Tagumpay! Nasa listahan ka na. Check mo ang email mo soon 🚀",
+        }
     }
-}
 
-def txt(key):
-    lang_dict = texts.get(st.session_state.language, texts["en"])
-    return lang_dict.get(key, key)
+    def txt(key):
+        # Safe fallback to English if language or key missing
+        lang_dict = texts.get(st.session_state.language, texts["en"])
+        return lang_dict.get(key, key)
 
-# ── Improved Language Toggle (centered below logo or in hero) ──
-st.markdown("""
-<style>
-    .lang-toggle-container {
-        text-align: center;
-        margin: 1.2rem 0 2rem;
-    }
-    .lang-toggle-btn {
-        background: transparent;
-        border: 1px solid #444;
-        color: #000000 !important;  /* Black text */
-        padding: 0.5rem 1.2rem;
-        border-radius: 50px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        display: inline-block;
-    }
-    .lang-toggle-btn:hover {
-        background: #00ffaa20;
-        border-color: #00ffaa;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 15px rgba(0,255,170,0.3);
-    }
-    .lang-toggle-btn.active {
-        background: #00ffaa;
-        color: #000 !important;
-        border-color: #00ffaa;
-    }
-</style>
-""", unsafe_allow_html=True)
-
-# Language toggle (centered, pill-style)
-with st.container():
-    st.markdown('<div class="lang-toggle-container">', unsafe_allow_html=True)
-    
-    col_left, col_toggle, col_right = st.columns([1, 2, 1])
-    with col_toggle:
-        if st.session_state.language == "en":
-            btn_label = "EN / TL"
-            btn_key = "lang_en_active"
-        else:
-            btn_label = "TL / EN"
-            btn_key = "lang_tl_active"
-        
-        if st.button(btn_label, key=btn_key, help="Switch language", use_container_width=False):
-            st.session_state.language = "tl" if st.session_state.language == "en" else "en"
-            st.rerun()
-    
+    # Language toggle (top-right-ish)
+    st.markdown('<div style="text-align: right; margin: 1rem 0;">', unsafe_allow_html=True)
+    if st.button("EN / TL", key="lang_toggle_public"):
+        st.session_state.language = "tl" if st.session_state.language == "en" else "en"
+        st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
 
     # Logo
@@ -373,8 +330,9 @@ with st.container():
     </div>
     """, height=420)
 
-    # ── Waitlist Form (SIMPLIFIED – save only, no welcome email send yet) ──
+    # ── Waitlist Form (FINAL FIXED – client-side Edge Function invoke) ──
 st.markdown("<div class='glass-card' style='padding: 2.5rem; border-radius: 24px;'>", unsafe_allow_html=True)
+
 st.markdown(f"""
     <h2 style='text-align:center; margin-bottom:1.5rem;'>{txt('join_waitlist')}</h2>
     <p style='text-align:center; color:{text_muted}; font-size:1.1rem; margin-bottom:2rem; line-height:1.6;'>
@@ -424,7 +382,7 @@ if submitted:
     email = email_input.strip().lower()
     full_name_clean = full_name.strip() if full_name else None
     message_clean = message.strip() if message else None
-    
+
     # Basic validation
     if not email:
         st.error(
@@ -445,27 +403,62 @@ if submitted:
                     "message": message_clean,
                     "language": st.session_state.language,
                     "status": "Pending",
-                    "subscribed": True,
-                    "created_at": "now()"  # optional: auto timestamp
+                    "subscribed": True
                 }
-                
+
+                # DEBUG: Show data (optional – remove later if you want clean UI)
+                # st.info("DEBUG: Data being sent")
+                # st.json(data)
+
                 response = supabase.table("waitlist").insert(data).execute()
-                
+
                 if response.data:
                     st.success(
-                        "Salamat! Nasa waitlist ka na. Makakatanggap ka ng updates at news soon 👑"
+                        "Salamat! Nasa waitlist ka na. Makakatanggap ka ng welcome email shortly 👑"
                         if st.session_state.language == "tl"
-                        else "Thank you! You're on the waitlist. You'll receive updates and news soon 👑"
+                        else "Thank you! You're on the waitlist. Welcome email coming soon 👑"
                     )
                     st.balloons()
                     st.caption(
-                        "Keep an eye on your inbox — magse-send kami ng important updates kapag ready na."
-                        if st.session_state.language == "tl"
-                        else "Keep an eye on your inbox — we'll send important updates when ready."
+                        "Check your inbox (and spam folder) for the confirmation email."
+                        if st.session_state.language == "en"
+                        else "Check mo ang inbox mo (at spam folder) para sa welcome email."
                     )
-                else:
-                    st.warning("Submission processed but no confirmation received — check dashboard later.")
+
+                    # ── DIRECTLY INVOKE EDGE FUNCTION FROM STREAMLIT ──
+                    try:
+                        invoke_resp = supabase.functions.invoke(
+                            "send-waitlist-confirmation",  # ← exact name of your Edge Function
+                            {
+                                "body": {
+                                    "name": full_name_clean or "Anonymous",
+                                    "email": email,
+                                    "message": message_clean or "",
+                                    "language": st.session_state.language
+                                }
+                            }
+                        )
+
+                        # Optional: Show more info if you want (remove for production)
+                        # st.caption(f"Email request sent (status: {invoke_resp.status_code})")
+
+                        st.caption("Welcome email request sent successfully! Check spam if not arrived in 1–2 minutes.")
                     
+                    except Exception as invoke_err:
+                        st.caption(
+                            f"Welcome email send had a small issue ({str(invoke_err)}), "
+                            "but you're already on the waitlist! We'll fix it soon."
+                        )
+                        # Optional: log to your logs table
+                        # supabase.table("logs").insert({
+                        #     "action": "waitlist_email_invoke_failed",
+                        #     "details": str(invoke_err),
+                        #     "email": email
+                        # }).execute()
+
+                else:
+                    st.warning("Submission processed but no confirmation received — check dashboard.")
+
             except Exception as e:
                 err_str = str(e).lower()
                 if any(x in err_str for x in ["duplicate", "unique", "23505"]):
