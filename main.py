@@ -1,7 +1,3 @@
-# main.py - KMFX EA Public Landing + Login Page
-# Cleaned old style + all new features (including Pioneers Carousel)
-# February 2026 - premium dark glassmorphism, adaptive theme, robust mobile
-
 import streamlit as st
 import yfinance as yf
 import os
@@ -19,44 +15,62 @@ from utils.helpers import (
 
 start_keep_alive_if_needed()
 
-# ====================== EARLY AUTH & THEME SETUP ======================
+# ────────────────────────────────────────────────
+# 1. Check authentication FIRST — this must be before ANY st.set_page_config
+# ────────────────────────────────────────────────
+authenticated = is_authenticated()
+
+# ────────────────────────────────────────────────
+# 2. Set page config EARLY based on real auth state
+# ────────────────────────────────────────────────
+if authenticated:
+    st.set_page_config(
+        page_title="KMFX Empire Dashboard",
+        page_icon="👑",
+        layout="wide",
+        initial_sidebar_state="expanded"
+    )
+else:
+    st.set_page_config(
+        page_title="KMFX EA - Elite Gold Automation",
+        page_icon="👑",
+        layout="wide",
+        initial_sidebar_state="collapsed"
+    )
+
+# ────────────────────────────────────────────────
+# 3. Now safe to handle session state & theme
+# ────────────────────────────────────────────────
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
 if "theme" not in st.session_state:
     st.session_state.theme = "dark"
 
-# Auto theme switch + rerun for instant apply
-if st.session_state.authenticated:
-    if st.session_state.theme != "light":
-        st.session_state.theme = "light"
-        st.rerun()
-else:
-    if st.session_state.theme != "dark":
-        st.session_state.theme = "dark"
-        st.rerun()
+# Force correct theme based on auth (and trigger rerun only if needed)
+desired_theme = "light" if authenticated else "dark"
+
+if st.session_state.theme != desired_theme:
+    st.session_state.theme = desired_theme
+    st.rerun()
 
 theme = st.session_state.theme
 
-# Adaptive colors
-accent_gold    = "#ffd700"
-accent_glow    = "#ffd70050" if theme == "dark" else "#ffd70030"
-accent_orange  = "#ff6200"
-accent_hover  = "#ff8533"
-accent_green   = "#00ffaa"
-bg_color       = "#0a0d14" if theme == "dark" else "#f8fbff"
-card_bg        = "rgba(15,20,30,0.70)" if theme == "dark" else "rgba(255,255,255,0.75)"
-border_color   = "rgba(100,100,100,0.15)" if theme == "dark" else "rgba(0,0,0,0.08)"
-text_primary   = "#ffffff" if theme == "dark" else "#0f172a"
-text_muted     = "#aaaaaa" if theme == "dark" else "#64748b"
-card_shadow    = "0 10px 30px rgba(0,0,0,0.5)" if theme == "dark" else "0 8px 25px rgba(0,0,0,0.12)"
+# ────────────────────────────────────────────────
+# Adaptive colors (same as before)
+# ────────────────────────────────────────────────
+accent_gold  = "#ffd700"
+accent_glow  = "#ffd70050" if theme == "dark" else "#ffd70030"
+accent_orange = "#ff6200"
+accent_hover = "#ff8533"
+accent_green = "#00ffaa"
 
-st.set_page_config(
-    page_title="KMFX Empire Dashboard" if theme == "light" else "KMFX EA - Elite Gold Automation",
-    page_icon="👑",
-    layout="wide",
-    initial_sidebar_state="expanded" if theme == "light" else "collapsed"
-)
+bg_color     = "#0a0d14" if theme == "dark" else "#f8fbff"
+card_bg      = "rgba(15,20,30,0.70)" if theme == "dark" else "rgba(255,255,255,0.75)"
+border_color = "rgba(100,100,100,0.15)" if theme == "dark" else "rgba(0,0,0,0.08)"
+text_primary = "#ffffff" if theme == "dark" else "#0f172a"
+text_muted   = "#aaaaaa" if theme == "dark" else "#64748b"
+card_shadow  = "0 10px 30px rgba(0,0,0,0.5)" if theme == "dark" else "0 8px 25px rgba(0,0,0,0.12)"
 
 st.markdown(f"""
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
