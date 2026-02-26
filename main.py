@@ -116,9 +116,29 @@ st.markdown(f"""
     header[data-testid="stHeader"] {{
         visibility: hidden !important;
     }}
+    /* FIX: Remove top + bottom padding/margin in main content area */
     .block-container {{
         padding-top: 0 !important;
+        padding-bottom: 0rem !important;       /* ← key fix for large bottom space */
         margin-top: 0 !important;
+        margin-bottom: 0 !important;
+    }}
+    /* Hide + collapse Streamlit's bottom decoration/glow bar (prevents leftover space) */
+    div[data-testid="stDecoration"] {{
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        min-height: 0 !important;
+    }}
+    /* Extra bottom cleanup (sometimes needed) */
+    .stApp > div:last-child,
+    section.main > div.block-container > div:last-child,
+    footer,
+    [data-testid="stStatusWidget"] {{
+        display: none !important;
+        height: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
     }}
     /* Language toggle */
     .lang-toggle-container {{
@@ -411,7 +431,7 @@ for title, content in journey_sections:
     st.markdown(f"<h3 class='gold-text' style='margin:1.8rem 0 0.8rem;'>{title}</h3>", unsafe_allow_html=True)
     st.markdown(content.strip(), unsafe_allow_html=True)
 
-
+st.markdown("</div>", unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
 # FULL JOURNEY EXPANDER (detailed 2014–2026 story with images)
