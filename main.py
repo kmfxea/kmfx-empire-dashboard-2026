@@ -51,132 +51,209 @@ text_muted = "#a0aec0"
 card_shadow = "0 8px 32px rgba(0,0,0,0.55)"
 
 # ────────────────────────────────────────────────
-# IMPROVED RESPONSIVE CSS (mobile/tablet/laptop optimized)
+# IMPROVED RESPONSIVE CSS – professional, balanced, mobile-first polish (Feb 2026 style)
 # ────────────────────────────────────────────────
 st.markdown(f"""
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
-    * {{ box-sizing: border-box; }}
+    * {{ box-sizing: border-box; margin:0; padding:0; }}
     html, body, [class*="css-"] {{
-        font-family: 'Inter', system-ui, sans-serif !important;
+        font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
         font-size: 16px !important;
-        line-height: 1.65;
+        line-height: 1.6;
         overflow-x: hidden !important;
     }}
     .stApp {{
-        background: {bg_color};
+        background: linear-gradient(135deg, {bg_color} 0%, #0f1622 100%) !important;
         color: {text_primary};
     }}
     .stAppViewContainer {{
-        padding-bottom: 2rem !important;
+        padding-bottom: 3rem !important;
     }}
-    /* Main container - responsive padding & max-width */
+    /* ── Main content container ── */
     .main .block-container {{
-        max-width: 1080px !important;
-        padding: 1.8rem 3rem !important;
+        max-width: 1180px !important;
+        padding: 2.5rem 4rem !important;
         margin: 0 auto !important;
     }}
-    /* Logo responsive */
+    /* ── Logo – dramatic desktop, balanced mobile ── */
     [data-testid="stImage"] img {{
-        max-width: 80vw !important;
-        width: 100% !important;
-        max-width: 260px !important;
+        max-width: 420px !important;           /* big premium feel on laptop */
+        width: 85% !important;
         height: auto !important;
-        margin: 1.5rem auto 1rem !important;
+        margin: 2.5rem auto 1.5rem !important;
         display: block !important;
+        filter: drop-shadow(0 12px 40px rgba(255,215,0,0.3));
+        transition: transform 0.4s ease;
     }}
+    [data-testid="stImage"] img:hover {{
+        transform: scale(1.03);
+    }}
+    /* ── Typography hierarchy – luxurious & readable ── */
     h1, h2, h3, h4 {{
-        font-family: 'Playfair Display', serif;
+        font-family: 'Playfair Display', serif !important;
         color: {accent_gold} !important;
-        letter-spacing: 0.6px;
-        text-shadow: 0 0 14px {accent_glow};
+        letter-spacing: 0.4px;
+        text-shadow: 0 0 16px {accent_glow};
+        text-align: center;
     }}
-    h1 {{ font-size: 3.2rem; margin: 1.2rem 0 0.6rem; text-align: center; }}
-    h2 {{ font-size: 2.3rem; margin: 2.2rem 0 1rem; text-align: center; }}
-    h3 {{ font-size: 1.9rem; margin: 1.8rem 0 0.9rem; }}
+    h1 {{ font-size: 3.8rem; font-weight: 800; margin: 1rem 0 0.8rem; line-height: 1.1; }}
+    h2 {{ font-size: 2.8rem; font-weight: 700; margin: 3rem 0 1.5rem; }}
+    h3 {{ font-size: 2.1rem; font-weight: 600; margin: 2.2rem 0 1rem; }}
     p, div, span, label {{ color: {text_primary}; }}
-    small, .muted {{ color: {text_muted}; }}
-    /* Glass cards */
+    .muted {{ color: {text_muted}; opacity: 0.85; }}
+    /* ── Glass cards – softer, more premium ── */
     .glass-card {{
-        background: {card_bg};
-        backdrop-filter: blur(18px);
-        border-radius: 16px;
-        border: 1px solid {border_color};
-        padding: 1.8rem 2.2rem;
-        box-shadow: {card_shadow};
-        margin: 1.8rem auto;
-        max-width: 1000px !important;
-        transition: all 0.3s ease;
+        background: rgba(20,25,40,0.92) !important;
+        backdrop-filter: blur(20px) saturate(120%) !important;
+        -webkit-backdrop-filter: blur(20px) saturate(120%) !important;
+        border-radius: 20px;
+        border: 1px solid rgba(255,215,0,0.18);
+        padding: 2.2rem 2.8rem;
+        box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+        margin: 2.5rem auto;
+        transition: all 0.35s ease;
+        max-width: 1100px !important;
     }}
     .glass-card:hover {{
-        box-shadow: 0 14px 40px {accent_glow};
-        transform: translateY(-5px);
+        box-shadow: 0 20px 60px {accent_glow};
+        transform: translateY(-6px);
     }}
-    /* Pioneers layout */
-    .pioneers-glass {{
-        max-width: 960px !important;
-        margin: 1.6rem auto !important;
-        padding: 1.6rem 2rem !important;
-    }}
-    .pioneers-container {{
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 2rem 1.8rem;
-        padding: 1rem 0;
-    }}
-    .flip-card {{
-        flex: 0 1 220px;
-        max-width: 220px !important;
-        margin: 0 !important;
-    }}
-    .flip-card img.circular {{
-        width: 90px !important;
-        height: 90px !important;
-        margin-bottom: 0.8rem;
-        object-fit: cover;
-        border-radius: 50%;
-    }}
+    /* ── Buttons – more luxurious ── */
     button[kind="primary"] {{
         background: linear-gradient(90deg, {accent_primary}, {accent_hover}) !important;
         color: #000 !important;
         border: none !important;
-        border-radius: 12px !important;
-        padding: 0.9rem 1.8rem !important;
-        font-size: 1.1rem !important;
-        font-weight: 600 !important;
-        box-shadow: 0 5px 18px {accent_glow} !important;
+        border-radius: 14px !important;
+        padding: 1rem 2.2rem !important;
+        font-size: 1.15rem !important;
+        font-weight: 700 !important;
+        box-shadow: 0 6px 22px {accent_glow} !important;
+        transition: all 0.3s ease !important;
     }}
     button[kind="primary"]:hover {{
         background: {accent_hover} !important;
-        box-shadow: 0 10px 30px {accent_glow} !important;
-        transform: translateY(-3px);
+        box-shadow: 0 12px 36px {accent_glow} !important;
+        transform: translateY(-3px) scale(1.03) !important;
     }}
-    header[data-testid="stHeader"] {{ background: {bg_color} !important; }}
-    section[data-testid="stSidebar"] {{ display: none !important; }}
-    .stForm > div {{ gap: 1.1rem !important; }}
-    
-    /* ── RESPONSIVE MEDIA QUERIES ── */
+    /* ── Pioneers carousel – circular premium cards ── */
+    .pioneers-carousel-container {{
+        position: relative;
+        width: 100%;
+        overflow: hidden;
+        padding: 1.5rem 0;
+    }}
+    .pioneers-carousel {{
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        gap: 2rem;
+        overflow-x: auto;
+        scroll-behavior: smooth;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding: 1.2rem 0;
+    }}
+    .pioneers-carousel::-webkit-scrollbar {{ display: none; }}
+    .pioneer-card {{
+        flex: 0 0 260px;
+        width: 260px;
+        height: 360px;
+        background: rgba(30,35,55,0.88);
+        border-radius: 24px;
+        border: 1px solid rgba(255,215,0,0.2);
+        overflow: hidden;
+        box-shadow: 0 10px 35px rgba(0,0,0,0.45);
+        transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        scroll-snap-align: center;
+    }}
+    .pioneer-card:hover {{
+        transform: translateY(-14px) scale(1.06);
+        box-shadow: 0 24px 60px rgba(255,215,0,0.28);
+    }}
+    .pioneer-photo {{
+        width: 140px !important;
+        height: 140px !important;
+        border-radius: 50% !important;
+        border: 4px solid {accent_gold};
+        box-shadow: 0 6px 24px rgba(255,215,0,0.35);
+        margin: 2.4rem auto 1.4rem;
+        object-fit: cover;
+        display: block;
+    }}
+    .pioneer-name {{
+        font-size: 1.45rem;
+        font-weight: 700;
+        color: {accent_gold};
+        margin: 0.6rem 0 0.3rem;
+    }}
+    .pioneer-since {{
+        font-size: 1rem;
+        color: {text_muted};
+        opacity: 0.9;
+    }}
+    .earnings {{
+        font-size: 2.4rem;
+        font-weight: 800;
+        color: {accent_gold};
+        text-shadow: 0 0 14px {accent_glow};
+    }}
+    .gain {{
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: #00ffaa;
+    }}
+    /* ── Carousel arrows ── */
+    .carousel-arrow {{
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(13,17,23,0.85);
+        color: {accent_gold};
+        border: none;
+        border-radius: 50%;
+        width: 54px;
+        height: 54px;
+        font-size: 2.2rem;
+        cursor: pointer;
+        z-index: 10;
+        opacity: 0.85;
+        transition: all 0.3s;
+    }}
+    .carousel-arrow:hover {{ opacity: 1; background: rgba(13,17,23,1); transform: translateY(-50%) scale(1.1); }}
+    .left-arrow  {{ left: 12px; }}
+    .right-arrow {{ right: 12px; }}
+    /* ── RESPONSIVE BREAKPOINTS ── */
+    @media (max-width: 1200px) {{
+        .main .block-container {{ padding: 2rem 3rem !important; }}
+        h1 {{ font-size: 3.4rem !important; }}
+        h2 {{ font-size: 2.5rem !important; }}
+    }}
     @media (max-width: 992px) {{
-        .main .block-container {{ padding: 1.2rem 1.8rem !important; }}
-        h1 {{ font-size: 2.6rem !important; }}
-        h2 {{ font-size: 2rem !important; }}
-        .pioneers-container {{ gap: 1.5rem; }}
-        .flip-card {{ flex: 0 1 45%; max-width: 45% !important; }}
+        .main .block-container {{ padding: 1.8rem 2.5rem !important; }}
+        h1 {{ font-size: 3rem !important; }}
+        [data-testid="stImage"] img {{ max-width: 340px !important; }}
+        .pioneer-card {{ flex: 0 0 280px; width: 280px; height: 380px; }}
+        .pioneer-photo {{ width: 130px !important; height: 130px !important; }}
     }}
     @media (max-width: 768px) {{
-        .main .block-container {{ padding: 0.8rem 1.2rem !important; }}
-        h1 {{ font-size: 2.3rem !important; }}
-        .glass-card {{ padding: 1.4rem 1.6rem !important; }}
-        .flip-card {{ flex: 0 1 48%; max-width: 48% !important; }}
+        .main .block-container {{ padding: 1.4rem 2rem !important; }}
+        h1 {{ font-size: 2.6rem !important; }}
+        h2 {{ font-size: 2.2rem !important; }}
+        .glass-card {{ padding: 1.8rem 2rem !important; }}
+        .pioneer-card {{ flex: 0 0 300px; width: 300px; }}
+        .carousel-arrow {{ width: 60px; height: 60px; font-size: 2.4rem; }}
     }}
     @media (max-width: 480px) {{
-        h1 {{ font-size: 1.9rem !important; }}
-        h2 {{ font-size: 1.7rem !important; }}
-        .glass-card {{ padding: 1.2rem 1.4rem !important; margin: 1.2rem 0 !important; }}
-        .flip-card {{ flex: 0 1 100% !important; max-width: 100% !important; }}
-        .flip-card img.circular {{ width: 80px !important; height: 80px !important; }}
-        button[kind="primary"] {{ padding: 0.8rem 1.4rem !important; font-size: 1rem !important; }}
+        .main .block-container {{ padding: 1.2rem 1.5rem !important; }}
+        h1 {{ font-size: 2.2rem !important; }}
+        h2 {{ font-size: 1.9rem !important; }}
+        [data-testid="stImage"] img {{ max-width: 260px !important; margin: 2rem auto 1.2rem; }}
+        .glass-card {{ padding: 1.5rem 1.6rem !important; margin: 1.8rem auto !important; }}
+        .pioneer-card {{ flex: 0 0 100%; width: 100%; max-width: 340px; margin: 0 auto 1.5rem; }}
+        .pioneer-photo {{ width: 120px !important; height: 120px !important; margin: 2rem auto 1.2rem; }}
+        .earnings {{ font-size: 2rem; }}
     }}
 </style>
 """, unsafe_allow_html=True)
@@ -286,31 +363,99 @@ if st.button("EN / TL", key="lang_toggle", help="Switch to English / Tagalog"):
 st.markdown('</div>', unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# LOGO + HERO – old style, no extra padding, centered everything
+# LOGO + HERO – modern, centered, responsive & premium feel
 # ────────────────────────────────────────────────
 
-# Center the logo using columns (true center on all widths)
-logo_col = st.columns([1, 3, 1])[1]  # middle column wider
-with logo_col:
-    st.image("assets/logo.png", use_column_width=True)  # auto-fit + centered
-
-# No extra container, direct markdown for hero text
+# Add this small CSS snippet specifically for logo & hero (can be merged into your global style later)
 st.markdown(f"""
-<h1 style="text-align: center; margin: 1rem 0 0.5rem 0; color: {accent_gold};">
-    {txt('hero_title')}
-</h1>
+<style>
+    .hero-logo-container {{
+        text-align: center;
+        margin: 2.5rem 0 2rem 0;
+    }}
+    .hero-logo {{
+        width: 100%;
+        max-width: 420px;                /* ← big & luxurious on desktop */
+        height: auto;
+        filter: drop-shadow(0 12px 40px rgba(255, 215, 0, 0.28));
+        transition: transform 0.4s ease, filter 0.4s ease;
+    }}
+    .hero-logo:hover {{
+        transform: scale(1.04);
+        filter: drop-shadow(0 16px 50px rgba(255, 215, 0, 0.40));
+    }}
 
-<h2 style="text-align: center; margin: 0.5rem 0 1rem 0; color: {text_primary};">
-    {txt('hero_sub')}
-</h2>
+    .hero-title {{
+        font-size: 3.8rem;
+        font-weight: 800;
+        margin: 1.2rem 0 0.6rem;
+        line-height: 1.05;
+        letter-spacing: -0.8px;
+    }}
+    .hero-subtitle {{
+        font-size: 2.1rem;
+        font-weight: 500;
+        color: {text_primary};
+        margin: 0 0 1.4rem;
+        opacity: 0.95;
+    }}
+    .hero-desc {{
+        font-size: 1.4rem;
+        max-width: 820px;
+        margin: 0 auto 1.6rem;
+        line-height: 1.5;
+        opacity: 0.92;
+    }}
+    .hero-footer {{
+        font-size: 1.1rem;
+        opacity: 0.8;
+        margin-top: 1rem;
+    }}
 
-<p style="text-align: center; font-size: 1.35rem; color: {text_muted}; margin: 0.8rem 0 1.2rem 0; max-width: 800px; margin-left: auto; margin-right: auto;">
-    {txt('hero_desc')}
-</p>
+    /* Responsive adjustments */
+    @media (max-width: 1200px) {{
+        .hero-logo {{ max-width: 360px; }}
+        .hero-title {{ font-size: 3.3rem; }}
+        .hero-subtitle {{ font-size: 1.9rem; }}
+    }}
+    @media (max-width: 992px) {{
+        .hero-logo {{ max-width: 320px; margin: 2rem 0 1.5rem; }}
+        .hero-title {{ font-size: 2.9rem; }}
+    }}
+    @media (max-width: 768px) {{
+        .hero-logo-container {{ margin: 2rem 0 1.8rem; }}
+        .hero-logo {{ max-width: 280px; }}
+        .hero-title {{ font-size: 2.5rem; }}
+        .hero-subtitle {{ font-size: 1.7rem; }}
+        .hero-desc {{ font-size: 1.25rem; }}
+    }}
+    @media (max-width: 480px) {{
+        .hero-logo {{ max-width: 240px; }}
+        .hero-title {{ font-size: 2.1rem; }}
+        .hero-subtitle {{ font-size: 1.5rem; }}
+        .hero-desc {{ font-size: 1.15rem; padding: 0 1rem; }}
+    }}
+</style>
+""", unsafe_allow_html=True)
 
-<p style="text-align: center; font-size: 1.15rem; color: {text_muted}; opacity: 0.9;">
-    Mark Jeff Blando – Founder & Developer • 2026
-</p>
+# ── Logo + Hero Content ──
+st.markdown('<div class="hero-logo-container">', unsafe_allow_html=True)
+st.image(
+    "assets/logo.png",
+    use_column_width=False,
+    output_format="PNG",
+    clamp=True,
+    # No need for extra class – we style via .hero-logo in global or here
+)
+st.markdown('</div>', unsafe_allow_html=True)
+
+st.markdown(f"""
+<div style="text-align: center;">
+    <h1 class="hero-title">{txt('hero_title')}</h1>
+    <h2 class="hero-subtitle">{txt('hero_sub')}</h2>
+    <p class="hero-desc">{txt('hero_desc')}</p>
+    <p class="hero-footer">Mark Jeff Blando – Founder & Developer • 2026</p>
+</div>
 """, unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
@@ -423,15 +568,16 @@ with st.form("waitlist_form", clear_on_submit=True):
 st.markdown("</div>", unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# PIONEERS SECTION – horizontal scroll, arrows, snap, no vertical stack
+# PIONEERS SECTION – horizontal carousel, premium circular cards, smooth UX
 # ────────────────────────────────────────────────
+
 st.markdown(f"""
-<div class="glass-card" style="max-width: 1100px; margin: 2.5rem auto; padding: 2rem 1.5rem; overflow: hidden;">
-    <h2 style="text-align:center; margin-bottom: 1.8rem;">{txt('pioneers_title')}</h2>
-    
+<div class="glass-card" style="max-width:1200px; margin:3rem auto; padding:2.5rem 2rem;">
+    <h2 style="text-align:center; margin-bottom:2.2rem;">{txt('pioneers_title')}</h2>
+
     <div class="pioneers-carousel-container">
-        <button class="carousel-arrow left-arrow" onclick="document.querySelector('.pioneers-carousel').scrollBy({{left: -280, behavior: 'smooth'}})">‹</button>
-        
+        <button class="carousel-arrow left-arrow" onclick="document.querySelector('.pioneers-carousel').scrollBy({{left: -320, behavior: 'smooth'}})">‹</button>
+
         <div class="pioneers-carousel">
 """, unsafe_allow_html=True)
 
@@ -452,13 +598,11 @@ pioneers = [
         "quote": "Stable daily profits.",
         "photo": "assets/ramil.jpg"
     },
-    # Add more pioneers here — they will auto-extend horizontally
-    # Example:
-    # {"name": "Jai", "since": "Feb 2026", "earnings": "+$980", "gain": "+98%", "quote": "Game changer!", "photo": "assets/jai.jpg"},
+    # You can add more here — they extend horizontally automatically
 ]
 
 for p in pioneers:
-    photo_url = p.get("photo", f"https://via.placeholder.com/120/222/ffd700?text={p['name'][0]}")
+    photo_url = p.get("photo", f"https://via.placeholder.com/140/222/ffd700?text={p['name'][0]}")
     st.markdown(f"""
     <div class="pioneer-card">
         <div class="card-inner">
@@ -478,8 +622,8 @@ for p in pioneers:
 
 st.markdown("""
         </div>
-        
-        <button class="carousel-arrow right-arrow" onclick="document.querySelector('.pioneers-carousel').scrollBy({{left: 280, behavior: 'smooth'}})">›</button>
+
+        <button class="carousel-arrow right-arrow" onclick="document.querySelector('.pioneers-carousel').scrollBy({{left: 320, behavior: 'smooth'}})">›</button>
     </div>
 </div>
 
@@ -488,47 +632,50 @@ st.markdown("""
         position: relative;
         width: 100%;
         overflow: hidden;
+        padding: 1.5rem 0;
     }
 
     .pioneers-carousel {
         display: flex;
-        flex-direction: row;               /* always horizontal */
-        flex-wrap: nowrap;                 /* no wrapping / no vertical */
-        gap: 1.8rem;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        gap: 2.2rem;
         overflow-x: auto;
         scroll-behavior: smooth;
         scroll-snap-type: x mandatory;
-        -webkit-overflow-scrolling: touch; /* smooth on iOS */
-        scrollbar-width: none;             /* hide scrollbar Firefox */
-        -ms-overflow-style: none;          /* hide scrollbar IE/Edge */
-        padding: 1rem 0;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding: 1.2rem 0;
     }
 
     .pioneers-carousel::-webkit-scrollbar {
-        display: none;                     /* hide scrollbar Chrome/Safari */
+        display: none;
     }
 
     .pioneer-card {
-        flex: 0 0 240px;                   /* fixed width cards */
-        height: 320px;
+        flex: 0 0 280px;
+        width: 280px;
+        height: 380px;
+        background: rgba(30, 35, 55, 0.88);
+        border-radius: 28px;
+        border: 1px solid rgba(255,215,0,0.18);
+        overflow: hidden;
+        box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+        transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
         scroll-snap-align: center;
-        perspective: 1200px;
-        transition: transform 0.3s ease;
     }
 
     .pioneer-card:hover {
-        transform: scale(1.05);
+        transform: translateY(-16px) scale(1.07);
+        box-shadow: 0 28px 70px rgba(255,215,0,0.32);
     }
 
-    /* Flip card styles (same as before, just cleaned) */
     .card-inner {
         position: relative;
         width: 100%;
         height: 100%;
-        transition: transform 0.65s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
         transform-style: preserve-3d;
-        border-radius: 16px;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.35);
     }
 
     .pioneer-card:hover .card-inner,
@@ -541,132 +688,142 @@ st.markdown("""
         width: 100%;
         height: 100%;
         backface-visibility: hidden;
-        border-radius: 16px;
-        overflow: hidden;
+        border-radius: 28px;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        padding: 1.5rem;
+        padding: 2rem 1.5rem;
         text-align: center;
     }
 
     .card-front {
-        background: rgba(30, 35, 55, 0.92);
-        border: 1px solid rgba(255,215,0,0.25);
+        background: rgba(30, 35, 55, 0.94);
+        border: 1px solid rgba(255,215,0,0.22);
     }
 
     .card-back {
-        background: linear-gradient(145deg, rgba(40,45,65,0.95), rgba(20,25,45,0.95));
-        border: 1px solid rgba(0,255,170,0.25);
+        background: linear-gradient(145deg, rgba(40,45,65,0.97), rgba(20,25,45,0.97));
+        border: 1px solid rgba(0,255,170,0.22);
         transform: rotateY(180deg);
     }
 
     .pioneer-photo {
-        width: 110px;
-        height: 110px;
+        width: 140px;
+        height: 140px;
         border-radius: 50%;
         object-fit: cover;
-        border: 3px solid {accent_gold};
-        margin-bottom: 1.2rem;
-        box-shadow: 0 4px 15px rgba(255,215,0,0.3);
+        border: 4px solid {accent_gold};
+        box-shadow: 0 8px 28px rgba(255,215,0,0.35);
+        margin-bottom: 1.6rem;
     }
 
     .pioneer-name {
-        font-size: 1.35rem;
+        font-size: 1.5rem;
         font-weight: 700;
         color: {accent_gold};
-        margin: 0.4rem 0 0.3rem;
+        margin: 0.5rem 0 0.4rem;
     }
 
     .pioneer-since {
-        font-size: 0.95rem;
+        font-size: 1.05rem;
         color: {text_muted};
-        opacity: 0.85;
+        opacity: 0.88;
     }
 
     .earnings {
-        font-size: 2.1rem;
+        font-size: 2.6rem;
         font-weight: 800;
         color: {accent_gold};
-        margin-bottom: 0.5rem;
-        text-shadow: 0 0 12px {accent_glow};
+        text-shadow: 0 0 16px {accent_glow};
+        margin-bottom: 0.6rem;
     }
 
     .gain {
-        font-size: 1.45rem;
+        font-size: 1.7rem;
         font-weight: 700;
         color: #00ffaa;
-        margin-bottom: 1.1rem;
+        margin-bottom: 1.2rem;
     }
 
     .quote {
-        font-size: 1.05rem;
+        font-size: 1.15rem;
         font-style: italic;
         color: #e2e8f0;
-        opacity: 0.92;
-        line-height: 1.45;
-        padding: 0 0.6rem;
+        opacity: 0.93;
+        line-height: 1.48;
     }
 
-    /* Arrows – only show when overflowing */
+    /* ── Carousel arrows ── */
     .carousel-arrow {
         position: absolute;
         top: 50%;
         transform: translateY(-50%);
-        background: rgba(13,17,23,0.7);
+        background: rgba(13,17,23,0.88);
         color: {accent_gold};
         border: none;
         border-radius: 50%;
-        width: 48px;
-        height: 48px;
-        font-size: 2rem;
+        width: 60px;
+        height: 60px;
+        font-size: 2.4rem;
         font-weight: bold;
         cursor: pointer;
         z-index: 10;
-        opacity: 0.8;
-        transition: opacity 0.3s, background 0.3s;
+        opacity: 0.9;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.4);
     }
 
     .carousel-arrow:hover {
         opacity: 1;
-        background: rgba(13,17,23,0.95);
+        background: rgba(13,17,23,1);
+        transform: translateY(-50%) scale(1.12);
+        box-shadow: 0 8px 24px rgba(255,215,0,0.3);
     }
 
-    .left-arrow {
-        left: 10px;
-    }
+    .left-arrow  { left: 15px; }
+    .right-arrow { right: 15px; }
 
-    .right-arrow {
-        right: 10px;
-    }
-
-    /* Hide arrows if not overflowing (pure CSS trick) */
+    /* Hide arrows when not needed / not hovering */
     .pioneers-carousel-container:has(.pioneers-carousel:not(:hover)) .carousel-arrow {
-        display: none;
+        opacity: 0.4;
     }
 
-    /* Mobile adjustments – bigger touch area */
-    @media (max-width: 768px) {
+    /* ── Responsive ── */
+    @media (max-width: 992px) {
         .pioneer-card {
-            flex: 0 0 280px;
-            height: 340px;
+            flex: 0 0 300px;
+            width: 300px;
+            height: 400px;
         }
-        .pioneer-photo { width: 120px; height: 120px; }
+        .pioneer-photo { width: 150px; height: 150px; }
+    }
+
+    @media (max-width: 768px) {
+        .pioneers-carousel { gap: 1.8rem; }
+        .pioneer-card {
+            flex: 0 0 320px;
+            width: 320px;
+        }
         .carousel-arrow {
-            width: 56px;
-            height: 56px;
-            font-size: 2.2rem;
+            width: 64px;
+            height: 64px;
+            font-size: 2.6rem;
         }
     }
 
     @media (max-width: 480px) {
+        .pioneers-carousel-container { padding: 1rem 0; }
         .pioneer-card {
-            flex: 0 0 260px;
-            height: 320px;
+            flex: 0 0 100%;
+            max-width: 360px;
+            margin: 0 auto 1.5rem;
+            height: 420px;
         }
-        .earnings { font-size: 1.9rem; }
-        .gain { font-size: 1.35rem; }
+        .pioneer-photo { width: 130px; height: 130px; margin-bottom: 1.4rem; }
+        .earnings { font-size: 2.3rem; }
+        .gain { font-size: 1.55rem; }
+        .carousel-arrow { display: none; } /* hide arrows on very small screens – swipe instead */
     }
 </style>
 """, unsafe_allow_html=True)
