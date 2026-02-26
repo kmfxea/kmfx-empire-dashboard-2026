@@ -330,9 +330,8 @@ if not authenticated:
     </div>
     """, height=420)
 
-    # ── Waitlist Form (FINAL FIXED – client-side Edge Function invoke) ──
+    # ── Waitlist Form (SIMPLIFIED – save only, no welcome email send yet) ──
 st.markdown("<div class='glass-card' style='padding: 2.5rem; border-radius: 24px;'>", unsafe_allow_html=True)
-
 st.markdown(f"""
     <h2 style='text-align:center; margin-bottom:1.5rem;'>{txt('join_waitlist')}</h2>
     <p style='text-align:center; color:{text_muted}; font-size:1.1rem; margin-bottom:2rem; line-height:1.6;'>
@@ -382,7 +381,7 @@ if submitted:
     email = email_input.strip().lower()
     full_name_clean = full_name.strip() if full_name else None
     message_clean = message.strip() if message else None
-
+    
     # Basic validation
     if not email:
         st.error(
@@ -403,62 +402,27 @@ if submitted:
                     "message": message_clean,
                     "language": st.session_state.language,
                     "status": "Pending",
-                    "subscribed": True
+                    "subscribed": True,
+                    "created_at": "now()"  # optional: auto timestamp
                 }
-
-                # DEBUG: Show data (optional – remove later if you want clean UI)
-                # st.info("DEBUG: Data being sent")
-                # st.json(data)
-
+                
                 response = supabase.table("waitlist").insert(data).execute()
-
+                
                 if response.data:
                     st.success(
-                        "Salamat! Nasa waitlist ka na. Makakatanggap ka ng welcome email shortly 👑"
+                        "Salamat! Nasa waitlist ka na. Makakatanggap ka ng updates at news soon 👑"
                         if st.session_state.language == "tl"
-                        else "Thank you! You're on the waitlist. Welcome email coming soon 👑"
+                        else "Thank you! You're on the waitlist. You'll receive updates and news soon 👑"
                     )
                     st.balloons()
                     st.caption(
-                        "Check your inbox (and spam folder) for the confirmation email."
-                        if st.session_state.language == "en"
-                        else "Check mo ang inbox mo (at spam folder) para sa welcome email."
+                        "Keep an eye on your inbox — magse-send kami ng important updates kapag ready na."
+                        if st.session_state.language == "tl"
+                        else "Keep an eye on your inbox — we'll send important updates when ready."
                     )
-
-                    # ── DIRECTLY INVOKE EDGE FUNCTION FROM STREAMLIT ──
-                    try:
-                        invoke_resp = supabase.functions.invoke(
-                            "send-waitlist-confirmation",  # ← exact name of your Edge Function
-                            {
-                                "body": {
-                                    "name": full_name_clean or "Anonymous",
-                                    "email": email,
-                                    "message": message_clean or "",
-                                    "language": st.session_state.language
-                                }
-                            }
-                        )
-
-                        # Optional: Show more info if you want (remove for production)
-                        # st.caption(f"Email request sent (status: {invoke_resp.status_code})")
-
-                        st.caption("Welcome email request sent successfully! Check spam if not arrived in 1–2 minutes.")
-                    
-                    except Exception as invoke_err:
-                        st.caption(
-                            f"Welcome email send had a small issue ({str(invoke_err)}), "
-                            "but you're already on the waitlist! We'll fix it soon."
-                        )
-                        # Optional: log to your logs table
-                        # supabase.table("logs").insert({
-                        #     "action": "waitlist_email_invoke_failed",
-                        #     "details": str(invoke_err),
-                        #     "email": email
-                        # }).execute()
-
                 else:
-                    st.warning("Submission processed but no confirmation received — check dashboard.")
-
+                    st.warning("Submission processed but no confirmation received — check dashboard later.")
+                    
             except Exception as e:
                 err_str = str(e).lower()
                 if any(x in err_str for x in ["duplicate", "unique", "23505"]):
