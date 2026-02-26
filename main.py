@@ -216,41 +216,7 @@ if qr_token and not authenticated:
 # PUBLIC LANDING CONTENT (only shown if NOT authenticated)
 # ────────────────────────────────────────────────
 if not authenticated:
-    # ── Language support (for bilingual waitlist form) ──
-    if "language" not in st.session_state:
-        st.session_state.language = "en"
-
-    texts = {
-        "en": {
-            "join_waitlist": "Join Waitlist – Early Access",
-            "name": "Full Name",
-            "email": "Email",
-            "why_join": "Why do you want to join KMFX? (optional)",
-            "submit": "Join Waitlist 👑",
-            "success": "Success! You're on the list. Check your email soon 🚀",
-            # Add more keys later if you want to translate hero / other texts
-        },
-        "tl": {
-            "join_waitlist": "Sumali sa Waitlist – Maagang Access",
-            "name": "Buong Pangalan",
-            "email": "Email",
-            "why_join": "Bakit gusto mong sumali sa KMFX? (opsyonal)",
-            "submit": "Sumali sa Waitlist 👑",
-            "success": "Tagumpay! Nasa listahan ka na. Check mo ang email mo soon 🚀",
-        }
-    }
-
-    def txt(key):
-        # Safe fallback to English if language or key missing
-        lang_dict = texts.get(st.session_state.language, texts["en"])
-        return lang_dict.get(key, key)
-
-    # Language toggle (top-right-ish)
-    st.markdown('<div style="text-align: right; margin: 1rem 0;">', unsafe_allow_html=True)
-    if st.button("EN / TL", key="lang_toggle_public"):
-        st.session_state.language = "tl" if st.session_state.language == "en" else "en"
-        st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
+    
 
     # Logo
     logo_col = st.columns([1, 4, 1])[1]
