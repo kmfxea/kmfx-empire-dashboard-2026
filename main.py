@@ -330,13 +330,13 @@ if not authenticated:
     </div>
     """, height=420)
 
-    # ── Waitlist Form (final: bilingual, Supabase insert, duplicate-safe, great UX) ──
+    # ── Waitlist Form (FULL FIX: bilingual, escaped inputs, duplicate-safe, great UX) ──
 st.markdown("<div class='glass-card' style='padding: 2.5rem; border-radius: 24px;'>", unsafe_allow_html=True)
 
 st.markdown(f"""
     <h2 style='text-align:center; margin-bottom:1.5rem;'>{txt('join_waitlist')}</h2>
     <p style='text-align:center; color:{text_muted}; font-size:1.1rem; margin-bottom:2rem; line-height:1.6;'>
-        Sumali sa waitlist para maunang makakuha ng access kapag live na ang KMFX EA. 
+        Sumali sa waitlist para maunang makakuha ng access kapag live na ang KMFX EA.  
         Limited spots para sa mga pioneer — be part of the journey!
     </p>
 """, unsafe_allow_html=True)
@@ -378,7 +378,7 @@ with st.form("waitlist_form", clear_on_submit=True):
         help="We respect your privacy — email mo lang ang iingatan namin."
     )
 
-# Process submission (outside form para hindi ma-re-run ang form)
+# Process submission (outside form to avoid re-run issues)
 if submitted:
     email = email_input.strip().lower()
     
@@ -387,47 +387,53 @@ if submitted:
             "Email is required" if st.session_state.language == "en"
             else "Kailangan ang Email"
         )
-    elif "@" not in email or len(email.split("@")[1]) < 3:
+    elif "@" not in email or "." not in email.split("@")[-1]:
         st.error(
             "Please enter a valid email address" if st.session_state.language == "en"
             else "Pakilagyan ng valid na email address"
         )
     else:
         try:
-            # Insert to Supabase – trigger will auto-send email
-            supabase.table("waitlist").insert({
-                "full_name": full_name.strip() if full_name else None,
-                "email": email,
-                "message": message.strip() if message else None,
+            # Escape single quotes to prevent "Quote command returned error"
+            safe_full_name = (full_name or "").strip().replace("'", "''") if full_name else None
+            safe_message  = (message or "").strip().replace("'", "''") if message else None
+            safe_email    = email  # already cleaned
+
+            # Insert to Supabase – trigger will auto-send welcome email
+            response = supabase.table("waitlist").insert({
+                "full_name": safe_full_name,
+                "email": safe_email,
+                "message": safe_message,
                 "language": st.session_state.language,
-                # Optional: add referrer or source if you have utm params
-                # "referrer": st.query_params.get("ref", ["organic"])[0]
             }).execute()
 
-            # Success message
+            # Success
             st.success(
-                "Salamat! Nasa waitlist ka na. Excited kami sa updates — keep posted! 👑" 
+                "Salamat! Nasa waitlist ka na. Makakatanggap ka ng welcome email shortly 👑" 
                 if st.session_state.language == "tl"
-                else "Thank you! You're now on the waitlist. We'll keep you posted! 👑"
+                else "Thank you! You're on the waitlist. Welcome email coming soon 👑"
             )
-            
-            # Fun animation
             st.balloons()
-            
-            # Optional: small note
+
             st.caption(
-                "You will receive a welcome email shortly. Check spam if not in inbox." 
+                "Check your inbox (and spam folder) for the confirmation email."
                 if st.session_state.language == "en"
-                else "Makakatanggap ka ng welcome email shortly. Check mo rin ang spam folder."
+                else "Check mo ang inbox mo (at spam folder) para sa confirmation email."
             )
 
         except Exception as e:
             error_text = str(e).lower()
             if "duplicate key" in error_text or "unique constraint" in error_text:
                 st.info(
-                    "Nasa waitlist na pala ang email mo — salamat sa suporta! Keep following lang." 
+                    "Nasa waitlist na pala ang email mo — salamat sa suporta! Keep following lang."
                     if st.session_state.language == "tl"
                     else "Looks like you're already on the waitlist — thank you! Stay tuned."
+                )
+            elif "quote command" in error_text or "xx000" in error_text:
+                st.warning(
+                    "May special character (hal. apostrophe ') sa name o message mo. Subukan ulit nang walang ' o \" o backslash."
+                    if st.session_state.language == "tl"
+                    else "Looks like there's a special character (like ' or \\) in name/message. Try again without them."
                 )
             else:
                 st.error(
@@ -436,7 +442,6 @@ if submitted:
                 )
 
 st.markdown("</div>", unsafe_allow_html=True)
-    
 
 
 # Portfolio Story (centered)
