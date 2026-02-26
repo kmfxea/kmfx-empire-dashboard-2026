@@ -363,23 +363,34 @@ if st.button("EN / TL", key="lang_toggle", help="Switch to English / Tagalog"):
 st.markdown('</div>', unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# LOGO + HERO – modern, centered, responsive & premium feel
+# LOGO + HERO – ultra-reliable centering on all devices
 # ────────────────────────────────────────────────
 
-# Add this small CSS snippet specifically for logo & hero (can be merged into your global style later)
 st.markdown(f"""
 <style>
-    .hero-logo-container {{
+    .hero-section {{
         text-align: center;
+        width: 100%;
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 1rem 0 3rem 0;
+    }}
+
+    .hero-logo-wrapper {{
+        display: flex;
+        justify-content: center;
+        align-items: center;
         margin: 2.5rem 0 2rem 0;
     }}
+
     .hero-logo {{
-        width: 100%;
-        max-width: 420px;                /* ← big & luxurious on desktop */
+        max-width: 420px;
+        width: 85%;
         height: auto;
         filter: drop-shadow(0 12px 40px rgba(255, 215, 0, 0.28));
         transition: transform 0.4s ease, filter 0.4s ease;
     }}
+
     .hero-logo:hover {{
         transform: scale(1.04);
         filter: drop-shadow(0 16px 50px rgba(255, 215, 0, 0.40));
@@ -388,75 +399,84 @@ st.markdown(f"""
     .hero-title {{
         font-size: 3.8rem;
         font-weight: 800;
-        margin: 1.2rem 0 0.6rem;
+        margin: 0.8rem 0 0.4rem;
         line-height: 1.05;
         letter-spacing: -0.8px;
     }}
+
     .hero-subtitle {{
         font-size: 2.1rem;
         font-weight: 500;
         color: {text_primary};
-        margin: 0 0 1.4rem;
+        margin: 0 0 1.2rem;
         opacity: 0.95;
     }}
+
     .hero-desc {{
         font-size: 1.4rem;
         max-width: 820px;
-        margin: 0 auto 1.6rem;
+        margin: 0 auto 1.4rem;
         line-height: 1.5;
         opacity: 0.92;
     }}
+
     .hero-footer {{
         font-size: 1.1rem;
         opacity: 0.8;
-        margin-top: 1rem;
+        margin-top: 1.2rem;
     }}
 
-    /* Responsive adjustments */
+    /* ── Responsive ── */
     @media (max-width: 1200px) {{
         .hero-logo {{ max-width: 360px; }}
         .hero-title {{ font-size: 3.3rem; }}
-        .hero-subtitle {{ font-size: 1.9rem; }}
     }}
+
     @media (max-width: 992px) {{
-        .hero-logo {{ max-width: 320px; margin: 2rem 0 1.5rem; }}
+        .hero-logo {{ max-width: 320px; }}
         .hero-title {{ font-size: 2.9rem; }}
+        .hero-section {{ padding: 1rem 1.5rem 2.5rem; }}
     }}
+
     @media (max-width: 768px) {{
-        .hero-logo-container {{ margin: 2rem 0 1.8rem; }}
+        .hero-logo-wrapper {{ margin: 2rem 0 1.6rem; }}
         .hero-logo {{ max-width: 280px; }}
         .hero-title {{ font-size: 2.5rem; }}
         .hero-subtitle {{ font-size: 1.7rem; }}
-        .hero-desc {{ font-size: 1.25rem; }}
+        .hero-desc {{ font-size: 1.25rem; padding: 0 0.8rem; }}
     }}
+
     @media (max-width: 480px) {{
         .hero-logo {{ max-width: 240px; }}
         .hero-title {{ font-size: 2.1rem; }}
         .hero-subtitle {{ font-size: 1.5rem; }}
         .hero-desc {{ font-size: 1.15rem; padding: 0 1rem; }}
+        .hero-section {{ padding: 0.8rem 1rem 2rem; }}
     }}
 </style>
 """, unsafe_allow_html=True)
 
-# ── Logo + Hero Content ──
-st.markdown('<div class="hero-logo-container">', unsafe_allow_html=True)
-st.image(
-    "assets/logo.png",
-    use_column_width=False,
-    output_format="PNG",
-    clamp=True,
-    # No need for extra class – we style via .hero-logo in global or here
-)
-st.markdown('</div>', unsafe_allow_html=True)
+# ── Actual content ──
+with st.container():
+    st.markdown('<div class="hero-section">', unsafe_allow_html=True)
+    
+    st.markdown('<div class="hero-logo-wrapper">', unsafe_allow_html=True)
+    st.image(
+        "assets/logo.png",
+        use_column_width=False,
+        output_format="PNG",
+        clamp=True
+    )
+    st.markdown('</div>', unsafe_allow_html=True)
 
-st.markdown(f"""
-<div style="text-align: center;">
+    st.markdown(f"""
     <h1 class="hero-title">{txt('hero_title')}</h1>
     <h2 class="hero-subtitle">{txt('hero_sub')}</h2>
     <p class="hero-desc">{txt('hero_desc')}</p>
     <p class="hero-footer">Mark Jeff Blando – Founder & Developer • 2026</p>
-</div>
-""", unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
+
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
 # LIVE GOLD PRICE + REALTIME TRADINGVIEW MINI CHART – back to original ticker, better size & reliability
