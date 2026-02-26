@@ -216,7 +216,84 @@ if qr_token and not authenticated:
 # PUBLIC LANDING CONTENT (only shown if NOT authenticated)
 # ────────────────────────────────────────────────
 if not authenticated:
+    # ── Language support (bilingual waitlist form) ──
+if "language" not in st.session_state:
+    st.session_state.language = "en"
+
+texts = {
+    "en": {
+        "join_waitlist": "Join Waitlist – Early Access",
+        "name": "Full Name",
+        "email": "Email",
+        "why_join": "Why do you want to join KMFX? (optional)",
+        "submit": "Join Waitlist 👑",
+        "success": "Success! You're on the list. Check your email soon 🚀",
+    },
+    "tl": {
+        "join_waitlist": "Sumali sa Waitlist – Maagang Access",
+        "name": "Buong Pangalan",
+        "email": "Email",
+        "why_join": "Bakit gusto mong sumali sa KMFX? (opsyonal)",
+        "submit": "Sumali sa Waitlist 👑",
+        "success": "Tagumpay! Nasa listahan ka na. Check mo ang email mo soon 🚀",
+    }
+}
+
+def txt(key):
+    lang_dict = texts.get(st.session_state.language, texts["en"])
+    return lang_dict.get(key, key)
+
+# ── Improved Language Toggle (centered below logo or in hero) ──
+st.markdown("""
+<style>
+    .lang-toggle-container {
+        text-align: center;
+        margin: 1.2rem 0 2rem;
+    }
+    .lang-toggle-btn {
+        background: transparent;
+        border: 1px solid #444;
+        color: #000000 !important;  /* Black text */
+        padding: 0.5rem 1.2rem;
+        border-radius: 50px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        display: inline-block;
+    }
+    .lang-toggle-btn:hover {
+        background: #00ffaa20;
+        border-color: #00ffaa;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(0,255,170,0.3);
+    }
+    .lang-toggle-btn.active {
+        background: #00ffaa;
+        color: #000 !important;
+        border-color: #00ffaa;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# Language toggle (centered, pill-style)
+with st.container():
+    st.markdown('<div class="lang-toggle-container">', unsafe_allow_html=True)
     
+    col_left, col_toggle, col_right = st.columns([1, 2, 1])
+    with col_toggle:
+        if st.session_state.language == "en":
+            btn_label = "EN / TL"
+            btn_key = "lang_en_active"
+        else:
+            btn_label = "TL / EN"
+            btn_key = "lang_tl_active"
+        
+        if st.button(btn_label, key=btn_key, help="Switch language", use_container_width=False):
+            st.session_state.language = "tl" if st.session_state.language == "en" else "en"
+            st.rerun()
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
     # Logo
     logo_col = st.columns([1, 4, 1])[1]
