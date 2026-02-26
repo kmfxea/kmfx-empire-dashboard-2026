@@ -240,62 +240,58 @@ if not authenticated:
     }
 
     def txt(key):
-        # Safe fallback to English if language or key missing
         lang_dict = texts.get(st.session_state.language, texts["en"])
         return lang_dict.get(key, key)
 
-    # ── Modern Dark Pill Language Toggle (centered) ──
+    # ── Dark Pill Toggle sa Top-Right ──
     st.markdown("""
     <style>
-        .lang-toggle-wrapper {
-            text-align: center;
-            margin: 1.2rem 0 2.2rem 0;
+        .lang-toggle-topright {
+            position: absolute;
+            top: 1.2rem;
+            right: 2rem;
+            z-index: 100;
         }
         .lang-pill {
-            background: #111827;                /* dark black-gray bg */
+            background: #111827;                /* dark/black background */
             color: #ffffff !important;          /* white text */
             border: 1px solid #374151;
-            padding: 0.55rem 1.4rem;
+            padding: 0.5rem 1.2rem;
             border-radius: 9999px;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             font-weight: 500;
             cursor: pointer;
             transition: all 0.25s ease;
             display: inline-flex;
             align-items: center;
-            gap: 0.6rem;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.45);
+            gap: 0.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
         }
         .lang-pill:hover {
             background: #1f2937;
             border-color: #00ffaa88;
             transform: translateY(-1px);
-            box-shadow: 0 4px 20px rgba(0,255,170,0.25);
+            box-shadow: 0 4px 16px rgba(0,255,170,0.25);
         }
         .lang-pill.active {
             background: #00ffaa;
             color: #000000 !important;          /* black text on green */
             border-color: #00ffaa;
         }
-        .lang-pill .icon {
-            font-size: 1.1rem;
-        }
     </style>
     """, unsafe_allow_html=True)
 
-    # Centered toggle
-    st.markdown('<div class="lang-toggle-wrapper">', unsafe_allow_html=True)
+    # Top-right container
+    st.markdown('<div class="lang-toggle-topright">', unsafe_allow_html=True)
 
-    # Dynamic label + active class
     current_lang = st.session_state.language
     btn_label = "EN / TL" if current_lang == "en" else "TL / EN"
-    active_class = "active" if current_lang == "tl" else ""
+    is_active = "active" if current_lang == "tl" else ""
 
     if st.button(
         f"🌐 {btn_label}",
-        key="lang_switch_public",
-        help="Switch between English and Tagalog",
-        use_container_width=False
+        key="lang_toggle_public_unique",
+        help="Switch between English and Tagalog"
     ):
         st.session_state.language = "tl" if current_lang == "en" else "en"
         st.rerun()
