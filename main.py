@@ -59,7 +59,7 @@ st.set_page_config(
 )
 
 st.markdown(f"""
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
     html, body, [class*="css-"] {{
         font-family: 'Inter', system-ui, sans-serif !important;
@@ -151,11 +151,32 @@ st.markdown(f"""
     .stExpander summary svg {{
         fill: {text_primary} !important;
     }}
-    /* Responsive */
+    /* ── GOLD PRICE DISPLAY ── Using Fredoka font (Frankfurter-like playful rounded style) */
+    .gold-price-display {{
+        font-family: 'Fredoka', cursive !important;
+        font-weight: 700 !important;
+        font-size: clamp(4.5rem, 12vw, 8rem) !important;
+        letter-spacing: -4px !important;
+        background: linear-gradient(90deg, {accent_gold}, #ffea80, #ffd700) !important;
+        -webkit-background-clip: text !important;
+        -webkit-text-fill-color: transparent !important;
+        text-shadow: 0 0 30px {accent_glow}, 0 0 60px rgba(255,215,0,0.4) !important;
+        margin: 2.2rem 0 0.6rem !important;
+        text-align: center !important;
+        line-height: 0.9 !important;
+    }}
+    .price-change {{
+        font-family: 'Inter', sans-serif !important;
+        font-size: 1.8rem !important;
+        font-weight: 700 !important;
+        margin-left: 0.5rem;
+    }}
+    /* Responsive adjustments */
     @media (max-width: 768px) {{
         .glass-card {{ padding: 1.6rem !important; margin: 1.5rem 1rem !important; }}
         .lang-toggle-container {{ top: 1rem; right: 1rem; }}
         .lang-toggle-btn {{ padding: 0.6rem 1.2rem !important; font-size: 0.95rem !important; }}
+        .gold-price-display {{ font-size: clamp(3.5rem, 10vw, 6rem) !important; letter-spacing: -3px !important; }}
     }}
 </style>
 """, unsafe_allow_html=True)
