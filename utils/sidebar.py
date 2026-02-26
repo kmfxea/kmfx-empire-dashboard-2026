@@ -1,4 +1,3 @@
-# utils/sidebar.py
 import streamlit as st
 
 def render_sidebar():
@@ -41,6 +40,8 @@ def render_sidebar():
         st.sidebar.page_link("pages/🔔_Notifications.py", label="🔔 Notifications")
         st.sidebar.page_link("pages/📁_File_Vault.py", label="📁 File Vault")
         st.sidebar.page_link("pages/💬_Messages.py", label="💬 Messages")
+        # ── Added here: Whitelist Monitor ──
+        st.sidebar.page_link("pages/📊_Whitelist_Monitor.py", label="📡 Whitelist Monitor")
         st.sidebar.page_link("pages/📸_Testimonials.py", label="📸 Moderate Testimonials")
 
     # ── OWNER VIEW (full control – logical empire flow) ───────────────────
@@ -60,6 +61,8 @@ def render_sidebar():
         st.sidebar.page_link("pages/🔔_Notifications.py", label="🔔 Notifications")
         st.sidebar.page_link("pages/📁_File_Vault.py", label="📁 File Vault")
         st.sidebar.page_link("pages/💬_Messages.py", label="💬 Messages")
+        # ── Added here: Whitelist Monitor ──
+        st.sidebar.page_link("pages/📊_Whitelist_Monitor.py", label="📡 Whitelist Monitor")
         st.sidebar.page_link("pages/📸_Testimonials.py", label="📸 Testimonials")
         # Advanced tools last
         st.sidebar.markdown("---")
