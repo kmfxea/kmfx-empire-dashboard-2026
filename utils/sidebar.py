@@ -36,14 +36,11 @@ def render_sidebar():
         st.sidebar.page_link("pages/💰_Profit_Sharing.py", label="💰 Record Profit")
         st.sidebar.page_link("pages/💳_Withdrawals.py", label="💳 Approve Withdrawals")
         st.sidebar.page_link("pages/🌱_Growth_Fund.py", label="🌱 Manage Growth Fund")
-        
-        st.sidebar.markdown("---")
-        st.sidebar.subheader("Communication & Oversight")
-        st.sidebar.page_link("pages/💬_Messages.py", label="💬 Messages")
-        st.sidebar.page_link("pages/📡_Whitelist_Monitor.py", label="📡 Whitelist Monitor")  # ← Added here
+        st.sidebar.page_link("pages/🤖_EA_Versions.py", label="🤖 EA Versions")
         st.sidebar.page_link("pages/📢_Announcements.py", label="📢 Announcements")
         st.sidebar.page_link("pages/🔔_Notifications.py", label="🔔 Notifications")
         st.sidebar.page_link("pages/📁_File_Vault.py", label="📁 File Vault")
+        st.sidebar.page_link("pages/💬_Messages.py", label="💬 Messages")
         st.sidebar.page_link("pages/📸_Testimonials.py", label="📸 Moderate Testimonials")
 
     # ── OWNER VIEW (full control – logical empire flow) ───────────────────
@@ -53,22 +50,17 @@ def render_sidebar():
         st.sidebar.page_link("pages/💰_Profit_Sharing.py", label="💰 Profit Sharing")
         st.sidebar.page_link("pages/🌱_Growth_Fund.py", label="🌱 Growth Fund")
         st.sidebar.page_link("pages/💳_Withdrawals.py", label="💳 Withdrawals")
-
         # Management tools
         st.sidebar.page_link("pages/🤖_EA_Versions.py", label="🤖 EA Versions")
         st.sidebar.page_link("pages/🔑_License_Generator.py", label="🔑 License Generator")
         st.sidebar.page_link("pages/👤_Admin_Management.py", label="👤 Admin Management")
-
-        st.sidebar.markdown("---")
-        st.sidebar.subheader("Oversight & Communication")
+        # Oversight & broadcast
         st.sidebar.page_link("pages/📜_Audit_Logs.py", label="📜 Audit Logs")
-        st.sidebar.page_link("pages/💬_Messages.py", label="💬 Messages")
-        st.sidebar.page_link("pages/📡_Whitelist_Monitor.py", label="📡 Whitelist Monitor")  # ← Added here
         st.sidebar.page_link("pages/📢_Announcements.py", label="📢 Announcements")
         st.sidebar.page_link("pages/🔔_Notifications.py", label="🔔 Notifications")
         st.sidebar.page_link("pages/📁_File_Vault.py", label="📁 File Vault")
+        st.sidebar.page_link("pages/💬_Messages.py", label="💬 Messages")
         st.sidebar.page_link("pages/📸_Testimonials.py", label="📸 Testimonials")
-
         # Advanced tools last
         st.sidebar.markdown("---")
         st.sidebar.subheader("👑 Owner Tools")
@@ -81,17 +73,13 @@ def render_sidebar():
         # Clear auth-related session state
         keys_to_clear = [
             "authenticated", "username", "full_name", "role",
-            "theme", "just_logged_in", "_sidebar_rendered",
-            "user_id"  # added if you store it
+            "theme", "just_logged_in", "_sidebar_rendered"
         ]
         for key in keys_to_clear:
             if key in st.session_state:
                 del st.session_state[key]
-        
         # Flag for success message in main.py
         st.session_state["logging_out"] = True
-        st.session_state["logout_message"] = "You have been logged out successfully."
-        
         # Redirect to public landing
         st.switch_page("main.py")
         st.rerun()
