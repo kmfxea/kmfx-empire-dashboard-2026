@@ -330,7 +330,7 @@ if not authenticated:
     </div>
     """, height=420)
 
-    # ── Waitlist Form (FULL FIX: bilingual, escaped inputs, duplicate-safe, great UX) ──
+    # ── Waitlist Form (FULL FIX: escaped inputs, duplicate-safe, bilingual, great UX) ──
 st.markdown("<div class='glass-card' style='padding: 2.5rem; border-radius: 24px;'>", unsafe_allow_html=True)
 
 st.markdown(f"""
@@ -378,7 +378,7 @@ with st.form("waitlist_form", clear_on_submit=True):
         help="We respect your privacy — email mo lang ang iingatan namin."
     )
 
-# Process submission (outside form to avoid re-run issues)
+# Process submission
 if submitted:
     email = email_input.strip().lower()
     
@@ -394,13 +394,13 @@ if submitted:
         )
     else:
         try:
-            # Escape single quotes to prevent "Quote command returned error"
-            safe_full_name = (full_name or "").strip().replace("'", "''") if full_name else None
-            safe_message  = (message or "").strip().replace("'", "''") if message else None
-            safe_email    = email  # already cleaned
+            # Strong escaping: replace ' → '', \ → \\ (prevents quote command error)
+            safe_full_name = (full_name or "").strip().replace("'", "''").replace("\\", "\\\\") if full_name else None
+            safe_message   = (message or "").strip().replace("'", "''").replace("\\", "\\\\") if message else None
+            safe_email     = email
 
-            # Insert to Supabase – trigger will auto-send welcome email
-            response = supabase.table("waitlist").insert({
+            # Insert – trigger auto-sends email
+            supabase.table("waitlist").insert({
                 "full_name": safe_full_name,
                 "email": safe_email,
                 "message": safe_message,
