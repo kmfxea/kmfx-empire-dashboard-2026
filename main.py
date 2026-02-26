@@ -330,7 +330,7 @@ if not authenticated:
     </div>
     """, height=420)
 
-    # ── Waitlist Form (FINAL FIXED VERSION – direct insert + robust handling) ──
+    # ── Waitlist Form (DEBUG VERSION – always shows full error details) ──
 st.markdown("<div class='glass-card' style='padding: 2.5rem; border-radius: 24px;'>", unsafe_allow_html=True)
 
 st.markdown(f"""
@@ -396,20 +396,20 @@ if submitted:
         )
     else:
         with st.spinner("Processing your request..."):
-            try:
-                data = {
-                    "full_name": full_name_clean,
-                    "email": email,
-                    "message": message_clean,
-                    "language": st.session_state.language,
-                    "status": "Pending",
-                    "subscribed": True,
-                    # Optional: you can add these if you want to track source
-                    # "ip_address": st.session_state.get("client_ip", None),
-                    # "referrer": st.session_state.get("referrer", None)
-                }
+            # ── DEBUG: Show exactly what we're sending ──
+            debug_data = {
+                "full_name": full_name_clean,
+                "email": email,
+                "message": message_clean,
+                "language": st.session_state.language,
+                "status": "Pending",
+                "subscribed": True
+            }
+            st.info("DEBUG: Data being sent to Supabase")
+            st.json(debug_data)
 
-                response = supabase.table("waitlist").insert(data).execute()
+            try:
+                response = supabase.table("waitlist").insert(debug_data).execute()
 
                 # Success path
                 if response.data:
@@ -425,33 +425,36 @@ if submitted:
                         else "Check mo ang inbox mo (at spam folder) para sa welcome email."
                     )
                 else:
-                    # This branch is rare — usually means insert succeeded but no row returned
-                    st.warning("Submission processed, but confirmation not received. You're likely already on the list!")
+                    st.warning("Insert returned success but no data was returned — check Supabase dashboard manually")
 
             except Exception as e:
-                err_str = str(e).lower()
+                # ── DEBUG: ALWAYS show full error details ──
+                st.error("Submission failed — full error below:")
+                st.code(f"""
+Error message:
+{str(e)}
 
+Exception type:
+{type(e).__name__}
+
+Full repr:
+{repr(e)}
+                """.strip(), language="text")
+
+                # Still try to give friendly message
+                err_str = str(e).lower()
                 if any(x in err_str for x in ["duplicate", "unique", "23505", "unique_violation"]):
                     st.info(
                         "Nasa waitlist na pala ang email mo — salamat! Keep following lang."
                         if st.session_state.language == "tl"
                         else "Looks like you're already on the waitlist — thank you! Stay tuned."
                     )
-                elif "invalid" in err_str or "format" in err_str:
-                    st.error(
-                        "Invalid email format — please double-check."
-                        if st.session_state.language == "en"
-                        else "Mukhang mali ang format ng email — pakicheck ulit."
-                    )
+                elif "permission" in err_str or "policy" in err_str or "row-level security" in err_str:
+                    st.error("RLS / Permission issue — public insert is probably blocked")
+                elif "timeout" in err_str or "connect" in err_str:
+                    st.error("Connection problem — check your internet or Supabase status")
                 else:
-                    st.error(
-                        "May problema sa pag-submit. Subukan ulit mamaya."
-                        if st.session_state.language == "tl"
-                        else "Something went wrong while submitting. Please try again later."
-                    )
-                    # Show detailed error only in dev/staging
-                    if "dev" in os.getenv("ENV", "").lower() or "local" in os.getenv("ENV", "").lower():
-                        st.code(f"Error details: {str(e)}", language="text")
+                    st.caption("Copy the red box above and send it to your developer/fix helper")
 
 st.markdown("</div>", unsafe_allow_html=True)
 
