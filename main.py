@@ -144,7 +144,7 @@ if not authenticated:
         lang_dict = texts.get(st.session_state.language, texts["en"])
         return lang_dict.get(key, key)
 
-    # ── Dark Pill Toggle (black bg, white text inside button) ──
+    # ── Dark Pill Toggle (black text ONLY sa EN/TL button) ──
     st.markdown("""
     <style>
         .lang-toggle-wrapper {
@@ -153,7 +153,7 @@ if not authenticated:
         }
         .lang-pill {
             background: #111827;                /* dark/black background */
-            color: #ffffff !important;          /* white text INSIDE button */
+            color: #ffffff !important;          /* white text inside button (default) */
             border: 1px solid #374151;
             padding: 0.6rem 1.5rem;
             border-radius: 9999px;
@@ -174,17 +174,24 @@ if not authenticated:
         }
         .lang-pill.active {
             background: #00ffaa;
-            color: #000000 !important;          /* black text on green when TL */
+            color: #000000 !important;          /* black text on green when TL active */
             border-color: #00ffaa;
         }
-        /* Force all text black outside the button (labels, captions, etc.) */
-        .stMarkdown, p, div, span, label, small, .caption, .stText {
+        /* IMPORTANT: Black text ONLY sa EN/TL button lang */
+        button[kind="secondary"][key="lang_switch_public_unique"] {
+            color: #000000 !important;          /* black text sa EN/TL */
+        }
+        button[kind="secondary"][key="lang_switch_public_unique"] span {
             color: #000000 !important;
+        }
+        /* Ensure other texts NOT black (reset to theme default) */
+        .stApp p, .stApp div, .stApp span, .stApp label, small, .caption {
+            color: inherit !important;          /* back to your theme's text color */
         }
     </style>
     """, unsafe_allow_html=True)
 
-    # Centered toggle container
+    # Centered toggle
     st.markdown('<div class="lang-toggle-wrapper">', unsafe_allow_html=True)
 
     current_lang = st.session_state.language
@@ -194,25 +201,13 @@ if not authenticated:
     if st.button(
         f"🌐 {btn_label}",
         key="lang_switch_public_unique",
-        help="Switch between English and Tagalog"
+        help="Switch between English and Tagalog",
+        type="secondary"  # use secondary para ma-override ang color
     ):
         st.session_state.language = "tl" if current_lang == "en" else "en"
         st.rerun()
 
     st.markdown('</div>', unsafe_allow_html=True)
-
-    # Optional: Make whole page text black (if needed for other elements)
-    st.markdown("""
-    <style>
-        /* Override any remaining gray/white text leaks */
-        .stApp p, .stApp div, .stApp span, .stApp label {
-            color: #000000 !important;
-        }
-        .stApp small, .stApp .caption {
-            color: #111111 !important;  /* almost black */
-        }
-    </style>
-    """, unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
 # QR AUTO-LOGIN
