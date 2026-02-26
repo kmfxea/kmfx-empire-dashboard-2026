@@ -216,6 +216,41 @@ if qr_token and not authenticated:
 # PUBLIC LANDING CONTENT (only shown if NOT authenticated)
 # ────────────────────────────────────────────────
 if not authenticated:
+    # ── Language support (for bilingual waitlist form) ──
+    if "language" not in st.session_state:
+        st.session_state.language = "en"
+
+    texts = {
+        "en": {
+            "join_waitlist": "Join Waitlist – Early Access",
+            "name": "Full Name",
+            "email": "Email",
+            "why_join": "Why do you want to join KMFX? (optional)",
+            "submit": "Join Waitlist 👑",
+            "success": "Success! You're on the list. Check your email soon 🚀",
+            # Add more keys later if you want to translate hero / other texts
+        },
+        "tl": {
+            "join_waitlist": "Sumali sa Waitlist – Maagang Access",
+            "name": "Buong Pangalan",
+            "email": "Email",
+            "why_join": "Bakit gusto mong sumali sa KMFX? (opsyonal)",
+            "submit": "Sumali sa Waitlist 👑",
+            "success": "Tagumpay! Nasa listahan ka na. Check mo ang email mo soon 🚀",
+        }
+    }
+
+    def txt(key):
+        # Safe fallback to English if language or key missing
+        lang_dict = texts.get(st.session_state.language, texts["en"])
+        return lang_dict.get(key, key)
+
+    # Language toggle (top-right-ish)
+    st.markdown('<div style="text-align: right; margin: 1rem 0;">', unsafe_allow_html=True)
+    if st.button("EN / TL", key="lang_toggle_public"):
+        st.session_state.language = "tl" if st.session_state.language == "en" else "en"
+        st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
 
     # Logo
     logo_col = st.columns([1, 4, 1])[1]
@@ -235,7 +270,7 @@ if not authenticated:
         accounts_count = supabase.table("ftmo_accounts").select("id", count="exact").execute().count or 0
         equity_data = supabase.table("ftmo_accounts").select("current_equity").execute().data or []
         total_equity = sum(acc.get("current_equity", 0) for acc in equity_data)
-        gf_data = supabase.table("growth_fund_transactions").select("type, amount").execute().data or []
+        gf_data = supabase.table("growth_fund_transactions").select("type", "amount").execute().data or []
         gf_balance = sum(t["amount"] if t["type"] == "In" else -t["amount"] for t in gf_data)
         members_count = supabase.table("users").select("id", count="exact").eq("role", "client").execute().count or 0
     except Exception:
@@ -246,10 +281,12 @@ if not authenticated:
     with stat_cols[1]: st.metric("Total Equity", f"${total_equity:,.0f}")
     with stat_cols[2]: st.metric("Growth Fund", f"${gf_balance:,.0f}")
     with stat_cols[3]: st.metric("Members", members_count)
-# ── Live Gold Price ──────────────────────────────────────────────
+
+    # ── Live Gold Price (with better error handling) ──
     @st.cache_data(ttl=300)
     def get_gold_price():
         try:
+            import yfinance as yf
             t = yf.Ticker("GC=F")
             info = t.info
             price = (
@@ -266,7 +303,8 @@ if not authenticated:
                     prev = hist['Close'][-2] if len(hist) > 1 else price
                     ch = ((price - prev) / prev * 100) if prev else 0.0
             return round(price, 1) if price else None, round(ch, 2)
-        except:
+        except Exception as e:
+            # Silent fallback in production
             return None, 0.0
 
     price, change = get_gold_price()
@@ -282,7 +320,8 @@ if not authenticated:
         """, unsafe_allow_html=True)
     else:
         st.markdown(f"<p style='text-align:center; color:{text_muted}; font-size:1.8rem;'>Gold Price (Loading or Market Closed...)</p>", unsafe_allow_html=True)
-        # ── TradingView Mini Chart ───────────────────────────────────────
+
+    # ── TradingView Mini Chart (fixed indentation) ──
     st.components.v1.html("""
     <div class="tradingview-widget-container" style="width:100%; height:340px; min-height:220px; max-height:380px; margin:1.8rem auto 3rem; border-radius:14px; overflow:hidden; box-shadow:0 8px 28px rgba(0,0,0,0.5); background:rgba(13,17,23,0.6);">
       <div class="tradingview-widget-container__widget"></div>
@@ -290,24 +329,114 @@ if not authenticated:
       <tv-mini-chart symbol="OANDA:XAUUSD" color-theme="dark" locale="en" height="100%" width="100%"></tv-mini-chart>
     </div>
     """, height=420)
-    # ── Waitlist Form ── (dito na dapat ilagay ang waitlist mo)
-    st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
-    st.markdown(f"<h2 style='margin-bottom:1.8rem;'>{txt('join_waitlist')}</h2>", unsafe_allow_html=True)
-    with st.form("waitlist_form", clear_on_submit=True):
-        col1, col2 = st.columns([1, 1.4])
-        with col1:
-            full_name = st.text_input(txt("name"), placeholder="Juan Dela Cruz")
-        with col2:
-            email = st.text_input(txt("email"), placeholder="your@email.com")
-        message = st.text_area(txt("why_join"), height=120)
-        if st.form_submit_button(txt("submit"), type="primary", use_container_width=True):
-            if email.strip():
-                # TODO: real Supabase insert
-                # supabase.table("waitlist").insert({"name":full_name, "email":email, "message":message, "language": st.session_state.language}).execute()
-                st.success(txt("success"))
+
+    # ── Waitlist Form (final: bilingual, Supabase insert, duplicate-safe, great UX) ──
+st.markdown("<div class='glass-card' style='padding: 2.5rem; border-radius: 24px;'>", unsafe_allow_html=True)
+
+st.markdown(f"""
+    <h2 style='text-align:center; margin-bottom:1.5rem;'>{txt('join_waitlist')}</h2>
+    <p style='text-align:center; color:{text_muted}; font-size:1.1rem; margin-bottom:2rem; line-height:1.6;'>
+        Sumali sa waitlist para maunang makakuha ng access kapag live na ang KMFX EA. 
+        Limited spots para sa mga pioneer — be part of the journey!
+    </p>
+""", unsafe_allow_html=True)
+
+with st.form("waitlist_form", clear_on_submit=True):
+    col1, col2 = st.columns([1, 1.4])
+    
+    with col1:
+        full_name = st.text_input(
+            txt("name"),
+            placeholder="Juan Dela Cruz" if st.session_state.language == "en" else "Juan Dela Cruz",
+            key="waitlist_fullname",
+            help="Pwede ring nickname o full name mo lang"
+        )
+    
+    with col2:
+        email_input = st.text_input(
+            txt("email"),
+            placeholder="your@email.com",
+            key="waitlist_email",
+            help="Ito ang email na gagamitin namin para sa updates at invitation"
+        )
+    
+    message = st.text_area(
+        txt("why_join"),
+        height=140,
+        placeholder=(
+            "Halimbawa: Gusto ko sumali dahil pagod na ako sa manual trading at hanap ko na 'yung stable at hands-off na system..."
+            if st.session_state.language == "tl"
+            else "Example: I'm tired of emotional manual trading and want a consistent, automated system..."
+        ),
+        key="waitlist_message"
+    )
+    
+    submitted = st.form_submit_button(
+        txt("submit"),
+        type="primary",
+        use_container_width=True,
+        help="We respect your privacy — email mo lang ang iingatan namin."
+    )
+
+# Process submission (outside form para hindi ma-re-run ang form)
+if submitted:
+    email = email_input.strip().lower()
+    
+    if not email:
+        st.error(
+            "Email is required" if st.session_state.language == "en"
+            else "Kailangan ang Email"
+        )
+    elif "@" not in email or len(email.split("@")[1]) < 3:
+        st.error(
+            "Please enter a valid email address" if st.session_state.language == "en"
+            else "Pakilagyan ng valid na email address"
+        )
+    else:
+        try:
+            # Insert to Supabase – trigger will auto-send email
+            supabase.table("waitlist").insert({
+                "full_name": full_name.strip() if full_name else None,
+                "email": email,
+                "message": message.strip() if message else None,
+                "language": st.session_state.language,
+                # Optional: add referrer or source if you have utm params
+                # "referrer": st.query_params.get("ref", ["organic"])[0]
+            }).execute()
+
+            # Success message
+            st.success(
+                "Salamat! Nasa waitlist ka na. Excited kami sa updates — keep posted! 👑" 
+                if st.session_state.language == "tl"
+                else "Thank you! You're now on the waitlist. We'll keep you posted! 👑"
+            )
+            
+            # Fun animation
+            st.balloons()
+            
+            # Optional: small note
+            st.caption(
+                "You will receive a welcome email shortly. Check spam if not in inbox." 
+                if st.session_state.language == "en"
+                else "Makakatanggap ka ng welcome email shortly. Check mo rin ang spam folder."
+            )
+
+        except Exception as e:
+            error_text = str(e).lower()
+            if "duplicate key" in error_text or "unique constraint" in error_text:
+                st.info(
+                    "Nasa waitlist na pala ang email mo — salamat sa suporta! Keep following lang." 
+                    if st.session_state.language == "tl"
+                    else "Looks like you're already on the waitlist — thank you! Stay tuned."
+                )
             else:
-                st.error("Email is required")
-    st.markdown("</div>", unsafe_allow_html=True)
+                st.error(
+                    f"May error sa pag-save: {str(e)}" if st.session_state.language == "tl"
+                    else f"Error saving: {str(e)}"
+                )
+
+st.markdown("</div>", unsafe_allow_html=True)
+    
 
 
 # Portfolio Story (centered)
