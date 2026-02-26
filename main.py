@@ -87,15 +87,25 @@ st.markdown(f"""
         box-shadow: 0 18px 48px rgba(0,0,0,0.35);
         border-color: {accent_green};
     }}
-    .gold-text {{
+    /* ── ALL TITLES ARE NOW YELLOW ── */
+    h1, h2, h3, h4,
+    .stExpander summary,
+    .stExpander summary > div > div > p,
+    .stExpander summary > div > div,
+    h2.gold-text, h3.gold-text {{
         color: {accent_gold} !important;
-        text-shadow: 0 0 10px {accent_glow};
-        font-weight: 600;
+        text-shadow: 0 0 12px {accent_glow} !important;
     }}
-    h1, h2, h3, h4 {{
-        font-family: 'Playfair Display', serif !important;
-        color: {accent_orange} !important;
+    h1, h2 {{
+        font-family: 'Fredoka', 'Playfair Display', cursive !important;
+        font-weight: 700 !important;
+        letter-spacing: -0.8px !important;
         text-align: center !important;
+    }}
+    h3, h4 {{
+        font-family: 'Inter', sans-serif !important;
+        font-weight: 600 !important;
+        letter-spacing: 0.3px !important;
     }}
     button[kind="primary"] {{
         background: linear-gradient(90deg, {accent_green}, #ffea80) !important;
@@ -125,13 +135,12 @@ st.markdown(f"""
         font-weight: 700 !important;
         box-shadow: 0 6px 20px rgba(255,98,0,0.5) !important;
     }}
-    /* Force ALL normal text white/adaptive + better readability */
+    /* Force body text white/adaptive */
     .stMarkdown p,
     .stMarkdown div,
     .stWrite,
     div[data-testid="stMarkdownContainer"] p,
     div[data-testid="stMarkdownContainer"] div,
-    .stExpander div p,
     .element-container p,
     .element-container div {{
         color: {text_primary} !important;
@@ -139,19 +148,11 @@ st.markdown(f"""
         font-size: 1.05rem !important;
         opacity: 0.95 !important;
     }}
-    /* Force expander titles (questions) to be white/adaptive */
-    .stExpander summary,
-    .stExpander summary > div > div > p,
-    .stExpander summary > div > div {{
+    /* Expander content text remains normal */
+    .stExpander div p {{
         color: {text_primary} !important;
-        font-weight: 500 !important;
-        font-size: 1.1rem !important;
-        line-height: 1.5 !important;
     }}
-    .stExpander summary svg {{
-        fill: {text_primary} !important;
-    }}
-    /* ── GOLD PRICE DISPLAY ── Using Fredoka font (Frankfurter-like playful rounded style) */
+    /* Gold price display with Fredoka (playful Frankfurter-like) */
     .gold-price-display {{
         font-family: 'Fredoka', cursive !important;
         font-weight: 700 !important;
@@ -171,7 +172,7 @@ st.markdown(f"""
         font-weight: 700 !important;
         margin-left: 0.5rem;
     }}
-    /* Responsive adjustments */
+    /* Responsive */
     @media (max-width: 768px) {{
         .glass-card {{ padding: 1.6rem !important; margin: 1.5rem 1rem !important; }}
         .lang-toggle-container {{ top: 1rem; right: 1rem; }}
