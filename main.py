@@ -330,7 +330,7 @@ if not authenticated:
     </div>
     """, height=420)
 
-    # ── Waitlist Form (FULL FIX: escaped inputs, duplicate-safe, bilingual, great UX) ──
+    # ── Waitlist Form (FIX V2: remove special chars, debug, bilingual) ──
 st.markdown("<div class='glass-card' style='padding: 2.5rem; border-radius: 24px;'>", unsafe_allow_html=True)
 
 st.markdown(f"""
@@ -364,9 +364,9 @@ with st.form("waitlist_form", clear_on_submit=True):
         txt("why_join"),
         height=140,
         placeholder=(
-            "Halimbawa: Gusto ko sumali dahil pagod na ako sa manual trading at hanap ko na 'yung stable at hands-off na system..."
+            "Halimbawa: Gusto ko sumali dahil pagod na ako sa manual trading at hanap ko na yung stable na system..."
             if st.session_state.language == "tl"
-            else "Example: I'm tired of emotional manual trading and want a consistent, automated system..."
+            else "Example: I'm tired of manual trading and want a stable automated system..."
         ),
         key="waitlist_message"
     )
@@ -378,28 +378,25 @@ with st.form("waitlist_form", clear_on_submit=True):
         help="We respect your privacy — email mo lang ang iingatan namin."
     )
 
-# Process submission
 if submitted:
     email = email_input.strip().lower()
     
     if not email:
-        st.error(
-            "Email is required" if st.session_state.language == "en"
-            else "Kailangan ang Email"
-        )
+        st.error("Email is required" if st.session_state.language == "en" else "Kailangan ang Email")
     elif "@" not in email or "." not in email.split("@")[-1]:
-        st.error(
-            "Please enter a valid email address" if st.session_state.language == "en"
-            else "Pakilagyan ng valid na email address"
-        )
+        st.error("Please enter a valid email address" if st.session_state.language == "en" else "Pakilagyan ng valid na email address")
     else:
         try:
-            # Strong escaping: replace ' → '', \ → \\ (prevents quote command error)
-            safe_full_name = (full_name or "").strip().replace("'", "''").replace("\\", "\\\\") if full_name else None
-            safe_message   = (message or "").strip().replace("'", "''").replace("\\", "\\\\") if message else None
+            # Remove problematic chars completely (safest fix for now)
+            import re
+            safe_full_name = re.sub(r"['\"\\]", "", (full_name or "").strip()) if full_name else None
+            safe_message   = re.sub(r"['\"\\]", "", (message or "").strip()) if message else None
             safe_email     = email
 
-            # Insert – trigger auto-sends email
+            # Debug info (temporary – pwede mong tanggalin later)
+            st.caption(f"Debug: Sending name='{safe_full_name}', message='{safe_message[:50]}...'")
+
+            # Insert
             supabase.table("waitlist").insert({
                 "full_name": safe_full_name,
                 "email": safe_email,
@@ -407,7 +404,6 @@ if submitted:
                 "language": st.session_state.language,
             }).execute()
 
-            # Success
             st.success(
                 "Salamat! Nasa waitlist ka na. Makakatanggap ka ng welcome email shortly 👑" 
                 if st.session_state.language == "tl"
@@ -416,30 +412,22 @@ if submitted:
             st.balloons()
 
             st.caption(
-                "Check your inbox (and spam folder) for the confirmation email."
+                "Check inbox/spam for welcome email."
                 if st.session_state.language == "en"
-                else "Check mo ang inbox mo (at spam folder) para sa confirmation email."
+                else "Check inbox/spam para sa welcome email."
             )
 
         except Exception as e:
             error_text = str(e).lower()
-            if "duplicate key" in error_text or "unique constraint" in error_text:
+            if "duplicate" in error_text or "unique" in error_text:
                 st.info(
-                    "Nasa waitlist na pala ang email mo — salamat sa suporta! Keep following lang."
+                    "Nasa waitlist na pala ang email mo — salamat! Keep following lang."
                     if st.session_state.language == "tl"
-                    else "Looks like you're already on the waitlist — thank you! Stay tuned."
-                )
-            elif "quote command" in error_text or "xx000" in error_text:
-                st.warning(
-                    "May special character (hal. apostrophe ') sa name o message mo. Subukan ulit nang walang ' o \" o backslash."
-                    if st.session_state.language == "tl"
-                    else "Looks like there's a special character (like ' or \\) in name/message. Try again without them."
+                    else "Already on waitlist — thank you! Stay tuned."
                 )
             else:
-                st.error(
-                    f"May error sa pag-save: {str(e)}" if st.session_state.language == "tl"
-                    else f"Error saving: {str(e)}"
-                )
+                st.error(f"Error: {str(e)}")
+                st.code(str(e), language="text")  # shows full details
 
 st.markdown("</div>", unsafe_allow_html=True)
 
