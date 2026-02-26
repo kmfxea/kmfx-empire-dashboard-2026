@@ -185,67 +185,78 @@ texts = {
 def txt(key):
     return texts[st.session_state.language].get(key, key)
 
-# ── Custom CSS: orange theme, top-right fixed ──
-st.markdown("""
+# ────────────────────────────────────────────────
+# FULL CSS STYLING
+# ────────────────────────────────────────────────
+st.markdown(f"""
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
 <style>
-    .lang-toggle-container {
-        position: fixed;                    /* fixed para laging nasa top-right kahit scroll */
-        top: 1.2rem;
-        right: 1.8rem;
-        z-index: 1000;                      /* siguradong nasa ibabaw ng lahat */
-    }
-
-    .lang-toggle-btn {
-        background: linear-gradient(135deg, #ff6200, #ff8533) !important;  /* orange gradient */
-        color: white !important;
-        border: none !important;
-        border-radius: 999px !important;    /* pill shape */
-        padding: 0.75rem 1.5rem !important;
-        font-size: 1.1rem !important;
-        font-weight: 700 !important;
-        box-shadow: 0 6px 20px rgba(255,98,0,0.5) !important;
-        transition: all 0.3s ease !important;
-        cursor: pointer;
+    html, body, [class*="css-"] {{
+        font-family: 'Poppins', sans-serif !important;
+        font-size: 15px !important;
+    }}
+    .stApp {{
+        background: {bg_color};
+        color: {text_primary};
+    }}
+    h1, h2, h3, h4, h5, h6, p, div, span, label, .stMarkdown {{
+        color: {text_primary} !important;
+    }}
+    small, caption, .caption {{
+        color: {text_muted} !important;
+    }}
+    .glass-card {{
+        background: {card_bg};
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 20px;
+        border: 1px solid {border_color};
+        padding: 2.2rem !important;
+        box-shadow: {card_shadow};
+        transition: all 0.3s ease;
+        margin: 2rem auto;
+        max-width: 1100px;
+    }}
+    .glass-card:hover {{
+        box-shadow: 0 15px 40px {accent_glow if theme=='dark' else 'rgba(0,0,0,0.2)'};
+        transform: translateY(-6px);
+        border-color: {accent_primary};
+    }}
+    .gold-text {{
+        color: {accent_gold} !important;
+        font-weight: 600;
         letter-spacing: 0.5px;
-    }
-
-    .lang-toggle-btn:hover {
-        background: linear-gradient(135deg, #ff8533, #ff6200) !important;
-        transform: scale(1.08) translateY(-2px) !important;
-        box-shadow: 0 12px 30px rgba(255,98,0,0.7) !important;
-    }
-
-    .lang-toggle-btn:active {
-        transform: scale(0.97) !important;
-    }
-
-    /* Mobile / tablet adjustments */
-    @media (max-width: 992px) {
-        .lang-toggle-container {
-            top: 1rem;
-            right: 1.2rem;
-        }
-        .lang-toggle-btn {
-            padding: 0.65rem 1.3rem !important;
-            font-size: 1rem !important;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .lang-toggle-container {
-            top: 0.9rem;
-            right: 1rem;
-        }
-        .lang-toggle-btn {
-            padding: 0.6rem 1.2rem !important;
-            font-size: 0.95rem !important;
-        }
-    }
+    }}
+    /* ... rest of your CSS remains the same ... */
+    button[kind="primary"] {{
+        background: {accent_primary} !important;
+        color: #000000 !important;
+        border-radius: 16px !important;
+        box-shadow: 0 6px 20px {accent_glow} !important;
+        padding: 1rem 2rem !important;
+        font-size: 1.2rem !important;
+    }}
+    button[kind="primary"]:hover {{
+        background: {accent_hover} !important;
+        box-shadow: 0 12px 35px {accent_glow} !important;
+        transform: translateY(-3px);
+    }}
+    header[data-testid="stHeader"] {{
+        background-color: {bg_color} !important;
+        backdrop-filter: blur(20px);
+    }}
+    section[data-testid="stSidebar"] {{
+        background: {sidebar_bg} !important;
+        backdrop-filter: blur(20px);
+        border-right: 1px solid {border_color};
+    }}
+    @media (max-width: 768px) {{
+        .public-hero {{ padding: 4rem 1rem 3rem; min-height: 70vh; }}
+        .glass-card {{ padding: 1.5rem !important; max-width: 95% !important; }}
+    }}
 </style>
 """, unsafe_allow_html=True)
 
-# Container + Button – top-right
-st.markdown('<div class="lang-toggle-container">', unsafe_allow_html=True)
 
 if st.button("EN / TL", key="lang_toggle", help="Switch to English / Tagalog"):
     st.session_state.language = "tl" if st.session_state.language == "en" else "en"
