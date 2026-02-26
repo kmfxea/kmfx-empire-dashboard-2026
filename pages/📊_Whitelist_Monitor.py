@@ -6,10 +6,8 @@ from utils.auth import require_auth
 from utils.sidebar import render_sidebar
 from utils.supabase_client import supabase
 
-# ────────────────────────────────────────────────
 render_sidebar()
 require_auth(min_role="admin")
-# ────────────────────────────────────────────────
 
 # ─── PAGE CONFIG & STYLING ───
 st.set_page_config(page_title="Whitelist / Waitlist Monitor", layout="wide")
@@ -29,14 +27,14 @@ st.markdown("""
     .rejected { border-left: 4px solid #ef4444; }
     .unsub    { border-left: 4px solid #6b7280; }
     .timestamp { color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.5rem; display: block; }
-    hr.thin { border: none; border-top: 1px solid #444; margin: 0.6rem 0; }
+    hr.thin { border: none; border-top: 1px solid #444; margin: 0.4rem 0; }
     .stTabs [data-baseweb="tab-list"] { gap: 0.8rem; }
 </style>
 """, unsafe_allow_html=True)
 
 # ─── HEADER (no logout here) ───
 st.title("👥 Whitelist / Waitlist Monitor")
-st.caption("Waitlist submissions + messages from approved clients • Admin only")
+st.caption("Waitlist signups + messages from approved clients • Admin only")
 
 # ─── TABS ───
 tab_waitlist, tab_messages = st.tabs(["📋 Waitlist Submissions", "💬 Whitelisted Messages"])
@@ -47,7 +45,7 @@ tab_waitlist, tab_messages = st.tabs(["📋 Waitlist Submissions", "💬 Whiteli
 with tab_waitlist:
     st.subheader("Public Waitlist Entries")
 
-    # Filters ─────────────────────────────────────
+    # Filters
     col1, col2, col3 = st.columns([2.2, 2.5, 1.4])
     with col1:
         status_filter = st.multiselect(
@@ -61,7 +59,7 @@ with tab_waitlist:
     with col3:
         page_size = st.number_input("Per page", 10, 100, 20, 5, key="wl_page_size")
 
-    # Fetch function ─────────────────────────────────
+    # Fetch
     @st.cache_data(ttl=12, show_spinner="Loading waitlist...")
     def fetch_waitlist(page=1, size=20, statuses=None, search=""):
         offset = (page - 1) * size
@@ -89,7 +87,6 @@ with tab_waitlist:
 
         return data, total
 
-    # Pagination state
     if "wl_page" not in st.session_state:
         st.session_state.wl_page = 1
 
@@ -102,27 +99,24 @@ with tab_waitlist:
 
     total_pages = max(1, (total + page_size - 1) // page_size)
 
-    # Pagination controls
+    # Pagination
     col_prev, col_info, col_next = st.columns([1, 5, 1])
     with col_prev:
-        if st.button("← Prev", disabled=st.session_state.wl_page <= 1):
+        if st.button("← Prev", disabled=st.session_state.wl_page <= 1, key="wl_prev_btn"):
             st.session_state.wl_page -= 1
             st.rerun()
     with col_info:
         st.markdown(f"**Page {st.session_state.wl_page} / {total_pages}**  •  {total:,} entries")
     with col_next:
-        if st.button("Next →", disabled=st.session_state.wl_page >= total_pages):
+        if st.button("Next →", disabled=st.session_state.wl_page >= total_pages, key="wl_next_btn"):
             st.session_state.wl_page += 1
             st.rerun()
 
-    # Display entries
     if not data:
         st.info("No matching waitlist entries.")
     else:
         for entry in data:
-            created = entry.get("created_at", "—")
-            created_str = created[:19].replace("T", " ") if created != "—" else "—"
-
+            created_str = entry.get("created_at", "—")[:19].replace("T", " ") if entry.get("created_at") else "—"
             name = entry.get("full_name") or "—"
             email = entry.get("email", "—")
             message = (entry.get("message") or "").strip()
@@ -143,10 +137,9 @@ with tab_waitlist:
             badge_color = {"Pending": "orange", "Approved": "green", "Rejected": "red", "Unsubscribed": "gray"}.get(status, "blue")
             st.caption(f"Status: :{badge_color}-background[**{status}**] • Subscribed: {subscribed}")
 
-            # Actions ────────────────────────────────────────
-            col_a, col_r, col_u = st.columns([1, 1, 1])
+            col_a, col_r, col_u = st.columns(3)
             with col_a:
-                if status != "Approved" and st.button("Approve", key=f"wl_app_{entry['id']}", type="primary", use_container_width=True):
+                if status != "Approved" and st.button("Approve", key=f"approve_{entry['id']}"):
                     try:
                         supabase.table("waitlist").update({"status": "Approved"}).eq("id", entry["id"]).execute()
                         st.toast("Approved!", icon="✅")
@@ -154,9 +147,8 @@ with tab_waitlist:
                         st.rerun()
                     except Exception as e:
                         st.error(f"Approve failed: {str(e)}")
-
             with col_r:
-                if status != "Rejected" and st.button("Reject", key=f"wl_rej_{entry['id']}", use_container_width=True):
+                if status != "Rejected" and st.button("Reject", key=f"reject_{entry['id']}"):
                     try:
                         supabase.table("waitlist").update({"status": "Rejected"}).eq("id", entry["id"]).execute()
                         st.toast("Rejected", icon="❌")
@@ -164,9 +156,8 @@ with tab_waitlist:
                         st.rerun()
                     except Exception as e:
                         st.error(f"Reject failed: {str(e)}")
-
             with col_u:
-                if status != "Unsubscribed" and st.button("Unsubscribe", key=f"wl_unsub_{entry['id']}", use_container_width=True):
+                if status != "Unsubscribed" and st.button("Unsubscribe", key=f"unsub_{entry['id']}"):
                     try:
                         supabase.table("waitlist").update({"status": "Unsubscribed", "subscribed": False}).eq("id", entry["id"]).execute()
                         st.toast("Unsubscribed", icon="🗑️")
@@ -179,18 +170,18 @@ with tab_waitlist:
             st.markdown('<hr class="thin">', unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# MESSAGES TAB (from whitelisted / approved clients)
+# MESSAGES TAB
 # ────────────────────────────────────────────────
 with tab_messages:
     st.subheader("Messages from Approved Clients")
 
     col_m1, col_m2, col_m3 = st.columns([2.2, 2.5, 1.5])
     with col_m1:
-        msg_mode = st.radio("View Mode", ["All Messages", "Inbox (Received)", "Sent", "Unread Only"], horizontal=True, key="msg_mode")
+        msg_mode = st.radio("View Mode", ["All Messages", "Inbox (Received)", "Sent", "Unread Only"], horizontal=True, key="msg_mode_select")
     with col_m2:
         msg_search = st.text_input("Search user / message", key="msg_search_input")
     with col_m3:
-        msg_page_size = st.number_input("Per page", 10, 100, 20, 5, key="msg_page_size")
+        msg_page_size = st.number_input("Per page", 10, 100, 20, 5, key="msg_page_size_input")
 
     @st.cache_data(ttl=8, show_spinner="Loading messages...")
     def fetch_messages(page=1, size=20, mode="All", search=""):
@@ -245,18 +236,18 @@ with tab_messages:
 
     col_mp1, col_mp2, col_mp3 = st.columns([1, 5, 1])
     with col_mp1:
-        if st.button("← Prev", disabled=st.session_state.msg_page <= 1):
+        if st.button("← Prev", disabled=st.session_state.msg_page <= 1, key="msg_prev_btn"):
             st.session_state.msg_page -= 1
             st.rerun()
     with col_mp2:
         st.markdown(f"**Page {st.session_state.msg_page} / {msg_total_pages}**  •  {msg_total:,} messages")
     with col_mp3:
-        if st.button("Next →", disabled=st.session_state.msg_page >= msg_total_pages):
+        if st.button("Next →", disabled=st.session_state.msg_page >= msg_total_pages, key="msg_next_btn"):
             st.session_state.msg_page += 1
             st.rerun()
 
     if not msg_data:
-        st.info("No messages match the current filters.")
+        st.info("No messages match the filters.")
     else:
         for msg in msg_data:
             ts_raw = msg.get("timestamp")
@@ -282,7 +273,7 @@ with tab_messages:
 
             col_read, col_reply, col_send = st.columns([1.3, 3.5, 1.2])
             with col_read:
-                if not is_read and st.button("Mark Read", key=f"read_{msg['id']}"):
+                if not is_read and st.button("Mark Read", key=f"msg_read_{msg['id']}"):
                     try:
                         supabase.table("messages").update({"is_read": True}).eq("id", msg["id"]).execute()
                         st.toast("Marked as read", icon="✅")
@@ -292,11 +283,11 @@ with tab_messages:
                         st.error(f"Error: {str(e)}")
 
             with col_reply:
-                reply_key = f"reply_{msg['id']}"
+                reply_key = f"msg_reply_{msg['id']}"
                 reply_text = st.text_input("", placeholder="Quick reply...", key=reply_key, label_visibility="collapsed")
 
             with col_send:
-                if st.button("Send", key=f"send_{msg['id']}") and reply_text.strip():
+                if st.button("Send", key=f"msg_send_{msg['id']}") and reply_text.strip():
                     try:
                         supabase.table("messages").insert({
                             "sender_id": st.session_state.get("user_id"),
@@ -315,7 +306,7 @@ with tab_messages:
             st.markdown("</div>", unsafe_allow_html=True)
             st.markdown('<hr class="thin">', unsafe_allow_html=True)
 
-# ─── AUTO-REFRESH (optional, only if toggled) ───
-if st.toggle("Auto-refresh every 15s", value=False, key="global_refresh"):
+# ─── OPTIONAL GLOBAL REFRESH ───
+if st.toggle("Auto-refresh every 15s (both tabs)", value=False, key="global_auto"):
     time.sleep(15)
     st.rerun()
