@@ -182,7 +182,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# LANGUAGE TOGGLE – improved styling, positioning & mobile experience
+# LANGUAGE TOGGLE – orange background, top-right, fixed & mobile-friendly
 # ────────────────────────────────────────────────
 if "language" not in st.session_state:
     st.session_state.language = "en"
@@ -217,177 +217,198 @@ texts = {
 def txt(key):
     return texts[st.session_state.language].get(key, key)
 
-# ── Custom CSS for beautiful language toggle button ──
+# ── Custom CSS: orange theme, top-right fixed ──
 st.markdown("""
 <style>
     .lang-toggle-container {
-        position: absolute;
+        position: fixed;                    /* fixed para laging nasa top-right kahit scroll */
         top: 1.2rem;
         right: 1.8rem;
-        z-index: 999;
+        z-index: 1000;                      /* siguradong nasa ibabaw ng lahat */
     }
-    
+
     .lang-toggle-btn {
-        background: linear-gradient(135deg, #ffd700, #ffea80) !important;
-        color: #0d1117 !important;
+        background: linear-gradient(135deg, #ff6200, #ff8533) !important;  /* orange gradient */
+        color: white !important;
         border: none !important;
-        border-radius: 50px !important;
-        padding: 0.7rem 1.4rem !important;
-        font-size: 1.05rem !important;
+        border-radius: 999px !important;    /* pill shape */
+        padding: 0.75rem 1.5rem !important;
+        font-size: 1.1rem !important;
         font-weight: 700 !important;
-        box-shadow: 0 6px 20px rgba(255,215,0,0.45) !important;
+        box-shadow: 0 6px 20px rgba(255,98,0,0.5) !important;
         transition: all 0.3s ease !important;
         cursor: pointer;
         letter-spacing: 0.5px;
     }
-    
+
     .lang-toggle-btn:hover {
-        background: linear-gradient(135deg, #ffea80, #ffd700) !important;
+        background: linear-gradient(135deg, #ff8533, #ff6200) !important;
         transform: scale(1.08) translateY(-2px) !important;
-        box-shadow: 0 12px 30px rgba(255,215,0,0.6) !important;
+        box-shadow: 0 12px 30px rgba(255,98,0,0.7) !important;
     }
-    
+
     .lang-toggle-btn:active {
-        transform: scale(0.98) !important;
+        transform: scale(0.97) !important;
     }
-    
-    /* Mobile adjustments */
-    @media (max-width: 768px) {
+
+    /* Mobile / tablet adjustments */
+    @media (max-width: 992px) {
         .lang-toggle-container {
             top: 1rem;
+            right: 1.2rem;
+        }
+        .lang-toggle-btn {
+            padding: 0.65rem 1.3rem !important;
+            font-size: 1rem !important;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .lang-toggle-container {
+            top: 0.9rem;
             right: 1rem;
         }
         .lang-toggle-btn {
             padding: 0.6rem 1.2rem !important;
-            font-size: 1rem !important;
-        }
-    }
-    
-    @media (max-width: 480px) {
-        .lang-toggle-btn {
-            padding: 0.55rem 1.1rem !important;
             font-size: 0.95rem !important;
         }
     }
 </style>
 """, unsafe_allow_html=True)
 
-# Container for absolute positioning (top-right)
+# Container + Button – top-right
 st.markdown('<div class="lang-toggle-container">', unsafe_allow_html=True)
 
-# The actual button
-if st.button("EN / TL", key="lang_toggle", help="Switch language (English / Tagalog)"):
+if st.button("EN / TL", key="lang_toggle", help="Switch to English / Tagalog"):
     st.session_state.language = "tl" if st.session_state.language == "en" else "en"
     st.rerun()
 
 st.markdown('</div>', unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# LOGO + HERO – improved centering, scale, glow & responsiveness
+# LOGO + HERO – mas malaking logo sa laptop, lahat centered, responsive pa rin
 # ────────────────────────────────────────────────
 
 st.markdown("""
 <style>
     .hero-section {
-        text-align: center;
-        padding: 1.5rem 0 3rem 0;
-        max-width: 1000px;
+        text-align: center !important;
+        padding: 2rem 1rem 4rem 1rem;
+        max-width: 1200px;
         margin: 0 auto;
+        width: 100%;
     }
-    
+
     .logo-wrapper {
-        margin: 1.5rem auto 2.5rem auto;
+        margin: 2rem auto 3rem auto;
+        text-align: center;
         position: relative;
     }
-    
+
     .logo-wrapper img {
-        max-width: 340px;               /* base size – larger & premium feel */
-        width: 80vw;                    /* responsive – scales with viewport */
-        min-width: 200px;               /* prevent too small on very narrow screens */
+        max-width: 420px;               /* MAS MALAKI sa laptop/desktop */
+        width: 85vw;                    /* responsive scaling */
+        min-width: 220px;               /* hindi masyadong maliit sa mobile */
         height: auto;
         display: block;
         margin: 0 auto;
-        border-radius: 16px;
-        box-shadow: 0 12px 40px rgba(255, 215, 0, 0.25),
-                    0 0 0 1px rgba(255, 215, 0, 0.12);
-        transition: all 0.6s ease;
+        border-radius: 20px;
+        box-shadow: 0 16px 48px rgba(255,215,0,0.28),
+                    inset 0 0 0 2px rgba(255,215,0,0.15);
+        transition: transform 0.5s ease, box-shadow 0.5s ease;
     }
-    
-    /* Optional subtle entrance animation */
+
+    .logo-wrapper img:hover {
+        transform: scale(1.03);
+        box-shadow: 0 24px 60px rgba(255,215,0,0.4);
+    }
+
+    /* Subtle float animation (optional – pwede tanggalin kung ayaw) */
     @keyframes logo-float {
-        0% { transform: translateY(0px); }
+        0%, 100% { transform: translateY(0); }
         50% { transform: translateY(-12px); }
-        100% { transform: translateY(0px); }
     }
-    
+
     .logo-wrapper img {
-        animation: logo-float 6s ease-in-out infinite;
+        animation: logo-float 7s ease-in-out infinite;
     }
-    
+
     .hero-title {
-        font-size: 3.8rem;
-        font-weight: 700;
-        margin: 0.4rem 0 0.8rem 0;
-        line-height: 1.1;
-        text-shadow: 0 0 30px {accent_glow};
+        font-size: 4.2rem;              /* mas malakas na impact sa laptop */
+        font-weight: 800;
+        margin: 0.5rem 0 0.8rem 0;
+        line-height: 1.05;
+        letter-spacing: -1px;
+        text-shadow: 0 0 35px {accent_glow};
+        color: {accent_gold};
     }
-    
+
     .hero-subtitle {
-        font-size: 2.1rem;
-        font-weight: 500;
-        margin: 0.6rem 0 1.4rem 0;
+        font-size: 2.4rem;
+        font-weight: 600;
+        margin: 0.8rem 0 1.6rem 0;
         color: {accent_primary};
+        text-shadow: 0 0 20px rgba(0,255,170,0.4);
     }
-    
+
     .hero-desc {
-        font-size: 1.35rem;
-        line-height: 1.6;
-        max-width: 780px;
-        margin: 0 auto 1.8rem auto;
+        font-size: 1.45rem;
+        line-height: 1.65;
+        max-width: 820px;
+        margin: 0 auto 2rem auto;
         color: {text_muted};
+        font-weight: 400;
     }
-    
+
     .hero-footer {
-        font-size: 1.05rem;
+        font-size: 1.15rem;
         color: {text_muted};
-        opacity: 0.85;
-        margin-top: 1rem;
+        opacity: 0.88;
+        margin-top: 1.2rem;
+        font-style: italic;
     }
-    
-    /* ── RESPONSIVE ADJUSTMENTS ── */
+
+    /* RESPONSIVE – para hindi masyadong malaki sa mobile */
+    @media (max-width: 1200px) {
+        .logo-wrapper img { max-width: 380px; }
+        .hero-title { font-size: 3.8rem; }
+        .hero-subtitle { font-size: 2.1rem; }
+    }
+
     @media (max-width: 992px) {
-        .hero-title { font-size: 3.1rem; }
+        .hero-section { padding: 1.5rem 0.8rem 3rem 0.8rem; }
+        .logo-wrapper { margin: 1.8rem auto 2.5rem auto; }
+        .logo-wrapper img { max-width: 340px; }
+        .hero-title { font-size: 3.4rem; }
         .hero-subtitle { font-size: 1.9rem; }
-        .logo-wrapper img { max-width: 300px; }
     }
-    
+
     @media (max-width: 768px) {
-        .hero-section { padding: 1rem 0 2.5rem 0; }
-        .hero-title { font-size: 2.6rem; }
+        .logo-wrapper img { max-width: 300px; }
+        .hero-title { font-size: 2.9rem; }
         .hero-subtitle { font-size: 1.7rem; }
-        .hero-desc { font-size: 1.2rem; }
-        .logo-wrapper { margin: 1rem auto 2rem auto; }
-        .logo-wrapper img { max-width: 280px; }
+        .hero-desc { font-size: 1.25rem; padding: 0 1rem; }
     }
-    
+
     @media (max-width: 480px) {
-        .hero-title { font-size: 2.2rem; }
+        .logo-wrapper img { max-width: 260px; }
+        .hero-title { font-size: 2.4rem; }
         .hero-subtitle { font-size: 1.5rem; }
-        .hero-desc { font-size: 1.1rem; padding: 0 1rem; }
-        .logo-wrapper img { max-width: 240px; }
+        .hero-desc { font-size: 1.15rem; }
+        .hero-footer { font-size: 1rem; }
     }
 </style>
 """, unsafe_allow_html=True)
 
-# Hero container
+# Hero container (centered lahat)
 st.markdown('<div class="hero-section">', unsafe_allow_html=True)
 
-# Logo with wrapper
+# Logo – centered na talaga
 st.markdown('<div class="logo-wrapper">', unsafe_allow_html=True)
 st.image("assets/logo.png", use_column_width=False)
 st.markdown('</div>', unsafe_allow_html=True)
 
-# Hero texts
+# All texts – centered & styled
 st.markdown(f"""
     <h1 class="hero-title">{txt('hero_title')}</h1>
     <div class="hero-subtitle">{txt('hero_sub')}</div>
@@ -402,83 +423,79 @@ st.markdown(f"""
 st.markdown('</div>', unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# LIVE GOLD PRICE + REALTIME TRADINGVIEW MINI CHART – bigger, more reliable, responsive
+# LIVE GOLD PRICE + REALTIME TRADINGVIEW MINI CHART – back to original ticker, better size & reliability
 # ────────────────────────────────────────────────
 
-@st.cache_data(ttl=20)  # shorter cache for fresher data
+@st.cache_data(ttl=30)  # medyo mas matagal para hindi masyadong mag-re-fetch, pero sapat pa rin
 def get_gold_price():
     try:
-        # Prefer spot gold via a more stable ticker (GC=F is futures, can lag)
-        # Alternative: use 'XAUUSD=X' or fallback to known reliable sources
-        spot = yf.Ticker("XAUUSD=X")  # Yahoo sometimes has spot via currency pair
-        info = spot.info
-        
-        price = info.get('regularMarketPrice') or info.get('previousClose') or info.get('regularMarketPreviousClose')
-        change_pct = info.get('regularMarketChangePercent', 0)
-        
-        if not price:
-            # Fallback to futures if spot fails
-            futures = yf.Ticker("GC=F").info
-            price = futures.get('regularMarketPrice') or futures.get('previousClose')
-            change_pct = futures.get('regularMarketChangePercent', 0)
-        
-        return round(price, 1) if price else None, change_pct
+        t = yf.Ticker("GC=F").info
+        price = t.get('regularMarketPrice') or t.get('previousClose') or t.get('regularMarketPreviousClose')
+        ch = t.get('regularMarketChangePercent', 0)
+        return round(price, 1) if price else None, ch
     except Exception as e:
-        st.warning(f"Gold price fetch error: {str(e)} – showing last known or approx.")
+        # Optional: tahimik na fallback, wag mag-warning sa user para clean
         return None, 0
 
 price, change = get_gold_price()
 
-# ── Very large, prominent price display ──
+# ── Prominent pero hindi sobrang laki na price display (mas balanced sa lahat ng screen) ──
 if price:
     st.markdown(f"""
     <div style="
         text-align: center;
-        font-size: 5.2rem;                /* MUCH larger – hero style */
+        font-size: 4.2rem;                /* mas maliit kaysa 5.2rem pero prominent pa rin */
         font-weight: 800;
         color: {accent_gold};
-        text-shadow: 0 0 30px {accent_glow}, 0 0 60px {accent_glow};
-        margin: 2rem 0 1rem 0;
-        letter-spacing: -1px;
-        line-height: 1;
+        text-shadow: 0 0 24px {accent_glow}, 0 0 48px {accent_glow};
+        margin: 2rem 0 0.8rem 0;
+        letter-spacing: -0.5px;
+        line-height: 1.05;
     ">
         ${price:,.1f}
     </div>
     <p style="
         text-align: center;
-        font-size: 1.8rem;
-        margin: 0 0 1.5rem 0;
+        font-size: 1.55rem;
+        margin: 0 0 2rem 0;
         color: {text_primary};
+        opacity: 0.95;
     ">
         <span style="
             color: {'#00ffaa' if change >= 0 else '#ff5555'};
             font-weight: 700;
-            font-size: 1.9rem;
+            font-size: 1.65rem;
         ">
             {change:+.2f}%
         </span>
-        <span style="opacity: 0.9;"> • Live Gold Spot (XAU/USD)</span>
+        <span> • Live Gold (XAU/USD) • GC=F Futures</span>
     </p>
     """, unsafe_allow_html=True)
 else:
     st.markdown(f"""
-    <div style="text-align:center; font-size:4rem; color:{text_muted}; margin:2rem 0;">
-        Gold Price Loading...
+    <div style="
+        text-align: center;
+        font-size: 3.2rem;
+        color: {text_muted};
+        margin: 2.5rem 0;
+        opacity: 0.7;
+    ">
+        Gold Price (Loading or Delayed...)
     </div>
     """, unsafe_allow_html=True)
 
-# ── TradingView mini-chart – keep responsive, slightly taller for visibility ──
+# ── TradingView mini-chart – inayos para mas maganda sa tablet/mobile (hindi clipped) ──
 st.components.v1.html("""
 <div class="tradingview-widget-container" style="
     width: 100%;
-    height: 48vw;               /* better aspect on mobile */
-    min-height: 220px;
-    max-height: 320px;
-    margin: 1.8rem auto 3rem auto;
+    height: 45vw;                     /* balanced aspect ratio */
+    min-height: 200px;
+    max-height: 280px;
+    margin: 1.5rem auto 2.8rem auto;
     position: relative;
     border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    box-shadow: 0 6px 24px rgba(0,0,0,0.45);
 ">
   <tv-mini-chart
     symbol="OANDA:XAUUSD"
@@ -488,7 +505,7 @@ st.components.v1.html("""
   ></tv-mini-chart>
   <script type="module" src="https://widgets.tradingview-widget.com/w/en/tv-mini-chart.js" async></script>
 </div>
-""", height=340)  # Give more vertical space so it doesn't feel cramped
+""", height=300)  # binigyan ng konting extra space para hindi ma-cut sa edges
 
 # ────────────────────────────────────────────────
 # WAITLIST FORM
@@ -515,13 +532,16 @@ with st.form("waitlist_form", clear_on_submit=True):
 st.markdown("</div>", unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# PIONEERS SECTION – improved, centered, flip working on all devices
+# PIONEERS SECTION – horizontal scroll, arrows, snap, no vertical stack
 # ────────────────────────────────────────────────
 st.markdown(f"""
-<div class="glass-card" style="max-width: 1100px; margin: 2.5rem auto; padding: 2rem 1.5rem;">
-    <h2 style="text-align:center; margin-bottom: 2rem;">{txt('pioneers_title')}</h2>
+<div class="glass-card" style="max-width: 1100px; margin: 2.5rem auto; padding: 2rem 1.5rem; overflow: hidden;">
+    <h2 style="text-align:center; margin-bottom: 1.8rem;">{txt('pioneers_title')}</h2>
     
-    <div class="pioneers-grid">
+    <div class="pioneers-carousel-container">
+        <button class="carousel-arrow left-arrow" onclick="document.querySelector('.pioneers-carousel').scrollBy({{left: -280, behavior: 'smooth'}})">‹</button>
+        
+        <div class="pioneers-carousel">
 """, unsafe_allow_html=True)
 
 pioneers = [
@@ -541,7 +561,9 @@ pioneers = [
         "quote": "Stable daily profits.",
         "photo": "assets/ramil.jpg"
     },
-    # You can easily add more here later
+    # Add more pioneers here — they will auto-extend horizontally
+    # Example:
+    # {"name": "Jai", "since": "Feb 2026", "earnings": "+$980", "gain": "+98%", "quote": "Game changer!", "photo": "assets/jai.jpg"},
 ]
 
 for p in pioneers:
@@ -564,25 +586,50 @@ for p in pioneers:
     """, unsafe_allow_html=True)
 
 st.markdown("""
+        </div>
+        
+        <button class="carousel-arrow right-arrow" onclick="document.querySelector('.pioneers-carousel').scrollBy({{left: 280, behavior: 'smooth'}})">›</button>
     </div>
 </div>
 
 <style>
-    .pioneers-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-        gap: 1.8rem 1.6rem;
-        justify-items: center;
+    .pioneers-carousel-container {
+        position: relative;
+        width: 100%;
+        overflow: hidden;
+    }
+
+    .pioneers-carousel {
+        display: flex;
+        flex-direction: row;               /* always horizontal */
+        flex-wrap: nowrap;                 /* no wrapping / no vertical */
+        gap: 1.8rem;
+        overflow-x: auto;
+        scroll-behavior: smooth;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch; /* smooth on iOS */
+        scrollbar-width: none;             /* hide scrollbar Firefox */
+        -ms-overflow-style: none;          /* hide scrollbar IE/Edge */
         padding: 1rem 0;
     }
 
-    .pioneer-card {
-        width: 240px;
-        height: 320px;
-        perspective: 1200px;
-        justify-self: center;
+    .pioneers-carousel::-webkit-scrollbar {
+        display: none;                     /* hide scrollbar Chrome/Safari */
     }
 
+    .pioneer-card {
+        flex: 0 0 240px;                   /* fixed width cards */
+        height: 320px;
+        scroll-snap-align: center;
+        perspective: 1200px;
+        transition: transform 0.3s ease;
+    }
+
+    .pioneer-card:hover {
+        transform: scale(1.05);
+    }
+
+    /* Flip card styles (same as before, just cleaned) */
     .card-inner {
         position: relative;
         width: 100%;
@@ -594,7 +641,7 @@ st.markdown("""
     }
 
     .pioneer-card:hover .card-inner,
-    .pioneer-card:active .card-inner {   /* better mobile tap support */
+    .pioneer-card:active .card-inner {
         transform: rotateY(180deg);
     }
 
@@ -671,36 +718,64 @@ st.markdown("""
         padding: 0 0.6rem;
     }
 
-    /* ── RESPONSIVE ── */
-    @media (max-width: 1024px) {
-        .pioneer-card {
-            width: 220px;
-            height: 300px;
-        }
-        .pioneer-photo { width: 100px; height: 100px; }
-        .earnings { font-size: 1.9rem; }
-        .gain { font-size: 1.35rem; }
+    /* Arrows – only show when overflowing */
+    .carousel-arrow {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(13,17,23,0.7);
+        color: {accent_gold};
+        border: none;
+        border-radius: 50%;
+        width: 48px;
+        height: 48px;
+        font-size: 2rem;
+        font-weight: bold;
+        cursor: pointer;
+        z-index: 10;
+        opacity: 0.8;
+        transition: opacity 0.3s, background 0.3s;
     }
 
+    .carousel-arrow:hover {
+        opacity: 1;
+        background: rgba(13,17,23,0.95);
+    }
+
+    .left-arrow {
+        left: 10px;
+    }
+
+    .right-arrow {
+        right: 10px;
+    }
+
+    /* Hide arrows if not overflowing (pure CSS trick) */
+    .pioneers-carousel-container:has(.pioneers-carousel:not(:hover)) .carousel-arrow {
+        display: none;
+    }
+
+    /* Mobile adjustments – bigger touch area */
     @media (max-width: 768px) {
-        .pioneers-grid {
-            gap: 2rem 1.4rem;
-        }
         .pioneer-card {
-            width: 100%;
-            max-width: 280px;
+            flex: 0 0 280px;
             height: 340px;
         }
         .pioneer-photo { width: 120px; height: 120px; }
+        .carousel-arrow {
+            width: 56px;
+            height: 56px;
+            font-size: 2.2rem;
+        }
     }
 
     @media (max-width: 480px) {
         .pioneer-card {
+            flex: 0 0 260px;
             height: 320px;
         }
-        .earnings { font-size: 1.8rem; }
-        .gain { font-size: 1.3rem; }
-        .quote { font-size: 1rem; }
+        .earnings { font-size: 1.9rem; }
+        .gain { font-size: 1.35rem; }
     }
 </style>
 """, unsafe_allow_html=True)
