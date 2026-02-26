@@ -330,13 +330,13 @@ if not authenticated:
     </div>
     """, height=420)
 
-    # ── Waitlist Form (FINAL FIX: use RPC to bypass quoting bug, bilingual, great UX) ──
+    # ── Waitlist Form (FINAL FIXED VERSION – direct insert + robust handling) ──
 st.markdown("<div class='glass-card' style='padding: 2.5rem; border-radius: 24px;'>", unsafe_allow_html=True)
 
 st.markdown(f"""
     <h2 style='text-align:center; margin-bottom:1.5rem;'>{txt('join_waitlist')}</h2>
     <p style='text-align:center; color:{text_muted}; font-size:1.1rem; margin-bottom:2rem; line-height:1.6;'>
-        Sumali sa waitlist para maunang makakuha ng access kapag live na ang KMFX EA.  
+        Sumali sa waitlist para maunang makakuha ng access kapag live na ang KMFX EA.<br>
         Limited spots para sa mga pioneer — be part of the journey!
     </p>
 """, unsafe_allow_html=True)
@@ -347,7 +347,7 @@ with st.form("waitlist_form", clear_on_submit=True):
     with col1:
         full_name = st.text_input(
             txt("name"),
-            placeholder="Juan Dela Cruz" if st.session_state.language == "en" else "Juan Dela Cruz",
+            placeholder="Juan Dela Cruz",
             key="waitlist_fullname",
             help="Pwede ring nickname o full name mo lang"
         )
@@ -380,49 +380,78 @@ with st.form("waitlist_form", clear_on_submit=True):
 
 if submitted:
     email = email_input.strip().lower()
-    
+    full_name_clean = full_name.strip() if full_name else None
+    message_clean = message.strip() if message else None
+
+    # Basic client-side validation
     if not email:
         st.error(
             "Email is required" if st.session_state.language == "en"
             else "Kailangan ang Email"
         )
-    elif "@" not in email or "." not in email.split("@")[-1]:
+    elif "@" not in email or "." not in email.split("@")[-1] or len(email) < 5:
         st.error(
             "Please enter a valid email address" if st.session_state.language == "en"
             else "Pakilagyan ng valid na email address"
         )
     else:
-        try:
-            # Use RPC function – bypasses PostgREST quoting bug completely
-            supabase.rpc("insert_waitlist_safe", {
-                "p_email": email,
-                "p_language": st.session_state.language
-            }).execute()
+        with st.spinner("Processing your request..."):
+            try:
+                data = {
+                    "full_name": full_name_clean,
+                    "email": email,
+                    "message": message_clean,
+                    "language": st.session_state.language,
+                    "status": "Pending",
+                    "subscribed": True,
+                    # Optional: you can add these if you want to track source
+                    # "ip_address": st.session_state.get("client_ip", None),
+                    # "referrer": st.session_state.get("referrer", None)
+                }
 
-            st.success(
-                "Salamat! Nasa waitlist ka na. Makakatanggap ka ng welcome email shortly 👑" 
-                if st.session_state.language == "tl"
-                else "Thank you! You're on the waitlist. Welcome email coming soon 👑"
-            )
-            st.balloons()
+                response = supabase.table("waitlist").insert(data).execute()
 
-            st.caption(
-                "Check your inbox (and spam folder) for the confirmation email."
-                if st.session_state.language == "en"
-                else "Check mo ang inbox mo (at spam folder) para sa welcome email."
-            )
+                # Success path
+                if response.data:
+                    st.success(
+                        "Salamat! Nasa waitlist ka na. Makakatanggap ka ng welcome email shortly 👑"
+                        if st.session_state.language == "tl"
+                        else "Thank you! You're on the waitlist. Welcome email coming soon 👑"
+                    )
+                    st.balloons()
+                    st.caption(
+                        "Check your inbox (and spam folder) for the confirmation email."
+                        if st.session_state.language == "en"
+                        else "Check mo ang inbox mo (at spam folder) para sa welcome email."
+                    )
+                else:
+                    # This branch is rare — usually means insert succeeded but no row returned
+                    st.warning("Submission processed, but confirmation not received. You're likely already on the list!")
 
-        except Exception as e:
-            error_text = str(e).lower()
-            if "duplicate" in error_text or "unique" in error_text:
-                st.info(
-                    "Nasa waitlist na pala ang email mo — salamat! Keep following lang."
-                    if st.session_state.language == "tl"
-                    else "Looks like you're already on the waitlist — thank you! Stay tuned."
-                )
-            else:
-                st.error(f"Error: {str(e)}")
-                st.code(str(e), language="text")  # full error for debug
+            except Exception as e:
+                err_str = str(e).lower()
+
+                if any(x in err_str for x in ["duplicate", "unique", "23505", "unique_violation"]):
+                    st.info(
+                        "Nasa waitlist na pala ang email mo — salamat! Keep following lang."
+                        if st.session_state.language == "tl"
+                        else "Looks like you're already on the waitlist — thank you! Stay tuned."
+                    )
+                elif "invalid" in err_str or "format" in err_str:
+                    st.error(
+                        "Invalid email format — please double-check."
+                        if st.session_state.language == "en"
+                        else "Mukhang mali ang format ng email — pakicheck ulit."
+                    )
+                else:
+                    st.error(
+                        "May problema sa pag-submit. Subukan ulit mamaya."
+                        if st.session_state.language == "tl"
+                        else "Something went wrong while submitting. Please try again later."
+                    )
+                    # Show detailed error only in dev/staging
+                    if "dev" in os.getenv("ENV", "").lower() or "local" in os.getenv("ENV", "").lower():
+                        st.code(f"Error details: {str(e)}", language="text")
 
 st.markdown("</div>", unsafe_allow_html=True)
 
