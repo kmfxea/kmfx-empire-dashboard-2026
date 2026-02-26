@@ -7,3 +7,6 @@ qrcode[pil]
 Pillow
 requests
 python-dotenv
+yfinance
+streamlit-lightweight-charts
+numpy  # optional pero safe para sa data processing
