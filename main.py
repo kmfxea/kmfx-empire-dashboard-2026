@@ -114,7 +114,7 @@ card_shadow  = "0 8px 25px rgba(0,0,0,0.12)" if theme == "light" else "0 10px 30
 sidebar_bg   = "rgba(248,251,255,0.95)" if theme == "light" else "rgba(10,13,20,0.95)"
 
 # ────────────────────────────────────────────────
-# FULL CSS STYLING
+# FULL CSS STYLING – Dark theme + Black text ONLY on EN/TL toggle
 # ────────────────────────────────────────────────
 st.markdown(f"""
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
@@ -133,6 +133,13 @@ st.markdown(f"""
     small, caption, .caption {{
         color: {text_muted} !important;
     }}
+    a {{
+        color: #00ffaa !important;
+    }}
+    a:hover {{
+        color: #00ffcc !important;
+    }}
+    /* Glass cards – optimized for dark bg */
     .glass-card {{
         background: {card_bg};
         backdrop-filter: blur(20px);
@@ -144,6 +151,7 @@ st.markdown(f"""
         transition: all 0.3s ease;
         margin: 2rem auto;
         max-width: 1100px;
+        color: {text_primary} !important;
     }}
     .glass-card:hover {{
         box-shadow: 0 15px 40px {accent_glow if theme=='dark' else 'rgba(0,0,0,0.2)'};
@@ -155,7 +163,7 @@ st.markdown(f"""
         font-weight: 600;
         letter-spacing: 0.5px;
     }}
-    /* ... rest of your CSS remains the same ... */
+    /* Primary buttons – green bg + black text */
     button[kind="primary"] {{
         background: {accent_primary} !important;
         color: #000000 !important;
@@ -169,6 +177,7 @@ st.markdown(f"""
         box-shadow: 0 12px 35px {accent_glow} !important;
         transform: translateY(-3px);
     }}
+    /* Header & Sidebar – dark & blurred */
     header[data-testid="stHeader"] {{
         background-color: {bg_color} !important;
         backdrop-filter: blur(20px);
@@ -177,7 +186,23 @@ st.markdown(f"""
         background: {sidebar_bg} !important;
         backdrop-filter: blur(20px);
         border-right: 1px solid {border_color};
+        color: {text_primary} !important;
     }}
+    /* Force BLACK text ONLY on the EN/TL toggle button */
+    button[key="lang_toggle_public"] {{
+        color: #000000 !important;
+    }}
+    button[key="lang_toggle_public"] span {{
+        color: #000000 !important;
+    }}
+    button[key="lang_toggle_public"]:hover {{
+        color: #000000 !important;
+    }}
+    /* Ensure other buttons/text don't inherit black */
+    button:not([key="lang_toggle_public"]) {{
+        color: inherit !important;
+    }}
+    /* Mobile adjustments */
     @media (max-width: 768px) {{
         .public-hero {{ padding: 4rem 1rem 3rem; min-height: 70vh; }}
         .glass-card {{ padding: 1.5rem !important; max-width: 95% !important; }}
