@@ -290,6 +290,24 @@ if not authenticated:
       <tv-mini-chart symbol="OANDA:XAUUSD" color-theme="dark" locale="en" height="100%" width="100%"></tv-mini-chart>
     </div>
     """, height=420)
+    # ── Waitlist Form ── (dito na dapat ilagay ang waitlist mo)
+    st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
+    st.markdown(f"<h2 style='margin-bottom:1.8rem;'>{txt('join_waitlist')}</h2>", unsafe_allow_html=True)
+    with st.form("waitlist_form", clear_on_submit=True):
+        col1, col2 = st.columns([1, 1.4])
+        with col1:
+            full_name = st.text_input(txt("name"), placeholder="Juan Dela Cruz")
+        with col2:
+            email = st.text_input(txt("email"), placeholder="your@email.com")
+        message = st.text_area(txt("why_join"), height=120)
+        if st.form_submit_button(txt("submit"), type="primary", use_container_width=True):
+            if email.strip():
+                # TODO: real Supabase insert
+                # supabase.table("waitlist").insert({"name":full_name, "email":email, "message":message, "language": st.session_state.language}).execute()
+                st.success(txt("success"))
+            else:
+                st.error("Email is required")
+    st.markdown("</div>", unsafe_allow_html=True)
 
 
 # Portfolio Story (centered)
