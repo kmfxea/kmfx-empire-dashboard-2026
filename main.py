@@ -114,7 +114,7 @@ card_shadow  = "0 8px 25px rgba(0,0,0,0.12)" if theme == "light" else "0 10px 30
 sidebar_bg   = "rgba(248,251,255,0.95)" if theme == "light" else "rgba(10,13,20,0.95)"
 
 # ────────────────────────────────────────────────
-# FULL CSS STYLING
+# FULL CSS STYLING (Dark Theme Optimized – Black BG + White Text)
 # ────────────────────────────────────────────────
 st.markdown(f"""
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
@@ -124,63 +124,86 @@ st.markdown(f"""
         font-size: 15px !important;
     }}
     .stApp {{
-        background: {bg_color};
-        color: {text_primary};
+        background: {bg_color};           /* already dark from your var */
+        color: #e2e8f0 !important;        /* light/white text default */
     }}
     h1, h2, h3, h4, h5, h6, p, div, span, label, .stMarkdown {{
-        color: {text_primary} !important;
+        color: #e2e8f0 !important;        /* white/light text */
     }}
     small, caption, .caption {{
-        color: {text_muted} !important;
+        color: #94a3b8 !important;        /* muted gray */
     }}
+    a {{
+        color: #00ffaa !important;
+    }}
+    a:hover {{
+        color: #00ffcc !important;
+    }}
+    /* Glass cards – better contrast on dark bg */
     .glass-card {{
-        background: {card_bg};
+        background: rgba(15, 23, 42, 0.75);   /* darker semi-transparent */
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
         border-radius: 20px;
-        border: 1px solid {border_color};
-        padding: 2.2rem !important;
-        box-shadow: {card_shadow};
+        border: 1px solid rgba(55, 65, 81, 0.5);  /* subtle gray border */
+        padding: 2rem !important;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.6);
         transition: all 0.3s ease;
-        margin: 2rem auto;
+        margin: 1.8rem auto;
         max-width: 1100px;
+        color: #e2e8f0 !important;
     }}
     .glass-card:hover {{
-        box-shadow: 0 15px 40px {accent_glow if theme=='dark' else 'rgba(0,0,0,0.2)'};
+        box-shadow: 0 15px 40px rgba(0, 255, 170, 0.15);
         transform: translateY(-6px);
-        border-color: {accent_primary};
+        border-color: #00ffaa80;
     }}
     .gold-text {{
         color: {accent_gold} !important;
         font-weight: 600;
         letter-spacing: 0.5px;
     }}
-    /* ... rest of your CSS remains the same ... */
+    /* Primary buttons – green bg + black text */
     button[kind="primary"] {{
         background: {accent_primary} !important;
         color: #000000 !important;
+        border: none !important;
         border-radius: 16px !important;
         box-shadow: 0 6px 20px {accent_glow} !important;
-        padding: 1rem 2rem !important;
-        font-size: 1.2rem !important;
+        padding: 0.9rem 2rem !important;
+        font-size: 1.1rem !important;
+        font-weight: 600;
+        transition: all 0.3s ease;
     }}
     button[kind="primary"]:hover {{
         background: {accent_hover} !important;
         box-shadow: 0 12px 35px {accent_glow} !important;
         transform: translateY(-3px);
     }}
+    /* Header & Sidebar dark + blurred */
     header[data-testid="stHeader"] {{
-        background-color: {bg_color} !important;
+        background-color: rgba(10, 13, 20, 0.85) !important;
         backdrop-filter: blur(20px);
+        border-bottom: 1px solid rgba(55, 65, 81, 0.3);
     }}
     section[data-testid="stSidebar"] {{
-        background: {sidebar_bg} !important;
+        background: rgba(10, 13, 20, 0.95) !important;
         backdrop-filter: blur(20px);
-        border-right: 1px solid {border_color};
+        border-right: 1px solid rgba(55, 65, 81, 0.4);
+        color: #e2e8f0 !important;
     }}
+    section[data-testid="stSidebar"] .stSidebarUserSelect {{
+        color: #e2e8f0 !important;
+    }}
+    /* Fix any white text leaks */
+    .stMarkdown, .stText, .stCaption, .stException {{
+        color: #e2e8f0 !important;
+    }}
+    /* Mobile adjustments */
     @media (max-width: 768px) {{
-        .public-hero {{ padding: 4rem 1rem 3rem; min-height: 70vh; }}
-        .glass-card {{ padding: 1.5rem !important; max-width: 95% !important; }}
+        .public-hero {{ padding: 3rem 1rem 2.5rem; min-height: 65vh; }}
+        .glass-card {{ padding: 1.4rem !important; max-width: 96% !important; }}
+        .lang-toggle-topright {{ right: 1rem !important; top: 0.8rem !important; }}
     }}
 </style>
 """, unsafe_allow_html=True)
