@@ -114,99 +114,105 @@ card_shadow  = "0 8px 25px rgba(0,0,0,0.12)" if theme == "light" else "0 10px 30
 sidebar_bg   = "rgba(248,251,255,0.95)" if theme == "light" else "rgba(10,13,20,0.95)"
 
 # ────────────────────────────────────────────────
-# FULL CSS STYLING (Dark Theme Optimized – Black BG + White Text)
+# PUBLIC LANDING CONTENT (only shown if NOT authenticated)
 # ────────────────────────────────────────────────
-st.markdown(f"""
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
-<style>
-    html, body, [class*="css-"] {{
-        font-family: 'Poppins', sans-serif !important;
-        font-size: 15px !important;
-    }}
-    .stApp {{
-        background: {bg_color};           /* already dark from your var */
-        color: #e2e8f0 !important;        /* light/white text default */
-    }}
-    h1, h2, h3, h4, h5, h6, p, div, span, label, .stMarkdown {{
-        color: #e2e8f0 !important;        /* white/light text */
-    }}
-    small, caption, .caption {{
-        color: #94a3b8 !important;        /* muted gray */
-    }}
-    a {{
-        color: #00ffaa !important;
-    }}
-    a:hover {{
-        color: #00ffcc !important;
-    }}
-    /* Glass cards – better contrast on dark bg */
-    .glass-card {{
-        background: rgba(15, 23, 42, 0.75);   /* darker semi-transparent */
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border-radius: 20px;
-        border: 1px solid rgba(55, 65, 81, 0.5);  /* subtle gray border */
-        padding: 2rem !important;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-        transition: all 0.3s ease;
-        margin: 1.8rem auto;
-        max-width: 1100px;
-        color: #e2e8f0 !important;
-    }}
-    .glass-card:hover {{
-        box-shadow: 0 15px 40px rgba(0, 255, 170, 0.15);
-        transform: translateY(-6px);
-        border-color: #00ffaa80;
-    }}
-    .gold-text {{
-        color: {accent_gold} !important;
-        font-weight: 600;
-        letter-spacing: 0.5px;
-    }}
-    /* Primary buttons – green bg + black text */
-    button[kind="primary"] {{
-        background: {accent_primary} !important;
-        color: #000000 !important;
-        border: none !important;
-        border-radius: 16px !important;
-        box-shadow: 0 6px 20px {accent_glow} !important;
-        padding: 0.9rem 2rem !important;
-        font-size: 1.1rem !important;
-        font-weight: 600;
-        transition: all 0.3s ease;
-    }}
-    button[kind="primary"]:hover {{
-        background: {accent_hover} !important;
-        box-shadow: 0 12px 35px {accent_glow} !important;
-        transform: translateY(-3px);
-    }}
-    /* Header & Sidebar dark + blurred */
-    header[data-testid="stHeader"] {{
-        background-color: rgba(10, 13, 20, 0.85) !important;
-        backdrop-filter: blur(20px);
-        border-bottom: 1px solid rgba(55, 65, 81, 0.3);
-    }}
-    section[data-testid="stSidebar"] {{
-        background: rgba(10, 13, 20, 0.95) !important;
-        backdrop-filter: blur(20px);
-        border-right: 1px solid rgba(55, 65, 81, 0.4);
-        color: #e2e8f0 !important;
-    }}
-    section[data-testid="stSidebar"] .stSidebarUserSelect {{
-        color: #e2e8f0 !important;
-    }}
-    /* Fix any white text leaks */
-    .stMarkdown, .stText, .stCaption, .stException {{
-        color: #e2e8f0 !important;
-    }}
-    /* Mobile adjustments */
-    @media (max-width: 768px) {{
-        .public-hero {{ padding: 3rem 1rem 2.5rem; min-height: 65vh; }}
-        .glass-card {{ padding: 1.4rem !important; max-width: 96% !important; }}
-        .lang-toggle-topright {{ right: 1rem !important; top: 0.8rem !important; }}
-    }}
-</style>
-""", unsafe_allow_html=True)
+if not authenticated:
+    # ── Language support (bilingual waitlist form) ──
+    if "language" not in st.session_state:
+        st.session_state.language = "en"
+
+    texts = {
+        "en": {
+            "join_waitlist": "Join Waitlist – Early Access",
+            "name": "Full Name",
+            "email": "Email",
+            "why_join": "Why do you want to join KMFX? (optional)",
+            "submit": "Join Waitlist 👑",
+            "success": "Success! You're on the list. Check your email soon 🚀",
+        },
+        "tl": {
+            "join_waitlist": "Sumali sa Waitlist – Maagang Access",
+            "name": "Buong Pangalan",
+            "email": "Email",
+            "why_join": "Bakit gusto mong sumali sa KMFX? (opsyonal)",
+            "submit": "Sumali sa Waitlist 👑",
+            "success": "Tagumpay! Nasa listahan ka na. Check mo ang email mo soon 🚀",
+        }
+    }
+
+    def txt(key):
+        lang_dict = texts.get(st.session_state.language, texts["en"])
+        return lang_dict.get(key, key)
+
+    # ── Dark Pill Toggle (black bg, white text inside button) ──
+    st.markdown("""
+    <style>
+        .lang-toggle-wrapper {
+            text-align: center;
+            margin: 1.2rem 0 2.2rem 0;
+        }
+        .lang-pill {
+            background: #111827;                /* dark/black background */
+            color: #ffffff !important;          /* white text INSIDE button */
+            border: 1px solid #374151;
+            padding: 0.6rem 1.5rem;
+            border-radius: 9999px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.45);
+        }
+        .lang-pill:hover {
+            background: #1f2937;
+            border-color: #00ffaa88;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(0,255,170,0.25);
+        }
+        .lang-pill.active {
+            background: #00ffaa;
+            color: #000000 !important;          /* black text on green when TL */
+            border-color: #00ffaa;
+        }
+        /* Force all text black outside the button (labels, captions, etc.) */
+        .stMarkdown, p, div, span, label, small, .caption, .stText {
+            color: #000000 !important;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # Centered toggle container
+    st.markdown('<div class="lang-toggle-wrapper">', unsafe_allow_html=True)
+
+    current_lang = st.session_state.language
+    btn_label = "EN / TL" if current_lang == "en" else "TL / EN"
+    is_active = "active" if current_lang == "tl" else ""
+
+    if st.button(
+        f"🌐 {btn_label}",
+        key="lang_switch_public_unique",
+        help="Switch between English and Tagalog"
+    ):
+        st.session_state.language = "tl" if current_lang == "en" else "en"
+        st.rerun()
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # Optional: Make whole page text black (if needed for other elements)
+    st.markdown("""
+    <style>
+        /* Override any remaining gray/white text leaks */
+        .stApp p, .stApp div, .stApp span, .stApp label {
+            color: #000000 !important;
+        }
+        .stApp small, .stApp .caption {
+            color: #111111 !important;  /* almost black */
+        }
+    </style>
+    """, unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
 # QR AUTO-LOGIN
