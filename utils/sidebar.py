@@ -40,7 +40,7 @@ def render_sidebar():
         st.sidebar.markdown("---")
         st.sidebar.subheader("Communication & Oversight")
         st.sidebar.page_link("pages/💬_Messages.py", label="💬 Messages")
-        st.sidebar.page_link("pages/📡_Whitelist_Monitor.py", label="📡 Whitelist Monitor")   # ← NEW
+        st.sidebar.page_link("pages/📡_Whitelist_Monitor.py", label="📡 Whitelist Monitor")  # ← Added here
         st.sidebar.page_link("pages/📢_Announcements.py", label="📢 Announcements")
         st.sidebar.page_link("pages/🔔_Notifications.py", label="🔔 Notifications")
         st.sidebar.page_link("pages/📁_File_Vault.py", label="📁 File Vault")
@@ -63,7 +63,7 @@ def render_sidebar():
         st.sidebar.subheader("Oversight & Communication")
         st.sidebar.page_link("pages/📜_Audit_Logs.py", label="📜 Audit Logs")
         st.sidebar.page_link("pages/💬_Messages.py", label="💬 Messages")
-        st.sidebar.page_link("pages/📡_Whitelist_Monitor.py", label="📡 Whitelist Monitor")   # ← NEW
+        st.sidebar.page_link("pages/📡_Whitelist_Monitor.py", label="📡 Whitelist Monitor")  # ← Added here
         st.sidebar.page_link("pages/📢_Announcements.py", label="📢 Announcements")
         st.sidebar.page_link("pages/🔔_Notifications.py", label="🔔 Notifications")
         st.sidebar.page_link("pages/📁_File_Vault.py", label="📁 File Vault")
