@@ -246,60 +246,7 @@ if not authenticated:
     with stat_cols[1]: st.metric("Total Equity", f"${total_equity:,.0f}")
     with stat_cols[2]: st.metric("Growth Fund", f"${gf_balance:,.0f}")
     with stat_cols[3]: st.metric("Members", members_count)
-# ── PUBLIC LANDING (only if not authenticated) ───────────────────────
-if not st.session_state.authenticated:
-    # Language toggle
-    if "language" not in st.session_state:
-        st.session_state.language = "en"
-
-    texts = {
-        "en": {
-            "hero_title": "KMFX EA",
-            "hero_sub": "Automated Gold Trading for Financial Freedom",
-            "hero_desc": "Passed FTMO Phase 1 • +3,071% 5-Year Backtest • Building Legacies of Generosity",
-            "join_waitlist": "Join Waitlist – Early Access",
-            "name": "Full Name",
-            "email": "Email",
-            "why_join": "Why do you want to join KMFX? (optional)",
-            "submit": "Join Waitlist 👑",
-            "success": "Success! You're on the list. Check your email soon 🚀",
-            "pioneers_title": "Our Pioneers",
-        },
-        "tl": {
-            "hero_title": "KMFX EA",
-            "hero_sub": "Awtomatikong Pangangalakal ng Ginto para sa Kalayaang Pinansyal",
-            "hero_desc": "Naipasa ang FTMO Phase 1 • +3,071% 5-Taon Backtest • Bumubuo ng Pamana ng Kagandahang-loob",
-            "join_waitlist": "Sumali sa Waitlist – Maagang Access",
-            "name": "Buong Pangalan",
-            "email": "Email",
-            "why_join": "Bakit gusto mong sumali sa KMFX? (opsyonal)",
-            "submit": "Sumali sa Waitlist 👑",
-            "success": "Tagumpay! Nasa listahan ka na. Check mo ang email mo soon 🚀",
-            "pioneers_title": "Mga Pioneer Namin",
-        }
-    }
-
-    def txt(key):
-        return texts[st.session_state.language].get(key, key)
-
-    st.markdown('<div class="lang-toggle-container">', unsafe_allow_html=True)
-    if st.button("EN / TL", key="lang_toggle", help="Switch language"):
-        st.session_state.language = "tl" if st.session_state.language == "en" else "en"
-        st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    # Logo + Hero
-    if os.path.exists("assets/logo.png"):
-        st.image("assets/logo.png", use_column_width=False)
-    else:
-        st.markdown("**[KMFX EA Logo Placeholder]**")
-
-    st.markdown(f"<h1 class='gold-text' style='text-align:center;'>{txt('hero_title')}</h1>", unsafe_allow_html=True)
-    st.markdown(f"<h2 style='text-align:center; color:{text_primary};'>{txt('hero_sub')}</h2>", unsafe_allow_html=True)
-    st.markdown(f"<p style='text-align:center; font-size:1.35rem; opacity:0.9; color:{text_muted};'>{txt('hero_desc')}</p>", unsafe_allow_html=True)
-    st.markdown(f"<p style='text-align:center; font-size:1.1rem; opacity:0.8;'>Mark Jeff Blando – Founder & Developer • 2026</p>", unsafe_allow_html=True)
-
-    # ── Live Gold Price ──────────────────────────────────────────────
+# ── Live Gold Price ──────────────────────────────────────────────
     @st.cache_data(ttl=300)
     def get_gold_price():
         try:
@@ -335,8 +282,7 @@ if not st.session_state.authenticated:
         """, unsafe_allow_html=True)
     else:
         st.markdown(f"<p style='text-align:center; color:{text_muted}; font-size:1.8rem;'>Gold Price (Loading or Market Closed...)</p>", unsafe_allow_html=True)
-
-    # ── TradingView Mini Chart ───────────────────────────────────────
+        # ── TradingView Mini Chart ───────────────────────────────────────
     st.components.v1.html("""
     <div class="tradingview-widget-container" style="width:100%; height:340px; min-height:220px; max-height:380px; margin:1.8rem auto 3rem; border-radius:14px; overflow:hidden; box-shadow:0 8px 28px rgba(0,0,0,0.5); background:rgba(13,17,23,0.6);">
       <div class="tradingview-widget-container__widget"></div>
@@ -344,8 +290,7 @@ if not st.session_state.authenticated:
       <tv-mini-chart symbol="OANDA:XAUUSD" color-theme="dark" locale="en" height="100%" width="100%"></tv-mini-chart>
     </div>
     """, height=420)
-
-    # ── Waitlist Form ─────────────────────────────────────────────────
+# ── Waitlist Form ─────────────────────────────────────────────────
     st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
     st.markdown(f"<h2 style='margin-bottom:1.8rem;'>{txt('join_waitlist')}</h2>", unsafe_allow_html=True)
     with st.form("waitlist_form", clear_on_submit=True):
