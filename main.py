@@ -216,7 +216,7 @@ if qr_token and not authenticated:
 # PUBLIC LANDING CONTENT (only shown if NOT authenticated)
 # ────────────────────────────────────────────────
 if not authenticated:
-    # ── Language support (for bilingual waitlist form) ──
+    # ── Language support (bilingual waitlist form) ──
     if "language" not in st.session_state:
         st.session_state.language = "en"
 
@@ -228,7 +228,6 @@ if not authenticated:
             "why_join": "Why do you want to join KMFX? (optional)",
             "submit": "Join Waitlist 👑",
             "success": "Success! You're on the list. Check your email soon 🚀",
-            # Add more keys later if you want to translate hero / other texts
         },
         "tl": {
             "join_waitlist": "Sumali sa Waitlist – Maagang Access",
@@ -245,11 +244,62 @@ if not authenticated:
         lang_dict = texts.get(st.session_state.language, texts["en"])
         return lang_dict.get(key, key)
 
-    # Language toggle (top-right-ish)
-    st.markdown('<div style="text-align: right; margin: 1rem 0;">', unsafe_allow_html=True)
-    if st.button("EN / TL", key="lang_toggle_public"):
-        st.session_state.language = "tl" if st.session_state.language == "en" else "en"
+    # ── Modern Dark Pill Language Toggle (centered) ──
+    st.markdown("""
+    <style>
+        .lang-toggle-wrapper {
+            text-align: center;
+            margin: 1.2rem 0 2.2rem 0;
+        }
+        .lang-pill {
+            background: #111827;                /* dark black-gray bg */
+            color: #ffffff !important;          /* white text */
+            border: 1px solid #374151;
+            padding: 0.55rem 1.4rem;
+            border-radius: 9999px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.45);
+        }
+        .lang-pill:hover {
+            background: #1f2937;
+            border-color: #00ffaa88;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(0,255,170,0.25);
+        }
+        .lang-pill.active {
+            background: #00ffaa;
+            color: #000000 !important;          /* black text on green */
+            border-color: #00ffaa;
+        }
+        .lang-pill .icon {
+            font-size: 1.1rem;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # Centered toggle
+    st.markdown('<div class="lang-toggle-wrapper">', unsafe_allow_html=True)
+
+    # Dynamic label + active class
+    current_lang = st.session_state.language
+    btn_label = "EN / TL" if current_lang == "en" else "TL / EN"
+    active_class = "active" if current_lang == "tl" else ""
+
+    if st.button(
+        f"🌐 {btn_label}",
+        key="lang_switch_public",
+        help="Switch between English and Tagalog",
+        use_container_width=False
+    ):
+        st.session_state.language = "tl" if current_lang == "en" else "en"
         st.rerun()
+
     st.markdown('</div>', unsafe_allow_html=True)
 
     # Logo
