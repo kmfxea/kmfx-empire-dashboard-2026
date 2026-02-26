@@ -1,9 +1,11 @@
 # main.py - KMFX EA Public Landing + Login Page
-# Latest: February 2026 - premium dark/orange glassmorphism, robust mobile, reliable widgets
+# Cleaned old style + all new features (including Pioneers Carousel)
+# February 2026 - premium dark glassmorphism, adaptive theme, robust mobile
 
 import streamlit as st
 import yfinance as yf
 import os
+import bcrypt
 from datetime import datetime, timedelta
 from PIL import Image
 from utils.supabase_client import supabase
@@ -17,96 +19,81 @@ from utils.helpers import (
 
 start_keep_alive_if_needed()
 
-# ── Auth & Page Config ───────────────────────────────────────────────
-authenticated = is_authenticated()
+# ====================== EARLY AUTH & THEME SETUP ======================
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
 
-if authenticated:
-    st.set_page_config(
-        page_title="KMFX Empire Dashboard",
-        page_icon="👑",
-        layout="wide",
-        initial_sidebar_state="expanded"
-    )
-    st.switch_page("pages/🏠_Dashboard.py")
+if "theme" not in st.session_state:
+    st.session_state.theme = "dark"
+
+# Auto theme switch + rerun for instant apply
+if st.session_state.authenticated:
+    if st.session_state.theme != "light":
+        st.session_state.theme = "light"
+        st.rerun()
 else:
-    st.set_page_config(
-        page_title="KMFX EA - Elite Gold Automation",
-        page_icon="👑",
-        layout="wide",
-        initial_sidebar_state="collapsed"
-    )
+    if st.session_state.theme != "dark":
+        st.session_state.theme = "dark"
+        st.rerun()
 
-# ── Theme Variables ──────────────────────────────────────────────────
+theme = st.session_state.theme
+
+# Adaptive colors
 accent_gold    = "#ffd700"
-accent_glow    = "#ffd70050"
+accent_glow    = "#ffd70050" if theme == "dark" else "#ffd70030"
 accent_orange  = "#ff6200"
 accent_hover  = "#ff8533"
 accent_green   = "#00ffaa"
-bg_color       = "#0d1117"
-card_bg        = "rgba(20, 25, 40, 0.88)"
-border_color   = "rgba(255,215,0,0.22)"
-text_primary   = "#e2e8f0"
-text_muted     = "#a0aec0"
-card_shadow    = "0 10px 35px rgba(0,0,0,0.48)"
+bg_color       = "#0a0d14" if theme == "dark" else "#f8fbff"
+card_bg        = "rgba(15,20,30,0.70)" if theme == "dark" else "rgba(255,255,255,0.75)"
+border_color   = "rgba(100,100,100,0.15)" if theme == "dark" else "rgba(0,0,0,0.08)"
+text_primary   = "#ffffff" if theme == "dark" else "#0f172a"
+text_muted     = "#aaaaaa" if theme == "dark" else "#64748b"
+card_shadow    = "0 10px 30px rgba(0,0,0,0.5)" if theme == "dark" else "0 8px 25px rgba(0,0,0,0.12)"
 
+st.set_page_config(
+    page_title="KMFX Empire Dashboard" if theme == "light" else "KMFX EA - Elite Gold Automation",
+    page_icon="👑",
+    layout="wide",
+    initial_sidebar_state="expanded" if theme == "light" else "collapsed"
+)
+
+# ── Global Style ─────────────────────────────────────────────────────
 st.markdown(f"""
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
 <style>
-    * {{ box-sizing: border-box; margin:0; padding:0; }}
     html, body, [class*="css-"] {{
-        font-family: 'Inter', system-ui, sans-serif;
-        font-size: 16px;
-        line-height: 1.6;
+        font-family: 'Poppins', sans-serif !important;
+        font-size: 15px !important;
         color: {text_primary};
     }}
-    .stApp {{
-        background: linear-gradient(135deg, {bg_color} 0%, #0f1622 100%) !important;
-    }}
-    .main .block-container {{
-        max-width: 1180px;
-        padding: 2.5rem 4rem;
-        margin: 0 auto;
-    }}
-    h1, h2, h3, h4 {{
-        font-family: 'Playfair Display', serif;
-        color: {accent_orange};
-        text-align: center;
-        text-shadow: 0 0 12px rgba(255,98,0,0.5);
-        margin: 1.2rem 0 0.8rem;
-    }}
-    h1 {{ font-size: 3.8rem; font-weight: 800; letter-spacing: -0.6px; }}
-    h2 {{ font-size: 2.7rem; font-weight: 700; margin: 2.8rem 0 1.6rem; }}
-    h3 {{ font-size: 2.1rem; font-weight: 600; }}
-    .gold-text {{ color: {accent_gold}; text-shadow: 0 0 14px {accent_glow}; }}
+    .stApp {{ background: {bg_color}; }}
     .glass-card {{
         background: {card_bg};
-        backdrop-filter: blur(18px);
-        -webkit-backdrop-filter: blur(18px);
+        backdrop-filter: blur(20px);
         border-radius: 20px;
         border: 1px solid {border_color};
-        padding: 2.2rem 2.6rem;
+        padding: 2.2rem;
         box-shadow: {card_shadow};
+        transition: all 0.3s ease;
         margin: 2.5rem auto;
         max-width: 1100px;
-        transition: transform 0.28s ease, box-shadow 0.28s ease;
     }}
     .glass-card:hover {{
         transform: translateY(-6px);
-        box-shadow: 0 18px 48px rgba(0,0,0,0.55);
+        box-shadow: 0 18px 48px rgba(0,0,0,0.35);
+        border-color: {accent_green};
     }}
+    .gold-text {{ color: {accent_gold} !important; text-shadow: 0 0 10px {accent_glow}; font-weight: 600; }}
+    h1, h2, h3 {{ font-family: 'Playfair Display', serif; color: {accent_orange}; text-align: center; }}
     button[kind="primary"] {{
         background: linear-gradient(90deg, {accent_green}, #ffea80) !important;
         color: #000 !important;
-        border: none !important;
         border-radius: 12px !important;
-        padding: 0.9rem 2rem !important;
-        font-weight: 600 !important;
-        box-shadow: 0 5px 18px rgba(0,255,170,0.4) !important;
+        box-shadow: 0 6px 20px rgba(0,255,170,0.4) !important;
     }}
-    button[kind="primary"]:hover {{
-        transform: translateY(-2px) scale(1.02);
-        box-shadow: 0 10px 30px rgba(0,255,170,0.6) !important;
-    }}
+    header {{ visibility: hidden !important; }}
+    .block-container {{ padding-top: 0 !important; margin-top: 0 !important; }}
     /* Language toggle */
     .lang-toggle-container {{
         position: fixed;
@@ -122,262 +109,232 @@ st.markdown(f"""
         font-weight: 700 !important;
         box-shadow: 0 6px 20px rgba(255,98,0,0.5) !important;
     }}
-    /* Responsive */
-    @media (max-width: 992px) {{
-        .main .block-container {{ padding: 2rem 3rem; }}
-        h1 {{ font-size: 3.2rem; }} h2 {{ font-size: 2.4rem; }}
-    }}
-    @media (max-width: 768px) {{
-        .main .block-container {{ padding: 1.6rem 2.2rem; }}
-        h1 {{ font-size: 2.7rem; }} h2 {{ font-size: 2.1rem; }}
-        .glass-card {{ padding: 1.8rem 2rem; margin: 2rem 1rem; }}
-    }}
-    @media (max-width: 480px) {{
-        h1 {{ font-size: 2.3rem; }} h2 {{ font-size: 1.9rem; }}
-        .glass-card {{ padding: 1.5rem 1.6rem; }}
-    }}
 </style>
 """, unsafe_allow_html=True)
 
-# ── Language ─────────────────────────────────────────────────────────
-if "language" not in st.session_state:
-    st.session_state.language = "en"
-
-texts = {
-    "en": {
-        "hero_title": "KMFX EA",
-        "hero_sub": "Automated Gold Trading for Financial Freedom",
-        "hero_desc": "Passed FTMO Phase 1 • +3,071% 5-Year Backtest • Building Legacies of Generosity",
-        "join_waitlist": "Join Waitlist – Early Access",
-        "name": "Full Name",
-        "email": "Email",
-        "why_join": "Why do you want to join KMFX? (optional)",
-        "submit": "Join Waitlist 👑",
-        "success": "Success! You're on the list. Check your email soon 🚀",
-        "pioneers_title": "Our Pioneers",
-    },
-    "tl": {
-        "hero_title": "KMFX EA",
-        "hero_sub": "Awtomatikong Pangangalakal ng Ginto para sa Kalayaang Pinansyal",
-        "hero_desc": "Naipasa ang FTMO Phase 1 • +3,071% 5-Taon Backtest • Bumubuo ng Pamana ng Kagandahang-loob",
-        "join_waitlist": "Sumali sa Waitlist – Maagang Access",
-        "name": "Buong Pangalan",
-        "email": "Email",
-        "why_join": "Bakit gusto mong sumali sa KMFX? (opsyonal)",
-        "submit": "Sumali sa Waitlist 👑",
-        "success": "Tagumpay! Nasa listahan ka na. Check mo ang email mo soon 🚀",
-        "pioneers_title": "Mga Pioneer Namin",
-    }
-}
-
-def txt(key):
-    return texts[st.session_state.language].get(key, key)
-
-st.markdown("""
-<style>
-    .lang-toggle-container { position: fixed; top: 1.2rem; right: 1.8rem; z-index: 1000; }
-    .lang-toggle-btn {
-        background: linear-gradient(135deg, #ff6200, #ff8533) !important;
-        color: white !important;
-        border-radius: 999px !important;
-        padding: 0.75rem 1.5rem !important;
-        font-weight: 700 !important;
-        box-shadow: 0 6px 20px rgba(255,98,0,0.5) !important;
-    }
-    @media (max-width: 480px) {
-        .lang-toggle-container { top: 0.9rem; right: 1rem; }
-        .lang-toggle-btn { padding: 0.6rem 1.2rem !important; font-size: 0.95rem !important; }
-    }
-</style>
-""", unsafe_allow_html=True)
-
-st.markdown('<div class="lang-toggle-container">', unsafe_allow_html=True)
-if st.button("EN / TL", key="lang_toggle", help="Switch language"):
-    st.session_state.language = "tl" if st.session_state.language == "en" else "en"
-    st.rerun()
-st.markdown('</div>', unsafe_allow_html=True)
-
-# ── Hero ─────────────────────────────────────────────────────────────
-st.markdown('<div style="text-align:center; margin:2.5rem 0 2rem;">', unsafe_allow_html=True)
-if os.path.exists("assets/logo.png"):
-    st.image("assets/logo.png", use_column_width=False)
-else:
-    st.markdown("**[KMFX EA Logo]**", unsafe_allow_html=True)
-st.markdown('</div>', unsafe_allow_html=True)
-
-st.markdown(f"""
-<div style="text-align:center; max-width:900px; margin:0 auto;">
-    <h1>{txt('hero_title')}</h1>
-    <h2 style="color:{text_primary};">{txt('hero_sub')}</h2>
-    <p style="font-size:1.35rem; opacity:0.92; margin:1rem auto; max-width:800px;">
-        {txt('hero_desc')}
-    </p>
-    <p style="font-size:1.1rem; opacity:0.8;">
-        Mark Jeff Blando – Founder & Developer • 2026
-    </p>
-</div>
-""", unsafe_allow_html=True)
-
-# ── Live Gold Price ──────────────────────────────────────────────────
-@st.cache_data(ttl=300)
-def get_gold_price():
+# ── QR Auto-Login (early, no flash) ──────────────────────────────────
+params = st.query_params
+qr_token = params.get("qr")
+if qr_token and not st.session_state.authenticated:
     try:
-        t = yf.Ticker("GC=F")
-        info = t.info
-        price = (
-            info.get('regularMarketPrice') or
-            info.get('regularMarketPreviousClose') or
-            info.get('previousClose') or
-            info.get('currentPrice')
-        )
-        ch = info.get('regularMarketChangePercent') or 0.0
-        
-        if price is None:
-            hist = t.history(period="2d")
-            if not hist.empty:
-                price = hist['Close'][-1]
-                prev = hist['Close'][-2] if len(hist) > 1 else price
-                ch = ((price - prev) / prev * 100) if prev else 0.0
-        
-        return round(price, 1) if price else None, round(ch, 2)
+        resp = supabase.table("users").select("*").eq("qr_token", qr_token).execute()
+        if resp.data:
+            user = resp.data[0]
+            st.session_state.authenticated = True
+            st.session_state.username = user["username"].lower()
+            st.session_state.full_name = user.get("full_name", user["username"])
+            st.session_state.role = user["role"]
+            st.session_state.theme = "light"
+            log_action("QR Login Success", user["username"])
+            st.query_params.clear()
+            st.rerun()
     except:
-        return None, 0.0
+        st.query_params.clear()
 
-price, change = get_gold_price()
-
-if price:
-    st.markdown(f"""
-    <div style="
-        text-align: center;
-        font-size: clamp(3rem, 9vw, 4.5rem);
-        font-weight: 800;
-        color: {accent_gold};
-        text-shadow: 0 0 24px {accent_glow};
-        margin: 2.2rem 0 0.8rem;
-        letter-spacing: -0.5px;
-    ">
-        ${price:,.1f}
-    </div>
-    <p style="text-align:center; font-size:1.55rem; margin:0 0 2.5rem; opacity:0.95;">
-        <span style="color: {'#00ffaa' if change >= 0 else '#ff5555'}; font-weight:700; font-size:1.65rem;">
-            {change:+.2f}%
-        </span>
-         • Live Gold (XAU/USD) • GC=F Futures
-    </p>
-    """, unsafe_allow_html=True)
-else:
-    st.markdown(f"""
-    <div style="text-align:center; font-size:3rem; color:{text_muted}; margin:3rem 0; opacity:0.7;">
-        Gold Price (Loading or Market Closed...)
-    </div>
-    """, unsafe_allow_html=True)
-
-# ── TradingView Mini Chart (fixed & reliable) ────────────────────────
-st.components.v1.html("""
-<div class="tradingview-widget-container" style="
-    width: 100%;
-    height: 340px;
-    min-height: 220px;
-    max-height: 380px;
-    margin: 1.8rem auto 3.2rem auto;
-    border-radius: 14px;
-    overflow: hidden;
-    box-shadow: 0 8px 28px rgba(0,0,0,0.5);
-    background: rgba(13,17,23,0.6);
-">
-  <div class="tradingview-widget-container__widget"></div>
-  <script type="module" src="https://widgets.tradingview-widget.com/w/en/tv-mini-chart.js" async></script>
-  <tv-mini-chart
-    symbol="OANDA:XAUUSD"
-    color-theme="dark"
-    locale="en"
-    height="100%"
-    width="100%"
-  ></tv-mini-chart>
-</div>
-""", height=420)
-
-# ── Waitlist Form ────────────────────────────────────────────────────
-st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
-st.markdown(f"<h2 style='margin-bottom:1.8rem;'>{txt('join_waitlist')}</h2>", unsafe_allow_html=True)
-
-with st.form("waitlist_form", clear_on_submit=True):
-    col1, col2 = st.columns([1, 1.4])
-    with col1:
-        full_name = st.text_input(txt("name"), placeholder="Juan Dela Cruz")
-    with col2:
-        email = st.text_input(txt("email"), placeholder="your@email.com")
-    message = st.text_area(txt("why_join"), height=120)
-    
-    if st.form_submit_button(txt("submit"), type="primary", use_container_width=True):
-        if email.strip():
-            # TODO: Replace with real Supabase insert
-            # supabase.table("waitlist").insert({"name": full_name, "email": email, "message": message}).execute()
-            st.success(txt("success"))
+# ── Login Helper (no success flash on public) ────────────────────────
+def login_user(username, password, expected_role=None):
+    try:
+        resp = supabase.table("users").select("password, full_name, role").eq("username", username.lower()).execute()
+        if resp.data:
+            user = resp.data[0]
+            if bcrypt.checkpw(password.encode(), user["password"].encode()):
+                if expected_role and user["role"] != expected_role:
+                    st.error(f"This tab is for {expected_role.title()} only.")
+                    return False
+                st.session_state.authenticated = True
+                st.session_state.username = username.lower()
+                st.session_state.full_name = user.get("full_name", username)
+                st.session_state.role = user["role"]
+                st.session_state.theme = "light"
+                log_action("Login Success", username)
+                st.rerun()
+                return True
+            else:
+                st.error("Invalid password")
         else:
-            st.error("Email is required")
-st.markdown("</div>", unsafe_allow_html=True)
+            st.error("Username not found")
+        return False
+    except Exception as e:
+        st.error(f"Login error: {e}")
+        return False
 
-# ── Pioneers Carousel ────────────────────────────────────────────────
-st.markdown(f"""
-<div class="glass-card" style="max-width:1200px; margin:3.5rem auto; padding:2.5rem 2rem;">
-    <h2 style="margin-bottom:2.2rem;">{txt('pioneers_title')}</h2>
-    <div class="pioneers-carousel-container" style="position:relative; overflow:hidden; padding:1.5rem 0;">
-        <button class="carousel-arrow left-arrow" onclick="document.querySelector('.pioneers-carousel').scrollBy({{left: -320, behavior: 'smooth'}})">‹</button>
-        <div class="pioneers-carousel" style="display:flex; flex-direction:row; flex-wrap:nowrap; gap:2rem; overflow-x:auto; scroll-snap-type:x mandatory; scroll-behavior:smooth; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding:1rem 0;">
-""", unsafe_allow_html=True)
+# ── PUBLIC LANDING (only if not authenticated) ───────────────────────
+if not st.session_state.authenticated:
+    # Language toggle
+    if "language" not in st.session_state:
+        st.session_state.language = "en"
 
-pioneers = [
-    {"name": "Weber", "since": "Dec 2025", "earnings": "+$1,284", "gain": "+128.4%", "quote": "Best decision ever!", "photo": "assets/weber.jpg"},
-    {"name": "Ramil", "since": "Jan 2026", "earnings": "+$2,150", "gain": "+215%", "quote": "Stable daily profits.", "photo": "assets/ramil.jpg"},
-    # Add more as needed
-]
+    texts = {
+        "en": {
+            "hero_title": "KMFX EA",
+            "hero_sub": "Automated Gold Trading for Financial Freedom",
+            "hero_desc": "Passed FTMO Phase 1 • +3,071% 5-Year Backtest • Building Legacies of Generosity",
+            "join_waitlist": "Join Waitlist – Early Access",
+            "name": "Full Name",
+            "email": "Email",
+            "why_join": "Why do you want to join KMFX? (optional)",
+            "submit": "Join Waitlist 👑",
+            "success": "Success! You're on the list. Check your email soon 🚀",
+            "pioneers_title": "Our Pioneers",
+        },
+        "tl": {
+            "hero_title": "KMFX EA",
+            "hero_sub": "Awtomatikong Pangangalakal ng Ginto para sa Kalayaang Pinansyal",
+            "hero_desc": "Naipasa ang FTMO Phase 1 • +3,071% 5-Taon Backtest • Bumubuo ng Pamana ng Kagandahang-loob",
+            "join_waitlist": "Sumali sa Waitlist – Maagang Access",
+            "name": "Buong Pangalan",
+            "email": "Email",
+            "why_join": "Bakit gusto mong sumali sa KMFX? (opsyonal)",
+            "submit": "Sumali sa Waitlist 👑",
+            "success": "Tagumpay! Nasa listahan ka na. Check mo ang email mo soon 🚀",
+            "pioneers_title": "Mga Pioneer Namin",
+        }
+    }
 
-for p in pioneers:
-    photo = p.get("photo", "")
-    photo_url = photo if os.path.exists(photo) else f"https://via.placeholder.com/140/222/ffd700?text={p['name'][0]}"
-    st.markdown(f"""
-    <div class="pioneer-card" style="flex:0 0 280px; width:280px; height:380px; border-radius:24px; overflow:hidden; background:rgba(30,35,55,0.9); border:1px solid rgba(255,215,0,0.2); box-shadow:0 10px 30px rgba(0,0,0,0.45); transition:all 0.35s ease; scroll-snap-align:center;">
-        <img src="{photo_url}" style="width:140px; height:140px; border-radius:50%; border:4px solid {accent_orange}; margin:2.2rem auto 1.5rem; display:block; object-fit:cover; box-shadow:0 6px 20px rgba(255,98,0,0.35);">
-        <div style="font-size:1.45rem; font-weight:700; color:{accent_orange}; margin:0.5rem 0;">{p['name']}</div>
-        <div style="font-size:1rem; color:{text_muted};">since {p['since']}</div>
-        <div style="margin-top:1.5rem; padding:0 1rem;">
-            <div style="font-size:1.6rem; color:{accent_green}; font-weight:700;">{p['earnings']}</div>
-            <div style="font-size:1.3rem; color:{accent_green};">{p['gain']}</div>
-            <div style="font-style:italic; margin-top:1rem; opacity:0.9;">“{p['quote']}”</div>
+    def txt(key):
+        return texts[st.session_state.language].get(key, key)
+
+    st.markdown('<div class="lang-toggle-container">', unsafe_allow_html=True)
+    if st.button("EN / TL", key="lang_toggle", help="Switch language"):
+        st.session_state.language = "tl" if st.session_state.language == "en" else "en"
+        st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # Logo + Hero
+    if os.path.exists("assets/logo.png"):
+        st.image("assets/logo.png", use_column_width=False)
+    else:
+        st.markdown("**[KMFX EA Logo Placeholder]**")
+
+    st.markdown(f"<h1 class='gold-text' style='text-align:center;'>{txt('hero_title')}</h1>", unsafe_allow_html=True)
+    st.markdown(f"<h2 style='text-align:center; color:{text_primary};'>{txt('hero_sub')}</h2>", unsafe_allow_html=True)
+    st.markdown(f"<p style='text-align:center; font-size:1.35rem; opacity:0.9; color:{text_muted};'>{txt('hero_desc')}</p>", unsafe_allow_html=True)
+    st.markdown(f"<p style='text-align:center; font-size:1.1rem; opacity:0.8;'>Mark Jeff Blando – Founder & Developer • 2026</p>", unsafe_allow_html=True)
+
+    # ── Live Gold Price ──────────────────────────────────────────────
+    @st.cache_data(ttl=300)
+    def get_gold_price():
+        try:
+            t = yf.Ticker("GC=F")
+            info = t.info
+            price = (
+                info.get('regularMarketPrice') or
+                info.get('regularMarketPreviousClose') or
+                info.get('previousClose') or
+                info.get('currentPrice')
+            )
+            ch = info.get('regularMarketChangePercent') or 0.0
+            if price is None:
+                hist = t.history(period="2d")
+                if not hist.empty:
+                    price = hist['Close'][-1]
+                    prev = hist['Close'][-2] if len(hist) > 1 else price
+                    ch = ((price - prev) / prev * 100) if prev else 0.0
+            return round(price, 1) if price else None, round(ch, 2)
+        except:
+            return None, 0.0
+
+    price, change = get_gold_price()
+    if price:
+        st.markdown(f"""
+        <div style="text-align:center; font-size: clamp(3rem,9vw,4.5rem); font-weight:800; color:{accent_gold}; text-shadow:0 0 24px {accent_glow}; margin:2.2rem 0 0.8rem;">
+            ${price:,.1f}
         </div>
+        <p style="text-align:center; font-size:1.55rem; opacity:0.95;">
+            <span style="color:{'#00ffaa' if change >=0 else '#ff5555'}; font-weight:700; font-size:1.65rem;">{change:+.2f}%</span>
+             • Live Gold (XAU/USD) • GC=F Futures
+        </p>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown(f"<p style='text-align:center; color:{text_muted}; font-size:1.8rem;'>Gold Price (Loading or Market Closed...)</p>", unsafe_allow_html=True)
+
+    # ── TradingView Mini Chart ───────────────────────────────────────
+    st.components.v1.html("""
+    <div class="tradingview-widget-container" style="width:100%; height:340px; min-height:220px; max-height:380px; margin:1.8rem auto 3rem; border-radius:14px; overflow:hidden; box-shadow:0 8px 28px rgba(0,0,0,0.5); background:rgba(13,17,23,0.6);">
+      <div class="tradingview-widget-container__widget"></div>
+      <script type="module" src="https://widgets.tradingview-widget.com/w/en/tv-mini-chart.js" async></script>
+      <tv-mini-chart symbol="OANDA:XAUUSD" color-theme="dark" locale="en" height="100%" width="100%"></tv-mini-chart>
     </div>
+    """, height=420)
+
+    # ── Waitlist Form ─────────────────────────────────────────────────
+    st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
+    st.markdown(f"<h2 style='margin-bottom:1.8rem;'>{txt('join_waitlist')}</h2>", unsafe_allow_html=True)
+    with st.form("waitlist_form", clear_on_submit=True):
+        col1, col2 = st.columns([1, 1.4])
+        with col1:
+            full_name = st.text_input(txt("name"), placeholder="Juan Dela Cruz")
+        with col2:
+            email = st.text_input(txt("email"), placeholder="your@email.com")
+        message = st.text_area(txt("why_join"), height=120)
+        if st.form_submit_button(txt("submit"), type="primary", use_container_width=True):
+            if email.strip():
+                # TODO: real Supabase insert
+                # supabase.table("waitlist").insert({"name":full_name, "email":email, "message":message}).execute()
+                st.success(txt("success"))
+            else:
+                st.error("Email is required")
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    # ── Pioneers Carousel ─────────────────────────────────────────────
+    st.markdown(f"""
+    <div class="glass-card" style="max-width:1200px; margin:3.5rem auto; padding:2.5rem 2rem;">
+        <h2 style="margin-bottom:2.2rem; text-align:center;">{txt('pioneers_title')}</h2>
+        <div class="pioneers-carousel-container" style="position:relative; overflow:hidden; padding:1.5rem 0;">
+            <button class="carousel-arrow left-arrow" onclick="document.querySelector('.pioneers-carousel').scrollBy({{left: -320, behavior: 'smooth'}})">‹</button>
+            <div class="pioneers-carousel" style="display:flex; flex-direction:row; flex-wrap:nowrap; gap:2rem; overflow-x:auto; scroll-snap-type:x mandatory; scroll-behavior:smooth; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding:1rem 0;">
     """, unsafe_allow_html=True)
 
-st.markdown("""
-        </div>
-        <button class="carousel-arrow right-arrow" onclick="document.querySelector('.pioneers-carousel').scrollBy({left: 320, behavior: 'smooth'})">›</button>
-    </div>
-</div>
+    pioneers = [
+        {"name": "Weber", "since": "Dec 2025", "earnings": "+$1,284", "gain": "+128.4%", "quote": "Best decision ever!", "photo": "assets/weber.jpg"},
+        {"name": "Ramil", "since": "Jan 2026", "earnings": "+$2,150", "gain": "+215%", "quote": "Stable daily profits.", "photo": "assets/ramil.jpg"},
+        # Add more pioneers here as needed
+    ]
 
-<style>
-    .carousel-arrow {
-        position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-        background: rgba(30,35,55,0.8);
-        color: white;
-        border: none;
-        border-radius: 50%;
-        width: 48px;
-        height: 48px;
-        font-size: 2rem;
-        cursor: pointer;
-        z-index: 10;
-        backdrop-filter: blur(8px);
-    }
-    .left-arrow { left: 12px; }
-    .right-arrow { right: 12px; }
-    @media (max-width: 768px) {
-        .carousel-arrow { width:42px; height:42px; font-size:1.7rem; }
-    }
-</style>
-""", unsafe_allow_html=True)
+    for p in pioneers:
+        photo_url = p["photo"] if os.path.exists(p["photo"]) else f"https://via.placeholder.com/140/222/ffd700?text={p['name'][0]}"
+        st.markdown(f"""
+        <div class="pioneer-card" style="flex:0 0 280px; width:280px; height:380px; border-radius:24px; overflow:hidden; background:rgba(30,35,55,0.9); border:1px solid rgba(255,215,0,0.2); box-shadow:0 10px 30px rgba(0,0,0,0.45); transition:all 0.35s ease; scroll-snap-align:center;">
+            <img src="{photo_url}" style="width:140px; height:140px; border-radius:50%; border:4px solid {accent_orange}; margin:2.2rem auto 1.5rem; display:block; object-fit:cover; box-shadow:0 6px 20px rgba(255,98,0,0.35);">
+            <div style="font-size:1.45rem; font-weight:700; color:{accent_orange}; margin:0.5rem 0; text-align:center;">{p['name']}</div>
+            <div style="font-size:1rem; color:{text_muted}; text-align:center;">since {p['since']}</div>
+            <div style="margin-top:1.5rem; padding:0 1rem; text-align:center;">
+                <div style="font-size:1.6rem; color:{accent_green}; font-weight:700;">{p['earnings']}</div>
+                <div style="font-size:1.3rem; color:{accent_green};">{p['gain']}</div>
+                <div style="font-style:italic; margin-top:1rem; opacity:0.9;">“{p['quote']}”</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("""
+            </div>
+            <button class="carousel-arrow right-arrow" onclick="document.querySelector('.pioneers-carousel').scrollBy({left: 320, behavior: 'smooth'})">›</button>
+        </div>
+    </div>
+
+    <style>
+        .carousel-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(30,35,55,0.8);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            font-size: 2rem;
+            cursor: pointer;
+            z-index: 10;
+            backdrop-filter: blur(8px);
+        }
+        .left-arrow { left: 12px; }
+        .right-arrow { right: 12px; }
+        @media (max-width: 768px) {
+            .carousel-arrow { width:42px; height:42px; font-size:1.7rem; }
+        }
+    </style>
+    """, unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
 # ORIGIN STORY / JOURNEY (condensed version – shown by default)
@@ -955,13 +912,8 @@ with tab_client:
 
 st.markdown("</div>", unsafe_allow_html=True)
 
-# Footer
-st.markdown(f"""
-<div style="text-align:center; margin:6rem 0 4rem; padding-top:3rem; border-top:1px solid rgba(255,215,0,0.18); opacity:0.8;">
-    <p>KMFX EA • Built by Faith, Powered by Discipline</p>
-    <p>© 2026 Mark Jeff Blando • All rights reserved</p>
-</div>
-""", unsafe_allow_html=True)
-
-if not authenticated:
+# ────────────────────────────────────────────────
+# STOP IF NOT AUTHENTICATED
+# ────────────────────────────────────────────────
+if not is_authenticated():
     st.stop()
