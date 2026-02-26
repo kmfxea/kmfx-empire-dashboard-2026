@@ -182,7 +182,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# LANGUAGE TOGGLE
+# LANGUAGE TOGGLE – improved styling, positioning & mobile experience
 # ────────────────────────────────────────────────
 if "language" not in st.session_state:
     st.session_state.language = "en"
@@ -217,59 +217,269 @@ texts = {
 def txt(key):
     return texts[st.session_state.language].get(key, key)
 
-c1, c2 = st.columns([9,1])
-with c2:
-    if st.button("EN / TL", key="lang_toggle"):
-        st.session_state.language = "tl" if st.session_state.language == "en" else "en"
-        st.rerun()
-
-# ────────────────────────────────────────────────
-# LOGO + HERO
-# ────────────────────────────────────────────────
-st.image("assets/logo.png", width=260, use_column_width=False)
-
-st.markdown(f"""
-<h1>{txt('hero_title')}</h1>
-<h2>{txt('hero_sub')}</h2>
-<p style='text-align:center; font-size:1.3rem; color:{text_muted}; max-width:760px; margin:1.2rem auto;'>
-    {txt('hero_desc')}
-</p>
-<p style='text-align:center; color:{text_muted}; font-size:1.1rem;'>
-    Mark Jeff Blando – Founder & Developer • 2026
-</p>
+# ── Custom CSS for beautiful language toggle button ──
+st.markdown("""
+<style>
+    .lang-toggle-container {
+        position: absolute;
+        top: 1.2rem;
+        right: 1.8rem;
+        z-index: 999;
+    }
+    
+    .lang-toggle-btn {
+        background: linear-gradient(135deg, #ffd700, #ffea80) !important;
+        color: #0d1117 !important;
+        border: none !important;
+        border-radius: 50px !important;
+        padding: 0.7rem 1.4rem !important;
+        font-size: 1.05rem !important;
+        font-weight: 700 !important;
+        box-shadow: 0 6px 20px rgba(255,215,0,0.45) !important;
+        transition: all 0.3s ease !important;
+        cursor: pointer;
+        letter-spacing: 0.5px;
+    }
+    
+    .lang-toggle-btn:hover {
+        background: linear-gradient(135deg, #ffea80, #ffd700) !important;
+        transform: scale(1.08) translateY(-2px) !important;
+        box-shadow: 0 12px 30px rgba(255,215,0,0.6) !important;
+    }
+    
+    .lang-toggle-btn:active {
+        transform: scale(0.98) !important;
+    }
+    
+    /* Mobile adjustments */
+    @media (max-width: 768px) {
+        .lang-toggle-container {
+            top: 1rem;
+            right: 1rem;
+        }
+        .lang-toggle-btn {
+            padding: 0.6rem 1.2rem !important;
+            font-size: 1rem !important;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .lang-toggle-btn {
+            padding: 0.55rem 1.1rem !important;
+            font-size: 0.95rem !important;
+        }
+    }
+</style>
 """, unsafe_allow_html=True)
 
+# Container for absolute positioning (top-right)
+st.markdown('<div class="lang-toggle-container">', unsafe_allow_html=True)
+
+# The actual button
+if st.button("EN / TL", key="lang_toggle", help="Switch language (English / Tagalog)"):
+    st.session_state.language = "tl" if st.session_state.language == "en" else "en"
+    st.rerun()
+
+st.markdown('</div>', unsafe_allow_html=True)
+
 # ────────────────────────────────────────────────
-# LIVE GOLD PRICE + REALTIME TRADINGVIEW MINI CHART
+# LOGO + HERO – improved centering, scale, glow & responsiveness
 # ────────────────────────────────────────────────
-@st.cache_data(ttl=25)
+
+st.markdown("""
+<style>
+    .hero-section {
+        text-align: center;
+        padding: 1.5rem 0 3rem 0;
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+    
+    .logo-wrapper {
+        margin: 1.5rem auto 2.5rem auto;
+        position: relative;
+    }
+    
+    .logo-wrapper img {
+        max-width: 340px;               /* base size – larger & premium feel */
+        width: 80vw;                    /* responsive – scales with viewport */
+        min-width: 200px;               /* prevent too small on very narrow screens */
+        height: auto;
+        display: block;
+        margin: 0 auto;
+        border-radius: 16px;
+        box-shadow: 0 12px 40px rgba(255, 215, 0, 0.25),
+                    0 0 0 1px rgba(255, 215, 0, 0.12);
+        transition: all 0.6s ease;
+    }
+    
+    /* Optional subtle entrance animation */
+    @keyframes logo-float {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-12px); }
+        100% { transform: translateY(0px); }
+    }
+    
+    .logo-wrapper img {
+        animation: logo-float 6s ease-in-out infinite;
+    }
+    
+    .hero-title {
+        font-size: 3.8rem;
+        font-weight: 700;
+        margin: 0.4rem 0 0.8rem 0;
+        line-height: 1.1;
+        text-shadow: 0 0 30px {accent_glow};
+    }
+    
+    .hero-subtitle {
+        font-size: 2.1rem;
+        font-weight: 500;
+        margin: 0.6rem 0 1.4rem 0;
+        color: {accent_primary};
+    }
+    
+    .hero-desc {
+        font-size: 1.35rem;
+        line-height: 1.6;
+        max-width: 780px;
+        margin: 0 auto 1.8rem auto;
+        color: {text_muted};
+    }
+    
+    .hero-footer {
+        font-size: 1.05rem;
+        color: {text_muted};
+        opacity: 0.85;
+        margin-top: 1rem;
+    }
+    
+    /* ── RESPONSIVE ADJUSTMENTS ── */
+    @media (max-width: 992px) {
+        .hero-title { font-size: 3.1rem; }
+        .hero-subtitle { font-size: 1.9rem; }
+        .logo-wrapper img { max-width: 300px; }
+    }
+    
+    @media (max-width: 768px) {
+        .hero-section { padding: 1rem 0 2.5rem 0; }
+        .hero-title { font-size: 2.6rem; }
+        .hero-subtitle { font-size: 1.7rem; }
+        .hero-desc { font-size: 1.2rem; }
+        .logo-wrapper { margin: 1rem auto 2rem auto; }
+        .logo-wrapper img { max-width: 280px; }
+    }
+    
+    @media (max-width: 480px) {
+        .hero-title { font-size: 2.2rem; }
+        .hero-subtitle { font-size: 1.5rem; }
+        .hero-desc { font-size: 1.1rem; padding: 0 1rem; }
+        .logo-wrapper img { max-width: 240px; }
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# Hero container
+st.markdown('<div class="hero-section">', unsafe_allow_html=True)
+
+# Logo with wrapper
+st.markdown('<div class="logo-wrapper">', unsafe_allow_html=True)
+st.image("assets/logo.png", use_column_width=False)
+st.markdown('</div>', unsafe_allow_html=True)
+
+# Hero texts
+st.markdown(f"""
+    <h1 class="hero-title">{txt('hero_title')}</h1>
+    <div class="hero-subtitle">{txt('hero_sub')}</div>
+    <p class="hero-desc">
+        {txt('hero_desc')}
+    </p>
+    <p class="hero-footer">
+        Mark Jeff Blando – Founder & Developer • 2026
+    </p>
+""", unsafe_allow_html=True)
+
+st.markdown('</div>', unsafe_allow_html=True)
+
+# ────────────────────────────────────────────────
+# LIVE GOLD PRICE + REALTIME TRADINGVIEW MINI CHART – bigger, more reliable, responsive
+# ────────────────────────────────────────────────
+
+@st.cache_data(ttl=20)  # shorter cache for fresher data
 def get_gold_price():
     try:
-        t = yf.Ticker("GC=F").info
-        price = t.get('regularMarketPrice') or t.get('previousClose')
-        ch = t.get('regularMarketChangePercent', 0)
-        return price, ch
-    except:
+        # Prefer spot gold via a more stable ticker (GC=F is futures, can lag)
+        # Alternative: use 'XAUUSD=X' or fallback to known reliable sources
+        spot = yf.Ticker("XAUUSD=X")  # Yahoo sometimes has spot via currency pair
+        info = spot.info
+        
+        price = info.get('regularMarketPrice') or info.get('previousClose') or info.get('regularMarketPreviousClose')
+        change_pct = info.get('regularMarketChangePercent', 0)
+        
+        if not price:
+            # Fallback to futures if spot fails
+            futures = yf.Ticker("GC=F").info
+            price = futures.get('regularMarketPrice') or futures.get('previousClose')
+            change_pct = futures.get('regularMarketChangePercent', 0)
+        
+        return round(price, 1) if price else None, change_pct
+    except Exception as e:
+        st.warning(f"Gold price fetch error: {str(e)} – showing last known or approx.")
         return None, 0
 
 price, change = get_gold_price()
 
+# ── Very large, prominent price display ──
 if price:
     st.markdown(f"""
-    <div style="text-align:center; font-size:3.5rem; font-weight:700; color:{accent_gold};
-                text-shadow:0 0 18px {accent_glow}; margin:1.8rem 0 0.6rem;">
+    <div style="
+        text-align: center;
+        font-size: 5.2rem;                /* MUCH larger – hero style */
+        font-weight: 800;
+        color: {accent_gold};
+        text-shadow: 0 0 30px {accent_glow}, 0 0 60px {accent_glow};
+        margin: 2rem 0 1rem 0;
+        letter-spacing: -1px;
+        line-height: 1;
+    ">
         ${price:,.1f}
     </div>
-    <p style="text-align:center; font-size:1.4rem; margin:0;">
-        <span style="color:{'#00ffaa' if change >= 0 else '#ff5555'}; font-weight:600;">
+    <p style="
+        text-align: center;
+        font-size: 1.8rem;
+        margin: 0 0 1.5rem 0;
+        color: {text_primary};
+    ">
+        <span style="
+            color: {'#00ffaa' if change >= 0 else '#ff5555'};
+            font-weight: 700;
+            font-size: 1.9rem;
+        ">
             {change:+.2f}%
-        </span> • Live Gold (XAU/USD)
+        </span>
+        <span style="opacity: 0.9;"> • Live Gold Spot (XAU/USD)</span>
     </p>
     """, unsafe_allow_html=True)
+else:
+    st.markdown(f"""
+    <div style="text-align:center; font-size:4rem; color:{text_muted}; margin:2rem 0;">
+        Gold Price Loading...
+    </div>
+    """, unsafe_allow_html=True)
 
-# Improved responsive TradingView mini-chart
+# ── TradingView mini-chart – keep responsive, slightly taller for visibility ──
 st.components.v1.html("""
-<div class="tradingview-widget-container" style="width:100%; height:42vw; min-height:180px; max-height:260px; margin:1.5rem auto 2.5rem; position:relative;">
+<div class="tradingview-widget-container" style="
+    width: 100%;
+    height: 48vw;               /* better aspect on mobile */
+    min-height: 220px;
+    max-height: 320px;
+    margin: 1.8rem auto 3rem auto;
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+">
   <tv-mini-chart
     symbol="OANDA:XAUUSD"
     color-theme="dark"
@@ -278,7 +488,7 @@ st.components.v1.html("""
   ></tv-mini-chart>
   <script type="module" src="https://widgets.tradingview-widget.com/w/en/tv-mini-chart.js" async></script>
 </div>
-""", height=280)
+""", height=340)  # Give more vertical space so it doesn't feel cramped
 
 # ────────────────────────────────────────────────
 # WAITLIST FORM
@@ -305,34 +515,49 @@ with st.form("waitlist_form", clear_on_submit=True):
 st.markdown("</div>", unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# PIONEERS SECTION
+# PIONEERS SECTION – improved, centered, flip working on all devices
 # ────────────────────────────────────────────────
 st.markdown(f"""
-<div class="glass-card pioneers-glass">
-    <h2>{txt('pioneers_title')}</h2>
-    <div class="pioneers-container">
+<div class="glass-card" style="max-width: 1100px; margin: 2.5rem auto; padding: 2rem 1.5rem;">
+    <h2 style="text-align:center; margin-bottom: 2rem;">{txt('pioneers_title')}</h2>
+    
+    <div class="pioneers-grid">
 """, unsafe_allow_html=True)
 
 pioneers = [
-    {"name":"Weber", "since":"Dec 2025", "earnings":"+$1,284", "gain":"+128.4%", "quote":"Best decision ever!", "photo":"assets/weber.jpg"},
-    {"name":"Ramil", "since":"Jan 2026", "earnings":"+$2,150", "gain":"+215%", "quote":"Stable daily profits.", "photo":"assets/ramil.jpg"},
-    # Add more real pioneers here when ready
+    {
+        "name": "Weber",
+        "since": "Dec 2025",
+        "earnings": "+$1,284",
+        "gain": "+128.4%",
+        "quote": "Best decision ever!",
+        "photo": "assets/weber.jpg"
+    },
+    {
+        "name": "Ramil",
+        "since": "Jan 2026",
+        "earnings": "+$2,150",
+        "gain": "+215%",
+        "quote": "Stable daily profits.",
+        "photo": "assets/ramil.jpg"
+    },
+    # You can easily add more here later
 ]
 
 for p in pioneers:
-    photo = p.get("photo", f"https://via.placeholder.com/110/222/ffd700?text={p['name'][0]}")
+    photo_url = p.get("photo", f"https://via.placeholder.com/120/222/ffd700?text={p['name'][0]}")
     st.markdown(f"""
-    <div class="flip-card">
-        <div class="flip-card-inner">
-            <div class="flip-card-front">
-                <img src="{photo}" class="circular">
-                <div style="font-weight:600; margin:0.5rem 0 0.2rem;">{p['name']}</div>
-                <small style="opacity:0.75; font-size:0.85rem;">since {p['since']}</small>
+    <div class="pioneer-card">
+        <div class="card-inner">
+            <div class="card-front">
+                <img src="{photo_url}" class="pioneer-photo" alt="{p['name']}">
+                <div class="pioneer-name">{p['name']}</div>
+                <div class="pioneer-since">since {p['since']}</div>
             </div>
-            <div class="flip-card-back">
-                <div style="font-size:1.35rem; color:{accent_gold}; font-weight:700;">{p['earnings']}</div>
-                <div style="font-size:1.1rem; font-weight:600; margin:0.3rem 0;">{p['gain']}</div>
-                <small style="font-style:italic; opacity:0.85; font-size:0.9rem;">"{p['quote']}"</small>
+            <div class="card-back">
+                <div class="earnings">{p['earnings']}</div>
+                <div class="gain">{p['gain']}</div>
+                <div class="quote">“{p['quote']}”</div>
             </div>
         </div>
     </div>
@@ -341,6 +566,143 @@ for p in pioneers:
 st.markdown("""
     </div>
 </div>
+
+<style>
+    .pioneers-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1.8rem 1.6rem;
+        justify-items: center;
+        padding: 1rem 0;
+    }
+
+    .pioneer-card {
+        width: 240px;
+        height: 320px;
+        perspective: 1200px;
+        justify-self: center;
+    }
+
+    .card-inner {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        transition: transform 0.65s cubic-bezier(0.4, 0, 0.2, 1);
+        transform-style: preserve-3d;
+        border-radius: 16px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.35);
+    }
+
+    .pioneer-card:hover .card-inner,
+    .pioneer-card:active .card-inner {   /* better mobile tap support */
+        transform: rotateY(180deg);
+    }
+
+    .card-front, .card-back {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        backface-visibility: hidden;
+        border-radius: 16px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+        text-align: center;
+    }
+
+    .card-front {
+        background: rgba(30, 35, 55, 0.92);
+        border: 1px solid rgba(255,215,0,0.25);
+    }
+
+    .card-back {
+        background: linear-gradient(145deg, rgba(40,45,65,0.95), rgba(20,25,45,0.95));
+        border: 1px solid rgba(0,255,170,0.25);
+        transform: rotateY(180deg);
+    }
+
+    .pioneer-photo {
+        width: 110px;
+        height: 110px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid {accent_gold};
+        margin-bottom: 1.2rem;
+        box-shadow: 0 4px 15px rgba(255,215,0,0.3);
+    }
+
+    .pioneer-name {
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: {accent_gold};
+        margin: 0.4rem 0 0.3rem;
+    }
+
+    .pioneer-since {
+        font-size: 0.95rem;
+        color: {text_muted};
+        opacity: 0.85;
+    }
+
+    .earnings {
+        font-size: 2.1rem;
+        font-weight: 800;
+        color: {accent_gold};
+        margin-bottom: 0.5rem;
+        text-shadow: 0 0 12px {accent_glow};
+    }
+
+    .gain {
+        font-size: 1.45rem;
+        font-weight: 700;
+        color: #00ffaa;
+        margin-bottom: 1.1rem;
+    }
+
+    .quote {
+        font-size: 1.05rem;
+        font-style: italic;
+        color: #e2e8f0;
+        opacity: 0.92;
+        line-height: 1.45;
+        padding: 0 0.6rem;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 1024px) {
+        .pioneer-card {
+            width: 220px;
+            height: 300px;
+        }
+        .pioneer-photo { width: 100px; height: 100px; }
+        .earnings { font-size: 1.9rem; }
+        .gain { font-size: 1.35rem; }
+    }
+
+    @media (max-width: 768px) {
+        .pioneers-grid {
+            gap: 2rem 1.4rem;
+        }
+        .pioneer-card {
+            width: 100%;
+            max-width: 280px;
+            height: 340px;
+        }
+        .pioneer-photo { width: 120px; height: 120px; }
+    }
+
+    @media (max-width: 480px) {
+        .pioneer-card {
+            height: 320px;
+        }
+        .earnings { font-size: 1.8rem; }
+        .gain { font-size: 1.3rem; }
+        .quote { font-size: 1rem; }
+    }
+</style>
 """, unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
