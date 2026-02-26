@@ -50,210 +50,101 @@ text_primary = "#e2e8f0"
 text_muted = "#a0aec0"
 card_shadow = "0 8px 32px rgba(0,0,0,0.55)"
 
-# ────────────────────────────────────────────────
-# IMPROVED RESPONSIVE CSS – professional, balanced, mobile-first polish (Feb 2026 style)
-# ────────────────────────────────────────────────
 st.markdown(f"""
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+
 <style>
-    * {{ box-sizing: border-box; margin:0; padding:0; }}
-    html, body, [class*="css-"] {{
-        font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
-        font-size: 16px !important;
-        line-height: 1.6;
-        overflow-x: hidden !important;
+    /* ── Safe global resets ── */
+    * {{
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
     }}
-    .stApp {{
-        background: linear-gradient(135deg, {bg_color} 0%, #0f1622 100%) !important;
+
+    html, body, [class*="css-"] {{
+        font-family: 'Inter', system-ui, sans-serif;
+        font-size: 16px;
+        line-height: 1.6;
         color: {text_primary};
     }}
-    .stAppViewContainer {{
-        padding-bottom: 3rem !important;
+
+    .stApp {{
+        background: linear-gradient(135deg, {bg_color} 0%, #0f1622 100%);
     }}
-    /* ── Main content container ── */
+
+    /* ── Main container ── */
     .main .block-container {{
-        max-width: 1180px !important;
-        padding: 2.5rem 4rem !important;
-        margin: 0 auto !important;
+        max-width: 1180px;
+        padding: 2.5rem 4rem;
+        margin: 0 auto;
     }}
-    /* ── Logo – dramatic desktop, balanced mobile ── */
-    [data-testid="stImage"] img {{
-        max-width: 420px !important;           /* big premium feel on laptop */
-        width: 85% !important;
-        height: auto !important;
-        margin: 2.5rem auto 1.5rem !important;
-        display: block !important;
-        filter: drop-shadow(0 12px 40px rgba(255,215,0,0.3));
-        transition: transform 0.4s ease;
-    }}
-    [data-testid="stImage"] img:hover {{
-        transform: scale(1.03);
-    }}
-    /* ── Typography hierarchy – luxurious & readable ── */
+
+    /* ── Typography – orange titles like before + gold glow for accent ── */
     h1, h2, h3, h4 {{
-        font-family: 'Playfair Display', serif !important;
-        color: {accent_gold} !important;
-        letter-spacing: 0.4px;
-        text-shadow: 0 0 16px {accent_glow};
+        font-family: 'Playfair Display', serif;
+        color: #ff6200;                 /* ← orange main title color */
         text-align: center;
+        text-shadow: 0 0 12px rgba(255,98,0,0.5);
+        margin: 1rem 0 0.8rem;
     }}
-    h1 {{ font-size: 3.8rem; font-weight: 800; margin: 1rem 0 0.8rem; line-height: 1.1; }}
-    h2 {{ font-size: 2.8rem; font-weight: 700; margin: 3rem 0 1.5rem; }}
-    h3 {{ font-size: 2.1rem; font-weight: 600; margin: 2.2rem 0 1rem; }}
-    p, div, span, label {{ color: {text_primary}; }}
-    .muted {{ color: {text_muted}; opacity: 0.85; }}
-    /* ── Glass cards – softer, more premium ── */
-    .glass-card {{
-        background: rgba(20,25,40,0.92) !important;
-        backdrop-filter: blur(20px) saturate(120%) !important;
-        -webkit-backdrop-filter: blur(20px) saturate(120%) !important;
-        border-radius: 20px;
-        border: 1px solid rgba(255,215,0,0.18);
-        padding: 2.2rem 2.8rem;
-        box-shadow: 0 12px 40px rgba(0,0,0,0.5);
-        margin: 2.5rem auto;
-        transition: all 0.35s ease;
-        max-width: 1100px !important;
-    }}
-    .glass-card:hover {{
-        box-shadow: 0 20px 60px {accent_glow};
-        transform: translateY(-6px);
-    }}
-    /* ── Buttons – more luxurious ── */
-    button[kind="primary"] {{
-        background: linear-gradient(90deg, {accent_primary}, {accent_hover}) !important;
-        color: #000 !important;
-        border: none !important;
-        border-radius: 14px !important;
-        padding: 1rem 2.2rem !important;
-        font-size: 1.15rem !important;
-        font-weight: 700 !important;
-        box-shadow: 0 6px 22px {accent_glow} !important;
-        transition: all 0.3s ease !important;
-    }}
-    button[kind="primary"]:hover {{
-        background: {accent_hover} !important;
-        box-shadow: 0 12px 36px {accent_glow} !important;
-        transform: translateY(-3px) scale(1.03) !important;
-    }}
-    /* ── Pioneers carousel – circular premium cards ── */
-    .pioneers-carousel-container {{
-        position: relative;
-        width: 100%;
-        overflow: hidden;
-        padding: 1.5rem 0;
-    }}
-    .pioneers-carousel {{
-        display: flex;
-        flex-direction: row;
-        flex-wrap: nowrap;
-        gap: 2rem;
-        overflow-x: auto;
-        scroll-behavior: smooth;
-        scroll-snap-type: x mandatory;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
-        padding: 1.2rem 0;
-    }}
-    .pioneers-carousel::-webkit-scrollbar {{ display: none; }}
-    .pioneer-card {{
-        flex: 0 0 260px;
-        width: 260px;
-        height: 360px;
-        background: rgba(30,35,55,0.88);
-        border-radius: 24px;
-        border: 1px solid rgba(255,215,0,0.2);
-        overflow: hidden;
-        box-shadow: 0 10px 35px rgba(0,0,0,0.45);
-        transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-        scroll-snap-align: center;
-    }}
-    .pioneer-card:hover {{
-        transform: translateY(-14px) scale(1.06);
-        box-shadow: 0 24px 60px rgba(255,215,0,0.28);
-    }}
-    .pioneer-photo {{
-        width: 140px !important;
-        height: 140px !important;
-        border-radius: 50% !important;
-        border: 4px solid {accent_gold};
-        box-shadow: 0 6px 24px rgba(255,215,0,0.35);
-        margin: 2.4rem auto 1.4rem;
-        object-fit: cover;
-        display: block;
-    }}
-    .pioneer-name {{
-        font-size: 1.45rem;
-        font-weight: 700;
-        color: {accent_gold};
-        margin: 0.6rem 0 0.3rem;
-    }}
-    .pioneer-since {{
-        font-size: 1rem;
-        color: {text_muted};
-        opacity: 0.9;
-    }}
-    .earnings {{
-        font-size: 2.4rem;
-        font-weight: 800;
+
+    h1 {{ font-size: 3.8rem; font-weight: 800; letter-spacing: -0.6px; }}
+    h2 {{ font-size: 2.7rem; font-weight: 700; margin: 2.8rem 0 1.6rem; }}
+    h3 {{ font-size: 2.1rem; font-weight: 600; }}
+
+    /* ── Gold accent text (for prices, gains, etc.) ── */
+    .gold-text {{
         color: {accent_gold};
         text-shadow: 0 0 14px {accent_glow};
     }}
-    .gain {{
-        font-size: 1.6rem;
-        font-weight: 700;
-        color: #00ffaa;
+
+    /* ── Glass cards (common) ── */
+    .glass-card {{
+        background: rgba(20,25,40,0.92);
+        backdrop-filter: blur(18px);
+        border-radius: 20px;
+        border: 1px solid rgba(255,215,0,0.18);
+        padding: 2.2rem 2.6rem;
+        box-shadow: 0 10px 35px rgba(0,0,0,0.45);
+        margin: 2.5rem auto;
+        max-width: 1100px;
     }}
-    /* ── Carousel arrows ── */
-    .carousel-arrow {{
-        position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-        background: rgba(13,17,23,0.85);
-        color: {accent_gold};
+
+    /* ── Primary button ── */
+    button[kind="primary"] {{
+        background: linear-gradient(90deg, #00ffaa, #ffea80);
+        color: #000;
         border: none;
-        border-radius: 50%;
-        width: 54px;
-        height: 54px;
-        font-size: 2.2rem;
-        cursor: pointer;
-        z-index: 10;
-        opacity: 0.85;
-        transition: all 0.3s;
+        border-radius: 12px;
+        padding: 0.9rem 2rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        box-shadow: 0 5px 18px rgba(0,255,170,0.4);
     }}
-    .carousel-arrow:hover {{ opacity: 1; background: rgba(13,17,23,1); transform: translateY(-50%) scale(1.1); }}
-    .left-arrow  {{ left: 12px; }}
-    .right-arrow {{ right: 12px; }}
-    /* ── RESPONSIVE BREAKPOINTS ── */
-    @media (max-width: 1200px) {{
-        .main .block-container {{ padding: 2rem 3rem !important; }}
-        h1 {{ font-size: 3.4rem !important; }}
-        h2 {{ font-size: 2.5rem !important; }}
+    button[kind="primary"]:hover {{
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 0 10px 30px rgba(0,255,170,0.6);
     }}
+
+    /* ── RESPONSIVE ── */
     @media (max-width: 992px) {{
-        .main .block-container {{ padding: 1.8rem 2.5rem !important; }}
-        h1 {{ font-size: 3rem !important; }}
-        [data-testid="stImage"] img {{ max-width: 340px !important; }}
-        .pioneer-card {{ flex: 0 0 280px; width: 280px; height: 380px; }}
-        .pioneer-photo {{ width: 130px !important; height: 130px !important; }}
+        .main .block-container {{ padding: 2rem 3rem; }}
+        h1 {{ font-size: 3.2rem; }}
+        h2 {{ font-size: 2.4rem; }}
     }}
+
     @media (max-width: 768px) {{
-        .main .block-container {{ padding: 1.4rem 2rem !important; }}
-        h1 {{ font-size: 2.6rem !important; }}
-        h2 {{ font-size: 2.2rem !important; }}
-        .glass-card {{ padding: 1.8rem 2rem !important; }}
-        .pioneer-card {{ flex: 0 0 300px; width: 300px; }}
-        .carousel-arrow {{ width: 60px; height: 60px; font-size: 2.4rem; }}
+        .main .block-container {{ padding: 1.6rem 2.2rem; }}
+        h1 {{ font-size: 2.7rem; }}
+        h2 {{ font-size: 2.1rem; }}
+        .glass-card {{ padding: 1.8rem 2rem; }}
     }}
+
     @media (max-width: 480px) {{
-        .main .block-container {{ padding: 1.2rem 1.5rem !important; }}
-        h1 {{ font-size: 2.2rem !important; }}
-        h2 {{ font-size: 1.9rem !important; }}
-        [data-testid="stImage"] img {{ max-width: 260px !important; margin: 2rem auto 1.2rem; }}
-        .glass-card {{ padding: 1.5rem 1.6rem !important; margin: 1.8rem auto !important; }}
-        .pioneer-card {{ flex: 0 0 100%; width: 100%; max-width: 340px; margin: 0 auto 1.5rem; }}
-        .pioneer-photo {{ width: 120px !important; height: 120px !important; margin: 2rem auto 1.2rem; }}
-        .earnings {{ font-size: 2rem; }}
+        .main .block-container {{ padding: 1.3rem 1.6rem; }}
+        h1 {{ font-size: 2.3rem; }}
+        h2 {{ font-size: 1.9rem; }}
+        .glass-card {{ padding: 1.5rem 1.6rem; margin: 2rem auto; }}
     }}
 </style>
 """, unsafe_allow_html=True)
@@ -366,117 +257,22 @@ st.markdown('</div>', unsafe_allow_html=True)
 # LOGO + HERO – ultra-reliable centering on all devices
 # ────────────────────────────────────────────────
 
+st.markdown('<div style="text-align:center; margin:2.5rem 0 2rem;">', unsafe_allow_html=True)
+st.image("assets/logo.png", use_column_width=False)
+st.markdown('</div>', unsafe_allow_html=True)
+
 st.markdown(f"""
-<style>
-    .hero-section {{
-        text-align: center;
-        width: 100%;
-        max-width: 1000px;
-        margin: 0 auto;
-        padding: 1rem 0 3rem 0;
-    }}
-
-    .hero-logo-wrapper {{
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        margin: 2.5rem 0 2rem 0;
-    }}
-
-    .hero-logo {{
-        max-width: 420px;
-        width: 85%;
-        height: auto;
-        filter: drop-shadow(0 12px 40px rgba(255, 215, 0, 0.28));
-        transition: transform 0.4s ease, filter 0.4s ease;
-    }}
-
-    .hero-logo:hover {{
-        transform: scale(1.04);
-        filter: drop-shadow(0 16px 50px rgba(255, 215, 0, 0.40));
-    }}
-
-    .hero-title {{
-        font-size: 3.8rem;
-        font-weight: 800;
-        margin: 0.8rem 0 0.4rem;
-        line-height: 1.05;
-        letter-spacing: -0.8px;
-    }}
-
-    .hero-subtitle {{
-        font-size: 2.1rem;
-        font-weight: 500;
-        color: {text_primary};
-        margin: 0 0 1.2rem;
-        opacity: 0.95;
-    }}
-
-    .hero-desc {{
-        font-size: 1.4rem;
-        max-width: 820px;
-        margin: 0 auto 1.4rem;
-        line-height: 1.5;
-        opacity: 0.92;
-    }}
-
-    .hero-footer {{
-        font-size: 1.1rem;
-        opacity: 0.8;
-        margin-top: 1.2rem;
-    }}
-
-    /* ── Responsive ── */
-    @media (max-width: 1200px) {{
-        .hero-logo {{ max-width: 360px; }}
-        .hero-title {{ font-size: 3.3rem; }}
-    }}
-
-    @media (max-width: 992px) {{
-        .hero-logo {{ max-width: 320px; }}
-        .hero-title {{ font-size: 2.9rem; }}
-        .hero-section {{ padding: 1rem 1.5rem 2.5rem; }}
-    }}
-
-    @media (max-width: 768px) {{
-        .hero-logo-wrapper {{ margin: 2rem 0 1.6rem; }}
-        .hero-logo {{ max-width: 280px; }}
-        .hero-title {{ font-size: 2.5rem; }}
-        .hero-subtitle {{ font-size: 1.7rem; }}
-        .hero-desc {{ font-size: 1.25rem; padding: 0 0.8rem; }}
-    }}
-
-    @media (max-width: 480px) {{
-        .hero-logo {{ max-width: 240px; }}
-        .hero-title {{ font-size: 2.1rem; }}
-        .hero-subtitle {{ font-size: 1.5rem; }}
-        .hero-desc {{ font-size: 1.15rem; padding: 0 1rem; }}
-        .hero-section {{ padding: 0.8rem 1rem 2rem; }}
-    }}
-</style>
+<div style="text-align:center; max-width:900px; margin:0 auto;">
+    <h1>{txt('hero_title')}</h1>
+    <h2 style="color:{text_primary};">{txt('hero_sub')}</h2>
+    <p style="font-size:1.35rem; opacity:0.92; margin:1rem auto; max-width:800px;">
+        {txt('hero_desc')}
+    </p>
+    <p style="font-size:1.1rem; opacity:0.8;">
+        Mark Jeff Blando – Founder & Developer • 2026
+    </p>
+</div>
 """, unsafe_allow_html=True)
-
-# ── Actual content ──
-with st.container():
-    st.markdown('<div class="hero-section">', unsafe_allow_html=True)
-    
-    st.markdown('<div class="hero-logo-wrapper">', unsafe_allow_html=True)
-    st.image(
-        "assets/logo.png",
-        use_column_width=False,
-        output_format="PNG",
-        clamp=True
-    )
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    st.markdown(f"""
-    <h1 class="hero-title">{txt('hero_title')}</h1>
-    <h2 class="hero-subtitle">{txt('hero_sub')}</h2>
-    <p class="hero-desc">{txt('hero_desc')}</p>
-    <p class="hero-footer">Mark Jeff Blando – Founder & Developer • 2026</p>
-    """, unsafe_allow_html=True)
-
-    st.markdown('</div>', unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
 # LIVE GOLD PRICE + REALTIME TRADINGVIEW MINI CHART – back to original ticker, better size & reliability
@@ -641,16 +437,10 @@ for p in pioneers:
     """, unsafe_allow_html=True)
 
 st.markdown("""
-        </div>
-
-        <button class="carousel-arrow right-arrow" onclick="document.querySelector('.pioneers-carousel').scrollBy({{left: 320, behavior: 'smooth'}})">›</button>
-    </div>
-</div>
-
 <style>
+    /* Pioneers – horizontal only, perfect circle photos */
     .pioneers-carousel-container {
         position: relative;
-        width: 100%;
         overflow: hidden;
         padding: 1.5rem 0;
     }
@@ -659,13 +449,13 @@ st.markdown("""
         display: flex;
         flex-direction: row;
         flex-wrap: nowrap;
-        gap: 2.2rem;
+        gap: 2rem;
         overflow-x: auto;
-        scroll-behavior: smooth;
         scroll-snap-type: x mandatory;
+        scroll-behavior: smooth;
         -webkit-overflow-scrolling: touch;
         scrollbar-width: none;
-        padding: 1.2rem 0;
+        padding: 1rem 0;
     }
 
     .pioneers-carousel::-webkit-scrollbar {
@@ -675,175 +465,66 @@ st.markdown("""
     .pioneer-card {
         flex: 0 0 280px;
         width: 280px;
+        min-width: 280px;
         height: 380px;
-        background: rgba(30, 35, 55, 0.88);
-        border-radius: 28px;
-        border: 1px solid rgba(255,215,0,0.18);
+        border-radius: 24px;
         overflow: hidden;
-        box-shadow: 0 12px 40px rgba(0,0,0,0.45);
-        transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        background: rgba(30,35,55,0.9);
+        border: 1px solid rgba(255,215,0,0.2);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+        transition: all 0.35s ease;
         scroll-snap-align: center;
     }
 
     .pioneer-card:hover {
-        transform: translateY(-16px) scale(1.07);
-        box-shadow: 0 28px 70px rgba(255,215,0,0.32);
-    }
-
-    .card-inner {
-        position: relative;
-        width: 100%;
-        height: 100%;
-        transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
-        transform-style: preserve-3d;
-    }
-
-    .pioneer-card:hover .card-inner,
-    .pioneer-card:active .card-inner {
-        transform: rotateY(180deg);
-    }
-
-    .card-front, .card-back {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        backface-visibility: hidden;
-        border-radius: 28px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 2rem 1.5rem;
-        text-align: center;
-    }
-
-    .card-front {
-        background: rgba(30, 35, 55, 0.94);
-        border: 1px solid rgba(255,215,0,0.22);
-    }
-
-    .card-back {
-        background: linear-gradient(145deg, rgba(40,45,65,0.97), rgba(20,25,45,0.97));
-        border: 1px solid rgba(0,255,170,0.22);
-        transform: rotateY(180deg);
+        transform: translateY(-12px) scale(1.05);
+        box-shadow: 0 20px 50px rgba(255,98,0,0.3);
     }
 
     .pioneer-photo {
         width: 140px;
         height: 140px;
         border-radius: 50%;
+        border: 4px solid #ff6200;           /* orange border para match sa title */
+        margin: 2.2rem auto 1.5rem;
+        display: block;
         object-fit: cover;
-        border: 4px solid {accent_gold};
-        box-shadow: 0 8px 28px rgba(255,215,0,0.35);
-        margin-bottom: 1.6rem;
+        box-shadow: 0 6px 20px rgba(255,98,0,0.35);
     }
 
     .pioneer-name {
-        font-size: 1.5rem;
+        font-size: 1.45rem;
         font-weight: 700;
-        color: {accent_gold};
-        margin: 0.5rem 0 0.4rem;
+        color: #ff6200;
+        margin: 0.5rem 0;
     }
 
     .pioneer-since {
-        font-size: 1.05rem;
+        font-size: 1rem;
         color: {text_muted};
-        opacity: 0.88;
-    }
-
-    .earnings {
-        font-size: 2.6rem;
-        font-weight: 800;
-        color: {accent_gold};
-        text-shadow: 0 0 16px {accent_glow};
-        margin-bottom: 0.6rem;
-    }
-
-    .gain {
-        font-size: 1.7rem;
-        font-weight: 700;
-        color: #00ffaa;
-        margin-bottom: 1.2rem;
-    }
-
-    .quote {
-        font-size: 1.15rem;
-        font-style: italic;
-        color: #e2e8f0;
-        opacity: 0.93;
-        line-height: 1.48;
-    }
-
-    /* ── Carousel arrows ── */
-    .carousel-arrow {
-        position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-        background: rgba(13,17,23,0.88);
-        color: {accent_gold};
-        border: none;
-        border-radius: 50%;
-        width: 60px;
-        height: 60px;
-        font-size: 2.4rem;
-        font-weight: bold;
-        cursor: pointer;
-        z-index: 10;
         opacity: 0.9;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.4);
     }
 
-    .carousel-arrow:hover {
-        opacity: 1;
-        background: rgba(13,17,23,1);
-        transform: translateY(-50%) scale(1.12);
-        box-shadow: 0 8px 24px rgba(255,215,0,0.3);
-    }
-
-    .left-arrow  { left: 15px; }
-    .right-arrow { right: 15px; }
-
-    /* Hide arrows when not needed / not hovering */
-    .pioneers-carousel-container:has(.pioneers-carousel:not(:hover)) .carousel-arrow {
-        opacity: 0.4;
-    }
-
-    /* ── Responsive ── */
-    @media (max-width: 992px) {
+    /* Force horizontal on small screens too */
+    @media (max-width: 768px) {
         .pioneer-card {
             flex: 0 0 300px;
-            width: 300px;
-            height: 400px;
-        }
-        .pioneer-photo { width: 150px; height: 150px; }
-    }
-
-    @media (max-width: 768px) {
-        .pioneers-carousel { gap: 1.8rem; }
-        .pioneer-card {
-            flex: 0 0 320px;
-            width: 320px;
-        }
-        .carousel-arrow {
-            width: 64px;
-            height: 64px;
-            font-size: 2.6rem;
+            min-width: 300px;
         }
     }
 
     @media (max-width: 480px) {
-        .pioneers-carousel-container { padding: 1rem 0; }
         .pioneer-card {
-            flex: 0 0 100%;
+            flex: 0 0 90%;
+            min-width: 90%;
             max-width: 360px;
             margin: 0 auto 1.5rem;
-            height: 420px;
         }
-        .pioneer-photo { width: 130px; height: 130px; margin-bottom: 1.4rem; }
-        .earnings { font-size: 2.3rem; }
-        .gain { font-size: 1.55rem; }
-        .carousel-arrow { display: none; } /* hide arrows on very small screens – swipe instead */
+        .pioneer-photo {
+            width: 130px;
+            height: 130px;
+            margin: 2rem auto 1.2rem;
+        }
     }
 </style>
 """, unsafe_allow_html=True)
