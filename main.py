@@ -411,7 +411,7 @@ for title, content in journey_sections:
     st.markdown(f"<h3 class='gold-text' style='margin:1.8rem 0 0.8rem;'>{title}</h3>", unsafe_allow_html=True)
     st.markdown(content.strip(), unsafe_allow_html=True)
 
-st.markdown("</div>", unsafe_allow_html=True)
+
 
 # ────────────────────────────────────────────────
 # FULL JOURNEY EXPANDER (detailed 2014–2026 story with images)
