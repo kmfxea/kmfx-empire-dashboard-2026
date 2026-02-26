@@ -286,141 +286,32 @@ if st.button("EN / TL", key="lang_toggle", help="Switch to English / Tagalog"):
 st.markdown('</div>', unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# LOGO + HERO – mas malaking logo sa laptop, lahat centered, responsive pa rin
+# LOGO + HERO – old style, no extra padding, centered everything
 # ────────────────────────────────────────────────
 
-st.markdown("""
-<style>
-    .hero-section {
-        text-align: center !important;
-        padding: 2rem 1rem 4rem 1rem;
-        max-width: 1200px;
-        margin: 0 auto;
-        width: 100%;
-    }
+# Center the logo using columns (true center on all widths)
+logo_col = st.columns([1, 3, 1])[1]  # middle column wider
+with logo_col:
+    st.image("assets/logo.png", use_column_width=True)  # auto-fit + centered
 
-    .logo-wrapper {
-        margin: 2rem auto 3rem auto;
-        text-align: center;
-        position: relative;
-    }
-
-    .logo-wrapper img {
-        max-width: 420px;               /* MAS MALAKI sa laptop/desktop */
-        width: 85vw;                    /* responsive scaling */
-        min-width: 220px;               /* hindi masyadong maliit sa mobile */
-        height: auto;
-        display: block;
-        margin: 0 auto;
-        border-radius: 20px;
-        box-shadow: 0 16px 48px rgba(255,215,0,0.28),
-                    inset 0 0 0 2px rgba(255,215,0,0.15);
-        transition: transform 0.5s ease, box-shadow 0.5s ease;
-    }
-
-    .logo-wrapper img:hover {
-        transform: scale(1.03);
-        box-shadow: 0 24px 60px rgba(255,215,0,0.4);
-    }
-
-    /* Subtle float animation (optional – pwede tanggalin kung ayaw) */
-    @keyframes logo-float {
-        0%, 100% { transform: translateY(0); }
-        50% { transform: translateY(-12px); }
-    }
-
-    .logo-wrapper img {
-        animation: logo-float 7s ease-in-out infinite;
-    }
-
-    .hero-title {
-        font-size: 4.2rem;              /* mas malakas na impact sa laptop */
-        font-weight: 800;
-        margin: 0.5rem 0 0.8rem 0;
-        line-height: 1.05;
-        letter-spacing: -1px;
-        text-shadow: 0 0 35px {accent_glow};
-        color: {accent_gold};
-    }
-
-    .hero-subtitle {
-        font-size: 2.4rem;
-        font-weight: 600;
-        margin: 0.8rem 0 1.6rem 0;
-        color: {accent_primary};
-        text-shadow: 0 0 20px rgba(0,255,170,0.4);
-    }
-
-    .hero-desc {
-        font-size: 1.45rem;
-        line-height: 1.65;
-        max-width: 820px;
-        margin: 0 auto 2rem auto;
-        color: {text_muted};
-        font-weight: 400;
-    }
-
-    .hero-footer {
-        font-size: 1.15rem;
-        color: {text_muted};
-        opacity: 0.88;
-        margin-top: 1.2rem;
-        font-style: italic;
-    }
-
-    /* RESPONSIVE – para hindi masyadong malaki sa mobile */
-    @media (max-width: 1200px) {
-        .logo-wrapper img { max-width: 380px; }
-        .hero-title { font-size: 3.8rem; }
-        .hero-subtitle { font-size: 2.1rem; }
-    }
-
-    @media (max-width: 992px) {
-        .hero-section { padding: 1.5rem 0.8rem 3rem 0.8rem; }
-        .logo-wrapper { margin: 1.8rem auto 2.5rem auto; }
-        .logo-wrapper img { max-width: 340px; }
-        .hero-title { font-size: 3.4rem; }
-        .hero-subtitle { font-size: 1.9rem; }
-    }
-
-    @media (max-width: 768px) {
-        .logo-wrapper img { max-width: 300px; }
-        .hero-title { font-size: 2.9rem; }
-        .hero-subtitle { font-size: 1.7rem; }
-        .hero-desc { font-size: 1.25rem; padding: 0 1rem; }
-    }
-
-    @media (max-width: 480px) {
-        .logo-wrapper img { max-width: 260px; }
-        .hero-title { font-size: 2.4rem; }
-        .hero-subtitle { font-size: 1.5rem; }
-        .hero-desc { font-size: 1.15rem; }
-        .hero-footer { font-size: 1rem; }
-    }
-</style>
-""", unsafe_allow_html=True)
-
-# Hero container (centered lahat)
-st.markdown('<div class="hero-section">', unsafe_allow_html=True)
-
-# Logo – centered na talaga
-st.markdown('<div class="logo-wrapper">', unsafe_allow_html=True)
-st.image("assets/logo.png", use_column_width=False)
-st.markdown('</div>', unsafe_allow_html=True)
-
-# All texts – centered & styled
+# No extra container, direct markdown for hero text
 st.markdown(f"""
-    <h1 class="hero-title">{txt('hero_title')}</h1>
-    <div class="hero-subtitle">{txt('hero_sub')}</div>
-    <p class="hero-desc">
-        {txt('hero_desc')}
-    </p>
-    <p class="hero-footer">
-        Mark Jeff Blando – Founder & Developer • 2026
-    </p>
-""", unsafe_allow_html=True)
+<h1 style="text-align: center; margin: 1rem 0 0.5rem 0; color: {accent_gold};">
+    {txt('hero_title')}
+</h1>
 
-st.markdown('</div>', unsafe_allow_html=True)
+<h2 style="text-align: center; margin: 0.5rem 0 1rem 0; color: {text_primary};">
+    {txt('hero_sub')}
+</h2>
+
+<p style="text-align: center; font-size: 1.35rem; color: {text_muted}; margin: 0.8rem 0 1.2rem 0; max-width: 800px; margin-left: auto; margin-right: auto;">
+    {txt('hero_desc')}
+</p>
+
+<p style="text-align: center; font-size: 1.15rem; color: {text_muted}; opacity: 0.9;">
+    Mark Jeff Blando – Founder & Developer • 2026
+</p>
+""", unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
 # LIVE GOLD PRICE + REALTIME TRADINGVIEW MINI CHART – back to original ticker, better size & reliability
