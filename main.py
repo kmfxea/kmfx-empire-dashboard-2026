@@ -58,19 +58,22 @@ st.set_page_config(
     initial_sidebar_state="expanded" if theme == "light" else "collapsed"
 )
 
-# ── Global Style ─────────────────────────────────────────────────────
 st.markdown(f"""
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
 <style>
     html, body, [class*="css-"] {{
         font-family: 'Poppins', sans-serif !important;
         font-size: 15px !important;
-        color: {text_primary};
+        color: {text_primary} !important;
     }}
-    .stApp {{ background: {bg_color}; }}
+    .stApp {{
+        background: {bg_color} !important;
+    }}
+    /* Glass card improvements */
     .glass-card {{
         background: {card_bg};
         backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
         border-radius: 20px;
         border: 1px solid {border_color};
         padding: 2.2rem;
@@ -84,16 +87,41 @@ st.markdown(f"""
         box-shadow: 0 18px 48px rgba(0,0,0,0.35);
         border-color: {accent_green};
     }}
-    .gold-text {{ color: {accent_gold} !important; text-shadow: 0 0 10px {accent_glow}; font-weight: 600; }}
-    h1, h2, h3 {{ font-family: 'Playfair Display', serif; color: {accent_orange}; text-align: center; }}
+    /* Gold accent text */
+    .gold-text {{
+        color: {accent_gold} !important;
+        text-shadow: 0 0 10px {accent_glow};
+        font-weight: 600;
+    }}
+    /* Headings */
+    h1, h2, h3, h4 {{
+        font-family: 'Playfair Display', serif !important;
+        color: {accent_orange} !important;
+        text-align: center !important;
+    }}
+    /* Primary buttons */
     button[kind="primary"] {{
         background: linear-gradient(90deg, {accent_green}, #ffea80) !important;
         color: #000 !important;
+        border: none !important;
         border-radius: 12px !important;
+        padding: 0.9rem 2rem !important;
+        font-weight: 600 !important;
         box-shadow: 0 6px 20px rgba(0,255,170,0.4) !important;
     }}
-    header {{ visibility: hidden !important; }}
-    .block-container {{ padding-top: 0 !important; margin-top: 0 !important; }}
+    button[kind="primary"]:hover {{
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 0 12px 35px rgba(0,255,170,0.6) !important;
+    }}
+    /* Hide Streamlit header on public page */
+    header[data-testid="stHeader"] {{
+        visibility: hidden !important;
+    }}
+    /* Zero top padding */
+    .block-container {{
+        padding-top: 0 !important;
+        margin-top: 0 !important;
+    }}
     /* Language toggle */
     .lang-toggle-container {{
         position: fixed;
@@ -108,6 +136,38 @@ st.markdown(f"""
         padding: 0.75rem 1.5rem !important;
         font-weight: 700 !important;
         box-shadow: 0 6px 20px rgba(255,98,0,0.5) !important;
+    }}
+    /* ── IMPORTANT: Force ALL normal text to be adaptive/white in dark mode ── */
+    .stMarkdown p,
+    .stMarkdown div,
+    .stWrite,
+    div[data-testid="stMarkdownContainer"] p,
+    div[data-testid="stMarkdownContainer"] div,
+    .stExpander div p,
+    .element-container p,
+    .element-container div {{
+        color: {text_primary} !important;
+        line-height: 1.7 !important;
+        font-size: 1.05rem !important;
+        opacity: 0.95 !important;
+    }}
+    /* Lists (bullets/numbers) sa journey */
+    .stMarkdown ul li,
+    .stMarkdown ol li {{
+        color: {text_primary} !important;
+    }}
+    /* Code blocks (kung may) */
+    pre, code {{
+        color: #e2e8f0 !important;
+        background: rgba(30,41,59,0.6) !important;
+        border-radius: 8px;
+        padding: 1rem;
+    }}
+    /* Responsive adjustments */
+    @media (max-width: 768px) {{
+        .glass-card {{ padding: 1.6rem !important; margin: 1.5rem 1rem !important; }}
+        .lang-toggle-container {{ top: 1rem; right: 1rem; }}
+        .lang-toggle-btn {{ padding: 0.6rem 1.2rem !important; font-size: 0.95rem !important; }}
     }}
 </style>
 """, unsafe_allow_html=True)
