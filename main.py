@@ -69,11 +69,6 @@ st.markdown(f"""
     }}
     .stApp {{
         background: {bg_color} !important;
-        overflow: hidden !important;  /* ← prevents extra scroll space at bottom */
-    }}
-    .main {{
-        padding: 0 !important;
-        margin: 0 !important;
     }}
     .glass-card {{
         background: {card_bg};
@@ -121,32 +116,9 @@ st.markdown(f"""
     header[data-testid="stHeader"] {{
         visibility: hidden !important;
     }}
-    /* SLIM FIX: Aggressive zero padding/margin sa bottom para maging slim */
-    .block-container,
-    section.main .block-container,
-    .stMainBlockContainer {{
+    .block-container {{
         padding-top: 0 !important;
-        padding-bottom: 0 !important;       /* ← core para mawala yung taba sa ibaba */
         margin-top: 0 !important;
-        margin-bottom: 0 !important;
-        max-width: 1100px !important;
-    }}
-    /* Hide/collapse any leftover bottom elements */
-    div[data-testid="stDecoration"],
-    footer,
-    [data-testid="stStatusWidget"],
-    .stApp > div:last-child,
-    .element-container:last-child {{
-        display: none !important;
-        visibility: hidden !important;
-        height: 0 !important;
-        min-height: 0 !important;
-        margin: 0 !important;
-        padding: 0 !important;
-    }}
-    /* Reduce gaps between elements kung may extra space pa rin */
-    [data-testid="stVerticalBlock"] {{
-        gap: 0.5rem !important;  /* adjust mo kung gusto mo mas maliit pa, like 0.2rem */
     }}
     /* Language toggle */
     .lang-toggle-container {{
@@ -175,7 +147,6 @@ st.markdown(f"""
         line-height: 1.7 !important;
         font-size: 1.05rem !important;
         opacity: 0.95 !important;
-        margin-bottom: 0.8rem !important;  /* slim down paragraph spacing if needed */
     }}
     /* Expander content text remains normal */
     .stExpander div p {{
