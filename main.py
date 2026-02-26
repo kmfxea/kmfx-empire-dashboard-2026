@@ -330,7 +330,7 @@ if not authenticated:
     </div>
     """, height=420)
 
-    # ── Waitlist Form (DEBUG VERSION – always shows full error details) ──
+    # ── Waitlist Form (FINAL FIXED – client-side Edge Function invoke) ──
 st.markdown("<div class='glass-card' style='padding: 2.5rem; border-radius: 24px;'>", unsafe_allow_html=True)
 
 st.markdown(f"""
@@ -383,7 +383,7 @@ if submitted:
     full_name_clean = full_name.strip() if full_name else None
     message_clean = message.strip() if message else None
 
-    # Basic client-side validation
+    # Basic validation
     if not email:
         st.error(
             "Email is required" if st.session_state.language == "en"
@@ -396,22 +396,22 @@ if submitted:
         )
     else:
         with st.spinner("Processing your request..."):
-            # ── DEBUG: Show exactly what we're sending ──
-            debug_data = {
-                "full_name": full_name_clean,
-                "email": email,
-                "message": message_clean,
-                "language": st.session_state.language,
-                "status": "Pending",
-                "subscribed": True
-            }
-            st.info("DEBUG: Data being sent to Supabase")
-            st.json(debug_data)
-
             try:
-                response = supabase.table("waitlist").insert(debug_data).execute()
+                data = {
+                    "full_name": full_name_clean,
+                    "email": email,
+                    "message": message_clean,
+                    "language": st.session_state.language,
+                    "status": "Pending",
+                    "subscribed": True
+                }
 
-                # Success path
+                # DEBUG: Show data (optional – remove later if you want clean UI)
+                # st.info("DEBUG: Data being sent")
+                # st.json(data)
+
+                response = supabase.table("waitlist").insert(data).execute()
+
                 if response.data:
                     st.success(
                         "Salamat! Nasa waitlist ka na. Makakatanggap ka ng welcome email shortly 👑"
@@ -424,37 +424,53 @@ if submitted:
                         if st.session_state.language == "en"
                         else "Check mo ang inbox mo (at spam folder) para sa welcome email."
                     )
+
+                    # ── DIRECTLY INVOKE EDGE FUNCTION FROM STREAMLIT ──
+                    try:
+                        invoke_resp = supabase.functions.invoke(
+                            "send-waitlist-confirmation",  # ← exact name of your Edge Function
+                            {
+                                "body": {
+                                    "name": full_name_clean or "Anonymous",
+                                    "email": email,
+                                    "message": message_clean or "",
+                                    "language": st.session_state.language
+                                }
+                            }
+                        )
+
+                        # Optional: Show more info if you want (remove for production)
+                        # st.caption(f"Email request sent (status: {invoke_resp.status_code})")
+
+                        st.caption("Welcome email request sent successfully! Check spam if not arrived in 1–2 minutes.")
+                    
+                    except Exception as invoke_err:
+                        st.caption(
+                            f"Welcome email send had a small issue ({str(invoke_err)}), "
+                            "but you're already on the waitlist! We'll fix it soon."
+                        )
+                        # Optional: log to your logs table
+                        # supabase.table("logs").insert({
+                        #     "action": "waitlist_email_invoke_failed",
+                        #     "details": str(invoke_err),
+                        #     "email": email
+                        # }).execute()
+
                 else:
-                    st.warning("Insert returned success but no data was returned — check Supabase dashboard manually")
+                    st.warning("Submission processed but no confirmation received — check dashboard.")
 
             except Exception as e:
-                # ── DEBUG: ALWAYS show full error details ──
-                st.error("Submission failed — full error below:")
-                st.code(f"""
-Error message:
-{str(e)}
-
-Exception type:
-{type(e).__name__}
-
-Full repr:
-{repr(e)}
-                """.strip(), language="text")
-
-                # Still try to give friendly message
                 err_str = str(e).lower()
-                if any(x in err_str for x in ["duplicate", "unique", "23505", "unique_violation"]):
+                if any(x in err_str for x in ["duplicate", "unique", "23505"]):
                     st.info(
                         "Nasa waitlist na pala ang email mo — salamat! Keep following lang."
                         if st.session_state.language == "tl"
                         else "Looks like you're already on the waitlist — thank you! Stay tuned."
                     )
-                elif "permission" in err_str or "policy" in err_str or "row-level security" in err_str:
-                    st.error("RLS / Permission issue — public insert is probably blocked")
-                elif "timeout" in err_str or "connect" in err_str:
-                    st.error("Connection problem — check your internet or Supabase status")
                 else:
-                    st.caption("Copy the red box above and send it to your developer/fix helper")
+                    st.error(f"Error joining waitlist: {str(e)}")
+                    if "dev" in os.getenv("ENV", "").lower():
+                        st.code(str(e))
 
 st.markdown("</div>", unsafe_allow_html=True)
 
