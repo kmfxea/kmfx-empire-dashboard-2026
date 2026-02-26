@@ -1,4 +1,5 @@
-# main.py - KMFX EA Public Landing + Login Page (Updated Feb 2026 with TradingView realtime gold widget)
+# main.py - KMFX EA Public Landing + Login Page
+# Updated: February 2026 with improved mobile/tablet responsiveness
 import streamlit as st
 import yfinance as yf
 from datetime import datetime, timedelta
@@ -18,6 +19,7 @@ start_keep_alive_if_needed()
 # SESSION & AUTH CHECK FIRST
 # ────────────────────────────────────────────────
 authenticated = is_authenticated()
+
 if authenticated:
     st.set_page_config(
         page_title="KMFX Empire Dashboard",
@@ -37,49 +39,52 @@ else:
 # ────────────────────────────────────────────────
 # THEME VARIABLES
 # ────────────────────────────────────────────────
-accent_gold   = "#ffd700"
-accent_glow   = "#ffd70050"
+accent_gold = "#ffd700"
+accent_glow = "#ffd70050"
 accent_primary = "#00ffaa"
 accent_hover = "#ffea80"
-bg_color      = "#0d1117"
-card_bg       = "rgba(20, 25, 40, 0.88)"
-border_color  = "rgba(255,215,0,0.22)"
-text_primary  = "#e2e8f0"
-text_muted    = "#a0aec0"
-card_shadow   = "0 8px 32px rgba(0,0,0,0.55)"
+bg_color = "#0d1117"
+card_bg = "rgba(20, 25, 40, 0.88)"
+border_color = "rgba(255,215,0,0.22)"
+text_primary = "#e2e8f0"
+text_muted = "#a0aec0"
+card_shadow = "0 8px 32px rgba(0,0,0,0.55)"
 
 # ────────────────────────────────────────────────
-# IMPROVED CSS – with side spacing, medium logo, balanced pioneers layout
+# IMPROVED RESPONSIVE CSS (mobile/tablet/laptop optimized)
 # ────────────────────────────────────────────────
 st.markdown(f"""
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
 <style>
+    * {{ box-sizing: border-box; }}
     html, body, [class*="css-"] {{
         font-family: 'Inter', system-ui, sans-serif !important;
         font-size: 16px !important;
         line-height: 1.65;
+        overflow-x: hidden !important;
     }}
     .stApp {{
         background: {bg_color};
         color: {text_primary};
     }}
-
-    /* Main content container - CENTERED + SIDE SPACING (most important fix) */
+    .stAppViewContainer {{
+        padding-bottom: 2rem !important;
+    }}
+    /* Main container - responsive padding & max-width */
     .main .block-container {{
-        max-width: 1080px !important;           /* tighter than 1140px → more side space */
-        padding: 1.8rem 3rem !important;       /* generous left/right padding */
+        max-width: 1080px !important;
+        padding: 1.8rem 3rem !important;
         margin: 0 auto !important;
     }}
-
-    /* Logo - medium size, centered, not huge */
+    /* Logo responsive */
     [data-testid="stImage"] img {{
-        max-width: 260px !important;           /* medium logo size – adjust to 220–300px if needed */
+        max-width: 80vw !important;
         width: 100% !important;
+        max-width: 260px !important;
         height: auto !important;
-        margin: 1.8rem auto 1.2rem !important;
+        margin: 1.5rem auto 1rem !important;
         display: block !important;
     }}
-
     h1, h2, h3, h4 {{
         font-family: 'Playfair Display', serif;
         color: {accent_gold} !important;
@@ -89,28 +94,25 @@ st.markdown(f"""
     h1 {{ font-size: 3.2rem; margin: 1.2rem 0 0.6rem; text-align: center; }}
     h2 {{ font-size: 2.3rem; margin: 2.2rem 0 1rem; text-align: center; }}
     h3 {{ font-size: 1.9rem; margin: 1.8rem 0 0.9rem; }}
-
     p, div, span, label {{ color: {text_primary}; }}
     small, .muted {{ color: {text_muted}; }}
-
-    /* Glass cards - slightly less padding, better centering */
+    /* Glass cards */
     .glass-card {{
         background: {card_bg};
         backdrop-filter: blur(18px);
         border-radius: 16px;
         border: 1px solid {border_color};
-        padding: 1.8rem 2.2rem;                /* reduced from 2.2rem 2.6rem */
+        padding: 1.8rem 2.2rem;
         box-shadow: {card_shadow};
-        margin: 1.8rem auto;                   /* auto margin + reduced vertical */
-        max-width: 1000px !important;          /* prevent full-width stretch */
+        margin: 1.8rem auto;
+        max-width: 1000px !important;
         transition: all 0.3s ease;
     }}
     .glass-card:hover {{
         box-shadow: 0 14px 40px {accent_glow};
         transform: translateY(-5px);
     }}
-
-    /* Pioneers specific - force side space & horizontal compact layout */
+    /* Pioneers layout */
     .pioneers-glass {{
         max-width: 960px !important;
         margin: 1.6rem auto !important;
@@ -132,8 +134,9 @@ st.markdown(f"""
         width: 90px !important;
         height: 90px !important;
         margin-bottom: 0.8rem;
+        object-fit: cover;
+        border-radius: 50%;
     }}
-
     button[kind="primary"] {{
         background: linear-gradient(90deg, {accent_primary}, {accent_hover}) !important;
         color: #000 !important;
@@ -149,11 +152,11 @@ st.markdown(f"""
         box-shadow: 0 10px 30px {accent_glow} !important;
         transform: translateY(-3px);
     }}
-
     header[data-testid="stHeader"] {{ background: {bg_color} !important; }}
     section[data-testid="stSidebar"] {{ display: none !important; }}
     .stForm > div {{ gap: 1.1rem !important; }}
-
+    
+    /* ── RESPONSIVE MEDIA QUERIES ── */
     @media (max-width: 992px) {{
         .main .block-container {{ padding: 1.2rem 1.8rem !important; }}
         h1 {{ font-size: 2.6rem !important; }}
@@ -161,8 +164,19 @@ st.markdown(f"""
         .pioneers-container {{ gap: 1.5rem; }}
         .flip-card {{ flex: 0 1 45%; max-width: 45% !important; }}
     }}
-    @media (max-width: 600px) {{
-        .flip-card {{ flex: 0 1 100%; max-width: 100% !important; }}
+    @media (max-width: 768px) {{
+        .main .block-container {{ padding: 0.8rem 1.2rem !important; }}
+        h1 {{ font-size: 2.3rem !important; }}
+        .glass-card {{ padding: 1.4rem 1.6rem !important; }}
+        .flip-card {{ flex: 0 1 48%; max-width: 48% !important; }}
+    }}
+    @media (max-width: 480px) {{
+        h1 {{ font-size: 1.9rem !important; }}
+        h2 {{ font-size: 1.7rem !important; }}
+        .glass-card {{ padding: 1.2rem 1.4rem !important; margin: 1.2rem 0 !important; }}
+        .flip-card {{ flex: 0 1 100% !important; max-width: 100% !important; }}
+        .flip-card img.circular {{ width: 80px !important; height: 80px !important; }}
+        button[kind="primary"] {{ padding: 0.8rem 1.4rem !important; font-size: 1rem !important; }}
     }}
 </style>
 """, unsafe_allow_html=True)
@@ -242,7 +256,7 @@ price, change = get_gold_price()
 
 if price:
     st.markdown(f"""
-    <div style="text-align:center; font-size:3.5rem; font-weight:700; color:{accent_gold}; 
+    <div style="text-align:center; font-size:3.5rem; font-weight:700; color:{accent_gold};
                 text-shadow:0 0 18px {accent_glow}; margin:1.8rem 0 0.6rem;">
         ${price:,.1f}
     </div>
@@ -253,21 +267,21 @@ if price:
     </p>
     """, unsafe_allow_html=True)
 
-# TradingView Realtime Mini Chart (modern web component)
+# Improved responsive TradingView mini-chart
 st.components.v1.html("""
-<div class="tradingview-widget-container" style="height:180px; width:100%; margin:1.5rem auto 2.5rem;">
-  <tv-mini-chart 
-    symbol="OANDA:XAUUSD" 
-    color-theme="dark" 
-    locale="en" 
-    autosize 
+<div class="tradingview-widget-container" style="width:100%; height:42vw; min-height:180px; max-height:260px; margin:1.5rem auto 2.5rem; position:relative;">
+  <tv-mini-chart
+    symbol="OANDA:XAUUSD"
+    color-theme="dark"
+    locale="en"
+    autosize
   ></tv-mini-chart>
   <script type="module" src="https://widgets.tradingview-widget.com/w/en/tv-mini-chart.js" async></script>
 </div>
-""", height=200)
+""", height=280)
 
 # ────────────────────────────────────────────────
-# WAITLIST FORM – nicer look
+# WAITLIST FORM
 # ────────────────────────────────────────────────
 st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
 st.markdown(f"<h2 style='margin-bottom:1.8rem;'>{txt('join_waitlist')}</h2>", unsafe_allow_html=True)
@@ -278,12 +292,12 @@ with st.form("waitlist_form", clear_on_submit=True):
         full_name = st.text_input(txt("name"), placeholder="Juan Dela Cruz")
     with col2:
         email = st.text_input(txt("email"), placeholder="your@email.com")
-
     message = st.text_area(txt("why_join"), height=120, placeholder="Optional: Share your trading goal...")
-
+    
     if st.form_submit_button(txt("submit"), type="primary", use_container_width=True):
         if email.strip():
-            # → Insert your Supabase logic here ←
+            # You can add your real Supabase insert logic here later
+            # Example: supabase.table("waitlist").insert({...}).execute()
             st.success(txt("success"))
         else:
             st.error("Email is required")
@@ -291,18 +305,18 @@ with st.form("waitlist_form", clear_on_submit=True):
 st.markdown("</div>", unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# PIONEERS (single-line / horizontal layout + side space)
+# PIONEERS SECTION
 # ────────────────────────────────────────────────
-st.markdown("""
-<div class="glass-card pioneers-card">
-    <h2 class="pioneers-title gold-text">{}</h2>
+st.markdown(f"""
+<div class="glass-card pioneers-glass">
+    <h2>{txt('pioneers_title')}</h2>
     <div class="pioneers-container">
-""".format(txt('pioneers_title')), unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
 pioneers = [
     {"name":"Weber", "since":"Dec 2025", "earnings":"+$1,284", "gain":"+128.4%", "quote":"Best decision ever!", "photo":"assets/weber.jpg"},
     {"name":"Ramil", "since":"Jan 2026", "earnings":"+$2,150", "gain":"+215%", "quote":"Stable daily profits.", "photo":"assets/ramil.jpg"},
-    # add more if needed
+    # Add more real pioneers here when ready
 ]
 
 for p in pioneers:
@@ -311,7 +325,7 @@ for p in pioneers:
     <div class="flip-card">
         <div class="flip-card-inner">
             <div class="flip-card-front">
-                <img src="{photo}" class="circular" style="width:90px; height:90px;">
+                <img src="{photo}" class="circular">
                 <div style="font-weight:600; margin:0.5rem 0 0.2rem;">{p['name']}</div>
                 <small style="opacity:0.75; font-size:0.85rem;">since {p['since']}</small>
             </div>
@@ -330,60 +344,60 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# ORIGIN STORY / JOURNEY (condensed spacing)
+# ORIGIN STORY / JOURNEY (condensed version – shown by default)
 # ────────────────────────────────────────────────
 st.markdown("<div class='glass-card' style='padding:2rem 2.4rem;'>", unsafe_allow_html=True)
 st.markdown("<h2 class='gold-text' style='text-align:center; margin-bottom:1.8rem;'>My Journey & Motivation</h2>", unsafe_allow_html=True)
 
 journey_sections = [
     ("Origin & Motivation (2024)", """
-Noong 2024, frustrated ako sa manual trading — paulit-ulit na losses dahil sa emotions, lack of discipline, at timing issues.  
-Realization: "Kung hindi professional, maloloss ka lang sa market."  
-Decided to build my own EA to remove human error, achieve consistency, and become a professional trader through automation.  
+Noong 2024, frustrated ako sa manual trading — paulit-ulit na losses dahil sa emotions, lack of discipline, at timing issues.
+Realization: "Kung hindi professional, maloloss ka lang sa market."
+Decided to build my own EA to remove human error, achieve consistency, and become a professional trader through automation.
 Early inspiration came from ~2016 trading days, sharing ideas with friend Ramil.
     """),
     ("Development Phase (2024)", """
-- Full year of self-study in MQL5 programming  
-- Trial-and-error: Combined multiple indicators, price action rules, risk management filters  
+- Full year of self-study in MQL5 programming
+- Trial-and-error: Combined multiple indicators, price action rules, risk management filters
 - Hundreds of backtests, forward tests, debugging — almost 1 year of experiment before stability
     """),
     ("Official Launch & Early Testing (2025)", """
-- January 2025: Breakthrough — EA fully functional and running smoothly. Officially named KMFX EA  
-- Focused exclusively on XAUUSD (GOLD) for its volatility and opportunities  
-- September 2025: Formed KMFX EA TESTER group (Weber most active, Ramil, Sheldon, Jai) — ~2 months forward testing  
+- January 2025: Breakthrough — EA fully functional and running smoothly. Officially named KMFX EA
+- Focused exclusively on XAUUSD (GOLD) for its volatility and opportunities
+- September 2025: Formed KMFX EA TESTER group (Weber most active, Ramil, Sheldon, Jai) — ~2 months forward testing
 - Late 2025 (Oct-Dec): Mastered backtesting 2021–2025, polished entries/exits, added filters for news volatility
     """),
     ("Major Milestones & Tools (2025)", """
-- October 15, 2025: Launched KMFX EA MT5 Client Tracker dashboard at kmfxea.streamlit.app  
-- December 2025: Pioneer community formed — 14 believers contributed ₱17,000 PHP (₱1,000 per unit)  
-  Profit sharing: 30% of profits proportional to units  
+- October 15, 2025: Launched KMFX EA MT5 Client Tracker dashboard at kmfxea.streamlit.app
+- December 2025: Pioneer community formed — 14 believers contributed ₱17,000 PHP (₱1,000 per unit)
+  Profit sharing: 30% of profits proportional to units
   Thank you to: Mark, Jai, Doc, Weber (2 units), Don, Mark Fernandez (3 units), Ramil, Cristy, Meg, Roland, Mila, Malruz, Julius, Joshua
     """),
     ("FTMO Prop Firm Journey – First Attempt (Dec 2025 - Jan 2026)", """
-- December 13, 2025: Started FTMO 10K Challenge  
-- December 26, 2025: **PASSED Phase 1 in just ~13 days!**  
-  Stats: $10,000 → $11,040.58 (+10.41%), 2.98% max DD, 118 trades (longs only), 52% win rate, +12,810.8 pips, profit factor 1.52  
+- December 13, 2025: Started FTMO 10K Challenge
+- December 26, 2025: **PASSED Phase 1 in just ~13 days!**
+  Stats: $10,000 → $11,040.58 (+10.41%), 2.98% max DD, 118 trades (longs only), 52% win rate, +12,810.8 pips, profit factor 1.52
   Avg trade duration: ~43 minutes (scalping-style)
     """),
     ("Phase 2 (Verification) Attempt & Lesson", """
-- Goal: 5% profit target with strict risk limits  
-- Outcome: Failed due to emotional intervention (manual adjustments out of fear)  
-- Key Insight: Untouched simulation (Jan 1–16, 2026) showed ~$2,000 additional gain — would have passed easily  
+- Goal: 5% profit target with strict risk limits
+- Outcome: Failed due to emotional intervention (manual adjustments out of fear)
+- Key Insight: Untouched simulation (Jan 1–16, 2026) showed ~$2,000 additional gain — would have passed easily
 - Big Lesson: Trust the System No Matter What. Emotions are the real enemy.
     """),
     ("Current Attempt (Jan 2026)", """
-- New FTMO 10K Challenge (Phase 1) ongoing  
-- Full trust mode: 100% hands-off — no tweaks, no manual trades, pure automated execution  
+- New FTMO 10K Challenge (Phase 1) ongoing
+- Full trust mode: 100% hands-off — no tweaks, no manual trades, pure automated execution
 - Confidence high from previous pass and untouched sim results
     """),
     ("Dual Product Evolution (2026)", """
-- Prop Firm Version (KMFX EA – Locked): Strict for FTMO/challenges, no intervention allowed  
+- Prop Firm Version (KMFX EA – Locked): Strict for FTMO/challenges, no intervention allowed
 - Personal/Client Version (in progress): Same core strategy, more flexible for real accounts and clients
     """),
     ("Performance Proof", """
-- FTMO Phase 1 Passed: +10.41%, 2.98% max DD  
-- 2025 Backtest: +187.97%  
-- 5-Year Backtest (2021-2025): +3,071%  
+- FTMO Phase 1 Passed: +10.41%, 2.98% max DD
+- 2025 Backtest: +187.97%
+- 5-Year Backtest (2021-2025): +3,071%
 - Safety First: 1% risk per trade, no martingale/grid, controlled drawdown
     """)
 ]
@@ -395,7 +409,7 @@ for title, content in journey_sections:
 st.markdown("</div>", unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# FULL TRADING JOURNEY EXPANDER (YOUR ORIGINAL LONG STORY – FULLY RESTORED)
+# FULL JOURNEY EXPANDER (detailed 2014–2026 story with images)
 # ────────────────────────────────────────────────
 if "show_full_journey" not in st.session_state:
     st.session_state.show_full_journey = False
@@ -409,13 +423,14 @@ st.markdown(
     "<p style='font-size:1.4rem; opacity:0.9;'>From OFW in Saudi to building an automated empire — built by faith, lessons, and persistence.</p>",
     unsafe_allow_html=True,
 )
+
 if st.button("👑 Read My Full Trading Journey (2014–2026)", type="primary", use_container_width=True):
     st.session_state.show_full_journey = True
     st.rerun()
 
 if st.session_state.get("show_full_journey", False):
     st.markdown(
-        "<div class='glass-card' style='padding:3rem; margin:3rem auto; max-width:1100px; border-left:6px solid {accent_gold};'>",
+        "<div class='glass-card' style='padding:3rem; margin:3rem auto; max-width:1100px; border-left:6px solid #ffd700;'>",
         unsafe_allow_html=True,
     )
     st.markdown(
@@ -433,245 +448,334 @@ if st.session_state.get("show_full_journey", False):
 
     # 2014: The Beginning in Saudi Arabia
     st.markdown(
-        f"<h3 style='color:{accent_gold}; text-align:center; font-size:1.8rem; margin:2rem 0;'>"
-        "🌍 2014: The Beginning in Saudi Arabia</h3>",
+        f"<h3 style='color:{accent_gold}; text-align:center; font-size:1.8rem; margin:2.5rem 0 1rem;'>🌍 2014: The Beginning in Saudi Arabia</h3>",
         unsafe_allow_html=True,
     )
     col1, col2 = st.columns(2)
     with col1:
-        resized1 = make_same_size("assets/saudi1.jpg", target_width=800, target_height=700)
-        if resized1:
-            st.image(resized1, use_column_width=True, caption="Team Saudi Boys 🇸🇦")
+        try:
+            img1 = make_same_size("assets/saudi1.jpg", target_width=800, target_height=700)
+            if img1:
+                st.image(img1, use_column_width=True, caption="Team Saudi Boys 🇸🇦")
+        except:
+            st.info("Image: assets/saudi1.jpg")
     with col2:
-        resized2 = make_same_size("assets/saudi2.jpg", target_width=800, target_height=700)
-        if resized2:
-            st.image(resized2, use_column_width=True, caption="Selfie with STC Cap")
-    st.write("""
-Noong 2014, nandoon ako sa Saudi Arabia bilang Telecom Technician sa STC.
-Everyday routine: work sa site, init ng desert... pero tuwing **Friday — off day ko** — may oras akong mag-explore online.
-Nag-start ako mag-search ng ways para magdagdag ng income. Alam mo naman OFW life: padala sa pamilya, savings, pero gusto ko rin ng something para sa future.
-Dun ko natuklasan ang **Philippine stock market**. Nagbukas ako ng account sa First Metro Sec, nag-download ng app, nagbasa ng news, PSE index... at sinubukan lahat ng basic — buy low sell high, tips sa forums, trial-and-error.
-**Emotions? Grabe.** Sobrang saya kapag green — parang nanalo sa lotto! Pero kapag red? Lungkot talaga, "sayang 'yung overtime ko."
+        try:
+            img2 = make_same_size("assets/saudi2.jpg", target_width=800, target_height=700)
+            if img2:
+                st.image(img2, use_column_width=True, caption="Selfie with STC Cap")
+        except:
+            st.info("Image: assets/saudi2.jpg")
+
+    st.markdown("""
+Noong 2014, nandoon ako sa Saudi Arabia bilang Telecom Technician sa STC.  
+Everyday routine: work sa site, init ng desert... pero tuwing **Friday — off day ko** — may oras akong mag-explore online.  
+Nag-start ako mag-search ng ways para magdagdag ng income. Alam mo naman OFW life: padala sa pamilya, savings, pero gusto ko rin ng something para sa future.  
+
+Dun ko natuklasan ang **Philippine stock market**. Nagbukas ako ng account sa First Metro Sec, nag-download ng app, nagbasa ng news, PSE index... at sinubukan lahat ng basic — buy low sell high, tips sa forums, trial-and-error.  
+
+**Emotions? Grabe.** Sobrang saya kapag green — parang nanalo sa lotto! Pero kapag red? Lungkot talaga, "sayang 'yung overtime ko."  
 Paulit-ulit 'yun — wins, losses, lessons. Hindi pa seryoso noon, more like hobby lang habang nasa abroad... pero dun talaga nagsimula ang passion ko sa trading.
-Around 2016, naging close friends ko sina Ramil, Mheg, at Christy. Nagsha-share kami ng ideas sa chat, stock picks, charts kahit liblib na oras.
-Yun 'yung simula ng **"team" feeling** — hindi pa pro, pero may spark na.
+
+Around 2016, naging close friends ko sina Ramil, Mheg, at Christy. Nagsha-share kami ng ideas sa chat, stock picks, charts kahit liblib na oras.  
+Yun 'yung simula ng **"team" feeling** — hindi pa pro, pero may spark na.  
+
 *Little did I know, 'yung mga simpleng usapan na 'yun ang magiging foundation ng KMFX EA years later.*
     """)
 
     # 2017: Umuwi sa Pinas at Crypto Era
     st.markdown(
-        f"<h3 style='color:{accent_gold}; text-align:center; font-size:1.8rem; margin:2rem 0;'>"
-        "🏠 2017: Umuwi sa Pinas at Crypto Era</h3>",
+        f"<h3 style='color:{accent_gold}; text-align:center; font-size:1.8rem; margin:3rem 0 1rem;'>🏠 2017: Umuwi sa Pinas at Crypto Era</h3>",
         unsafe_allow_html=True,
     )
     col1, col2 = st.columns(2)
     with col1:
-        resized1 = make_same_size("assets/family1.jpg", target_width=800, target_height=700)
-        if resized1:
-            st.image(resized1, use_column_width=True, caption="Date with her ❤️")
+        try:
+            img = make_same_size("assets/family1.jpg", target_width=800, target_height=700)
+            if img:
+                st.image(img, use_column_width=True, caption="Date with her ❤️")
+        except:
+            pass
     with col2:
-        resized2 = make_same_size("assets/family2.jpg", target_width=800, target_height=700)
-        if resized2:
-            st.image(resized2, use_column_width=True, caption="Selfie My Family 👨‍👩‍👧")
-    st.write("""
-Noong 2017, desisyon ko na — umuwi na ako sa Pilipinas para mag-start ng family life.
-Matagal na rin akong OFW, at 30+ na si misis 😊. Gusto ko nang makasama sila araw-araw, hindi na video call lang tuwing weekend.
-Yung feeling ng pagbalik? Airport pickup, yakap ng pamilya, settle sa Quezon City. **Parang fresh start** — walang desert heat, puro quality time na.
-Pero dun din sumabog ang **crypto wave**! Bitcoin skyrocket hanggang ₱1M+ — grabe 'yung hype!
-From stock learnings ko sa PSE, na-curious ako agad. 24/7 market kasi — mas madali mag-trade kahit busy sa bahay.
-Ginamit ko 'yung basics: charts, news, patterns. Pero newbie pa rin talaga ako sa crypto.
-Na-scam ako sa Auroramining (fake cloud mining). Sinubukan futures — leverage, high risk, manalo bigla tapos natatalo rin agad.
-Walang solid strategy pa, walang discipline. Emosyon ang nagdedesisyon: FOMO kapag pump, panic kapag dump.
+        try:
+            img = make_same_size("assets/family2.jpg", target_width=800, target_height=700)
+            if img:
+                st.image(img, use_column_width=True, caption="Selfie My Family 👨‍👩‍👧")
+        except:
+            pass
+
+    st.markdown("""
+Noong 2017, desisyon ko na — umuwi na ako sa Pilipinas para mag-start ng family life.  
+Matagal na rin akong OFW, at 30+ na si misis 😊. Gusto ko nang makasama sila araw-araw, hindi na video call lang tuwing weekend.  
+
+Yung feeling ng pagbalik? Airport pickup, yakap ng pamilya, settle sa Quezon City. **Parang fresh start** — walang desert heat, puro quality time na.  
+
+Pero dun din sumabog ang **crypto wave**! Bitcoin skyrocket hanggang ₱1M+ — grabe 'yung hype!  
+From stock learnings ko sa PSE, na-curious ako agad. 24/7 market kasi — mas madali mag-trade kahit busy sa bahay.  
+
+Ginamit ko 'yung basics: charts, news, patterns. Pero newbie pa rin talaga ako sa crypto.  
+Na-scam ako sa Auroramining (fake cloud mining). Sinubukan futures — leverage, high risk, manalo bigla tapos natatalo rin agad.  
+
+Walang solid strategy pa, walang discipline. Emosyon ang nagdedesisyon: FOMO kapag pump, panic kapag dump.  
 Paulit-ulit na cycle ng highs at lows... pero dun talaga natuto ako ng malalim na lessons sa volatility at risk.
-Yung panahon na 'yun: mix ng saya sa family life at excitement (at sakit) sa crypto world.
-Hindi pa stable, pero 'yung fire sa trading? **Lalong lumakas.**
+
+Yung panahon na 'yun: mix ng saya sa family life at excitement (at sakit) sa crypto world.  
 *Little did I know, 'yung mga losses at scams na 'yun ang magiging stepping stones para sa KMFX EA — natuto akong tanggalin emotions at mag-build ng system.*
     """)
 
     # 2019–2021: Pandemic Days & Biggest Lesson
     st.markdown(
-        f"<h3 style='color:{accent_gold}; text-align:center; font-size:1.8rem; margin:2rem 0;'>"
-        "🦠 2019–2021: Pandemic Days & Biggest Lesson</h3>",
+        f"<h3 style='color:{accent_gold}; text-align:center; font-size:1.8rem; margin:3rem 0 1rem;'>🦠 2019–2021: Pandemic Days & Biggest Lesson</h3>",
         unsafe_allow_html=True,
     )
     col1, col2 = st.columns(2)
     with col1:
-        resized1 = make_same_size("assets/klever1.jpg", target_width=800, target_height=700)
-        if resized1:
-            st.image(resized1, use_column_width=True, caption="Part of Gain almost 20k$+ Max gain 🔥")
+        try:
+            img = make_same_size("assets/klever1.jpg", target_width=800, target_height=700)
+            if img:
+                st.image(img, use_column_width=True, caption="Part of Gain almost 20k$+ Max gain 🔥")
+        except:
+            pass
     with col2:
-        resized2 = make_same_size("assets/klever2.jpg", target_width=800, target_height=700)
-        if resized2:
-            st.image(resized2, use_column_width=True, caption="Klever Exchange Set Buy Sell Instant")
-    st.write("""
-Noong 2019 hanggang 2021, dumating ang pandemic — isa sa pinakamahaba sa mundo.
-Lahat kami nasa bahay, walang labas, puro quarantine.
-Pero sa gitna ng gulo, natagpuan ko 'yung **Klever token (KLV)**. May feature na "Ninja Move" — set buy order tapos instant sell sa target. Parang automated quick flips.
+        try:
+            img = make_same_size("assets/klever2.jpg", target_width=800, target_height=700)
+            if img:
+                st.image(img, use_column_width=True, caption="Klever Exchange Set Buy Sell Instant")
+        except:
+            pass
+
+    st.markdown("""
+Noong 2019 hanggang 2021, dumating ang pandemic — isa sa pinakamahaba sa mundo.  
+Lahat kami nasa bahay, walang labas, puro quarantine.  
+
+Pero sa gitna ng gulo, natagpuan ko 'yung **Klever token (KLV)**. May feature na "Ninja Move" — set buy order tapos instant sell sa target. Parang automated quick flips.  
 Ginawa ko 'yun religiously — sobrang laki ng gains! Kasama ko si Michael, nag-team up kami, nag-celebrate sa chat kapag green. Feeling jackpot!
-Yung bull run noon, parang lahat may pera. Sobrang saya — "finally, may solid way na 'to."
+
+Yung bull run noon, parang lahat may pera. Sobrang saya — "finally, may solid way na 'to."  
 Pero bigla, glitch sa platform — half lang ng profits 'yung nabalik. Sakit sa puso 'yun.
-Pero dun dumating ang **pinakamalaking realization**: May pera talaga sa market kung may right strategy + discipline + emotion control. Hindi sa luck o hype.
+
+Pero dun dumating ang **pinakamalaking realization**: May pera talaga sa market kung may right strategy + discipline + emotion control. Hindi sa luck o hype.  
 **90% ng traders natatalo** hindi dahil sa strategy — kundi sa emotions: greed, fear, FOMO, revenge trading.
-Ako mismo, nahuhulog pa rin noon sa ganun.
+
+Ako mismo, nahuhulog pa rin noon sa ganun.  
 After 2021 crash (BTC 60k → 20k) — market bloodbath. Dun ako nag-decide: lumayo muna, mag-reflect, mag-heal, mag-build ng matibay na foundation.
-Yung pandemic days: family time sa bahay, pero dinagdagan ng market lessons na magiging key sa KMFX EA later.
+
+Yung pandemic days: family time sa bahay, pero dinagdagan ng market lessons na magiging key sa KMFX EA later.  
 *From home setups, laptop sa kama, hanggang sa pag-unawa na automation + no-emotion ang susi.*
     """)
 
     # 2024–2025: The Professional Shift
     st.markdown(
-        f"<h3 style='color:{accent_gold}; text-align:center; font-size:1.8rem; margin:2rem 0;'>"
-        "🤖 2024–2025: The Professional Shift</h3>",
+        f"<h3 style='color:{accent_gold}; text-align:center; font-size:1.8rem; margin:3rem 0 1rem;'>🤖 2024–2025: The Professional Shift</h3>",
         unsafe_allow_html=True,
     )
     col1, col2 = st.columns(2)
     with col1:
-        resized1 = make_same_size("assets/ai1.jpg", target_width=800, target_height=700)
-        if resized1:
-            st.image(resized1, use_column_width=True, caption="New Tech Found")
+        try:
+            img = make_same_size("assets/ai1.jpg", target_width=800, target_height=700)
+            if img:
+                st.image(img, use_column_width=True, caption="New Tech Found")
+        except:
+            pass
     with col2:
-        resized2 = make_same_size("assets/ai2.jpg", target_width=800, target_height=700)
-        if resized2:
-            st.image(resized2, use_column_width=True, caption="Using Old Laptop to Build")
-    st.write("""
-Noong 2024-2025, biglang nauso ang AI sa lahat — news, work, trading.
+        try:
+            img = make_same_size("assets/ai2.jpg", target_width=800, target_height=700)
+            if img:
+                st.image(img, use_column_width=True, caption="Using Old Laptop to Build")
+        except:
+            pass
+
+    st.markdown("""
+Noong 2024-2025, biglang nauso ang AI sa lahat — news, work, trading.  
 Nakita ko 'yung potential: bakit hindi gamitin 'yung tech para tanggalin 'yung human weaknesses? Emotions, late decisions, overtrading — lahat nawawala sa automation.
-Dun ko naisip: oras na gumawa ng sariling **Expert Advisor (EA)**.
+
+Dun ko naisip: oras na gumawa ng sariling **Expert Advisor (EA)**.  
 Buong halos isang taon akong nag-self-study ng **MQL5 programming**. Gabi-gabi, after work at family time — nakaupo sa laptop, nagbabasa, nanonood tutorials, nagko-code, nagde-debug.
-Pinagsama ko lahat ng natutunan mula 2014: stock basics, crypto volatility, pandemic lessons, Klever moves, at lahat ng sakit sa manual trading.
+
+Pinagsama ko lahat ng natutunan mula 2014: stock basics, crypto volatility, pandemic lessons, Klever moves, at lahat ng sakit sa manual trading.  
 Narealize ko 'yung **formula ng professional trader**:
-- Solid strategy (entries, exits, indicators)
-- Iron-clad risk management (1% risk per trade, no martingale)
+
+- Solid strategy (entries, exits, indicators)  
+- Iron-clad risk management (1% risk per trade, no martingale)  
 - Psychology — discipline, patience, trust the system
-Goal ko: maging ganun — hindi na trial-and-error trader, kundi consistent, emotion-free pro.
-**January 2025: Breakthrough!** Fully working na 'yung KMFX EA — focused sa Gold (XAUUSD).
+
+Goal ko: maging ganun — hindi na trial-and-error trader, kundi consistent, emotion-free pro.  
+
+**January 2025: Breakthrough!** Fully working na 'yung KMFX EA — focused sa Gold (XAUUSD).  
 Agad testing kasama sina Weber (super active), Jai, Sheldon, Ramil. Real-time results, adjustments.
-End of 2025: Pioneer community formed — mga believers na sumali at naging part ng journey.
+
+End of 2025: Pioneer community formed — mga believers na sumali at naging part ng journey.  
 *Parang rebirth. Mula sa losses dati, hanggang sa tool na makakatulong sa marami. Built by faith, fueled by persistence.*
     """)
 
     # 2025–2026: FTMO Challenges & Comeback
     st.markdown(
-        f"<h3 style='color:{accent_gold}; text-align:center; font-size:1.8rem; margin:2rem 0;'>"
-        "🏆 2025–2026: FTMO Challenges & Comeback</h3>",
+        f"<h3 style='color:{accent_gold}; text-align:center; font-size:1.8rem; margin:3rem 0 1rem;'>🏆 2025–2026: FTMO Challenges & Comeback</h3>",
         unsafe_allow_html=True,
     )
     col1, col2 = st.columns(2)
     with col1:
-        resized1 = make_same_size("assets/ftmo.jpeg", target_width=800, target_height=700)
-        if resized1:
-            st.image(resized1, use_column_width=True, caption="Passed Phase 1 in 13 days! 🎉")
+        try:
+            img = make_same_size("assets/ftmo.jpeg", target_width=800, target_height=700)
+            if img:
+                st.image(img, use_column_width=True, caption="Passed Phase 1 in 13 days! 🎉")
+        except:
+            pass
     with col2:
-        resized2 = make_same_size("assets/ongoing.jpg", target_width=800, target_height=700)
-        if resized2:
-            st.image(resized2, use_column_width=True, caption="Current challenge - full trust mode 🚀")
-    st.write("""
-First Taste of Pro Validation – Then the Hard Reset
+        try:
+            img = make_same_size("assets/ongoing.jpg", target_width=800, target_height=700)
+            if img:
+                st.image(img, use_column_width=True, caption="Current challenge - full trust mode 🚀")
+        except:
+            pass
+
+    st.markdown("""
+First Taste of Pro Validation – Then the Hard Reset  
 End of 2025 hanggang 2026: pinaka-exciting at challenging phase.
-After 1 year ng building at testing, ready na subukan sa **FTMO** — goal: funded account, live market proof.
-December 13, 2025: Start ng first 10K Challenge.
-December 26, 2025: **PASSED Phase 1 in 13 days!** +10.41% gain, 2.98% max DD.
-Stats:
-- $10,000 → $11,040.58
-- 118 trades (longs only)
-- 52% win rate, +12,810 pips
-- Profit factor 1.52
-- Avg duration ~43 minutes
+
+After 1 year ng building at testing, ready na subukan sa **FTMO** — goal: funded account, live market proof.  
+
+December 13, 2025: Start ng first 10K Challenge.  
+December 26, 2025: **PASSED Phase 1 in 13 days!** +10.41% gain, 2.98% max DD.  
+
+Stats:  
+- $10,000 → $11,040.58  
+- 118 trades (longs only)  
+- 52% win rate, +12,810 pips  
+- Profit factor 1.52  
+- Avg duration ~43 minutes  
+
 "Yes, it works!" moment — share agad sa group, salamat sa testers.
-Pero Phase 2: Failed — emotional intervention. Nag-adjust manually out of fear.
+
+Pero Phase 2: Failed — emotional intervention. Nag-adjust manually out of fear.  
 Key insight: Untouched sim run = +$2,000 more — madali sanang na-pass.
+
 **Big lesson**: Emotions ang tunay na kalaban. Full trust lang — run and forget mode. Surrender sa process, tulad ng surrender sa God's plan.
-January 2026: New challenge — 100% hands-off, pure automated.
+
+January 2026: New challenge — 100% hands-off, pure automated.  
 Confidence high. Comeback stronger — para sa legacy, community, financial freedom.
+
 *Built by faith, tested by fire.*
     """)
 
-    # Realization & Future Vision – FULL SIZE, NO CROP
+    # Final Vision
     st.markdown(
-        f"<h3 style='color:{accent_gold}; text-align:center; font-size:1.8rem; margin:2rem 0;'>"
-        "✨ Realization & Future Vision</h3>",
+        f"<h3 style='color:{accent_gold}; text-align:center; font-size:1.8rem; margin:3rem 0 1rem;'>✨ Realization & Future Vision</h3>",
         unsafe_allow_html=True,
     )
+
+    # Vision image (full width)
     try:
-        vision_image = Image.open("assets/journey_vision.jpg")
+        vision_img = Image.open("assets/journey_vision.jpg")
         st.image(
-            vision_image,
+            vision_img,
             use_column_width=True,
             caption="Built by Faith, Shared for Generations 👑"
         )
-    except Exception as e:
-        st.warning(f"Vision image not found or failed to load: {str(e)}")
-        st.info("Image: assets/journey_vision.jpg")
+    except Exception:
+        st.info("Vision image: assets/journey_vision.jpg (place it in assets folder)")
 
-    st.write("""
-Mula noong 2014, ramdam na ramdam ko na may malaking plano si Lord para sa akin.
-Hindi aksidente 'yung involvement ko sa market — stocks, crypto, gold, highs at lows.
-Lahat ng losses, scams, emotional rollercoasters, pandemic gains, FTMO failures... part ng preparation.
+    st.markdown("""
+Mula noong 2014, ramdam na ramdam ko na may malaking plano si Lord para sa akin.  
+Hindi aksidente 'yung involvement ko sa market — stocks, crypto, gold, highs at lows.  
+
+Lahat ng losses, scams, emotional rollercoasters, pandemic gains, FTMO failures... part ng preparation.  
 Purpose ko na 'to — hindi lang para sa sarili ko, kundi para makatulong sa marami na nahihirapan pero may pangarap na financially free.
-Kaya binuo ko ang **KMFX EA** — tool na tanggalin ang human error, bigyan ng consistency, at patunayan na kaya maging pro trader kahit nagsimula sa zero.
+
+Kaya binuo ko ang **KMFX EA** — tool na tanggalin ang human error, bigyan ng consistency, at patunayan na kaya maging pro trader kahit nagsimula sa zero.  
+
 *Built by faith, tested by fire, ready na ibahagi.*
-**Dream ko ngayon**:
-- KMFX EA Foundations — full guide mula basics hanggang pro level
-- Para maiwasan ng baguhan ang sakit ng ulo na pinagdaanan ko
-- Passive income para sa lahat na sumali at naniwala
+
+**Dream ko ngayon**:  
+- KMFX EA Foundations — full guide mula basics hanggang pro level  
+- Para maiwasan ng baguhan ang sakit ng ulo na pinagdaanan ko  
+- Passive income para sa lahat na sumali at naniwala  
 - Financial freedom — mas maraming oras sa Panginoon, pamilya, peaceful life
-Hindi 'to tungkol sa pera lang. Tungkol sa **legacy** — makapag-iwan ng something na makakatulong sa susunod na henerasyon.
+
+Hindi 'to tungkol sa pera lang. Tungkol sa **legacy** — makapag-iwan ng something na makakatulong sa susunod na henerasyon.  
 Na patunayan na kapag may faith, discipline, at tamang system — kaya baguhin ang buhay.
-**KMFX EA: Built by Faith, Shared for Generations**
+
+**KMFX EA: Built by Faith, Shared for Generations**  
 — Mark Jeff Blando | Founder & Developer | 2014 hanggang ngayon 👑
     """)
 
     st.markdown("</div>", unsafe_allow_html=True)
 
-    if st.button("Close Journey", use_container_width=True):
+    if st.button("× Close Full Journey", type="primary", use_container_width=True):
         st.session_state.show_full_journey = False
         st.rerun()
 
 st.markdown("</div>", unsafe_allow_html=True)
-
-
 # ────────────────────────────────────────────────
-# WHY CHOOSE KMFX EA? (complete benefits list)
+# WHY CHOOSE KMFX EA? (complete benefits grid – 3 columns on desktop, stacks on mobile)
 # ────────────────────────────────────────────────
 st.markdown("<div class='glass-card' style='padding:2rem 2.4rem; margin:2.5rem auto;'>", unsafe_allow_html=True)
 st.markdown("<h2 class='gold-text' style='text-align:center; margin-bottom:1.5rem;'>Why Choose KMFX EA?</h2>", unsafe_allow_html=True)
-st.markdown("<p style='text-align:center; opacity:0.9; font-size:1.25rem; margin-bottom:2rem;'>"
-            "Hindi lang isa pang EA — ito ang automated system na galing sa totoong 12+ years journey, "
-            "pinatunayan sa FTMO, at ginawa with discipline, persistence, at faith.</p>", unsafe_allow_html=True)
+st.markdown(
+    "<p style='text-align:center; opacity:0.9; font-size:1.25rem; margin-bottom:2rem;'>"
+    "Hindi lang isa pang EA — ito ang automated system na galing sa totoong 12+ years journey, "
+    "pinatunayan sa FTMO, at ginawa with discipline, persistence, at faith.</p>",
+    unsafe_allow_html=True
+)
 
 benefits = [
-    {"emoji": "👑", "title": "100% Hands-Off Automation", "points": [
-        "Run and forget — walang kailangang galawin pag naka-set na",
-        "Removes emotions completely (yung pinakamalaking killer sa trading)",
-        "Pure MQL5 logic + strict risk rules = consistent execution"
-    ]},
-    {"emoji": "📈", "title": "Gold (XAUUSD) Focused Edge", "points": [
-        "Optimized for Gold volatility — best market para sa scalping & swing",
-        "+3,071% 5-Year Backtest • +187% 2025 • Low DD <3%",
-        "Proven sa real FTMO challenge (Phase 1 passed in 13 days!)"
-    ]},
-    {"emoji": "🔒", "title": "Prop Firm Ready & Safe", "points": [
-        "FTMO-compatible — strict no-martingale, no-grid, 1% risk per trade",
-        "Locked version para sa challenges • Flexible personal version",
-        "Full transparency: journey, stats, at community pioneer sharing"
-    ]},
-    {"emoji": "🙏", "title": "Built by Faith & Real Experience", "points": [
-        "Galing sa 12 taon na totoong trading journey (2014 hanggang 2026)",
-        "Hindi basta code — may purpose: tulungan ang marami sa financial freedom",
-        "Discipline + surrender to God's plan = sustainable success"
-    ]},
-    {"emoji": "🤝", "title": "Pioneer Community & Sharing", "points": [
-        "Early believers get proportional profit share (30% pool)",
-        "Real accountability group — testers, pioneers, at future foundation",
-        "Hindi solo — sama-sama tayo sa pag-scale ng empire"
-    ]},
-    {"emoji": "💰", "title": "Passive Income + Legacy Vision", "points": [
-        "Goal: true passive income para mas maraming time sa pamilya at Lord",
-        "Dream: KMFX EA Foundations — turuan ang aspiring traders maging pro",
-        "Built by faith, shared for generations — legacy na hindi matitigil"
-    ]}
+    {
+        "emoji": "👑",
+        "title": "100% Hands-Off Automation",
+        "points": [
+            "Run and forget — walang kailangang galawin pag naka-set na",
+            "Removes emotions completely (yung pinakamalaking killer sa trading)",
+            "Pure MQL5 logic + strict risk rules = consistent execution"
+        ]
+    },
+    {
+        "emoji": "📈",
+        "title": "Gold (XAUUSD) Focused Edge",
+        "points": [
+            "Optimized for Gold volatility — best market para sa scalping & swing",
+            "+3,071% 5-Year Backtest • +187% 2025 • Low DD <3%",
+            "Proven sa real FTMO challenge (Phase 1 passed in 13 days!)"
+        ]
+    },
+    {
+        "emoji": "🔒",
+        "title": "Prop Firm Ready & Safe",
+        "points": [
+            "FTMO-compatible — strict no-martingale, no-grid, 1% risk per trade",
+            "Locked version para sa challenges • Flexible personal version",
+            "Full transparency: journey, stats, at community pioneer sharing"
+        ]
+    },
+    {
+        "emoji": "🙏",
+        "title": "Built by Faith & Real Experience",
+        "points": [
+            "Galing sa 12 taon na totoong trading journey (2014 hanggang 2026)",
+            "Hindi basta code — may purpose: tulungan ang marami sa financial freedom",
+            "Discipline + surrender to God's plan = sustainable success"
+        ]
+    },
+    {
+        "emoji": "🤝",
+        "title": "Pioneer Community & Sharing",
+        "points": [
+            "Early believers get proportional profit share (30% pool)",
+            "Real accountability group — testers, pioneers, at future foundation",
+            "Hindi solo — sama-sama tayo sa pag-scale ng empire"
+        ]
+    },
+    {
+        "emoji": "💰",
+        "title": "Passive Income + Legacy Vision",
+        "points": [
+            "Goal: true passive income para mas maraming time sa pamilya at Lord",
+            "Dream: KMFX EA Foundations — turuan ang aspiring traders maging pro",
+            "Built by faith, shared for generations — legacy na hindi matitigil"
+        ]
+    }
 ]
 
+# 3-column layout (stacks automatically on mobile/tablet)
 cols = st.columns(3)
 for i, benefit in enumerate(benefits):
     with cols[i % 3]:
@@ -688,133 +792,130 @@ for i, benefit in enumerate(benefits):
 st.markdown("</div>", unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# IN-DEPTH FAQs (complete list)
+# IN-DEPTH QUESTIONS ABOUT KMFX EA (detailed FAQ – expandable)
 # ────────────────────────────────────────────────
 st.markdown("<div class='glass-card' style='padding:2rem 2.4rem; margin:2.5rem auto;'>", unsafe_allow_html=True)
 st.markdown("<h2 class='gold-text' style='text-align:center; margin-bottom:1.5rem;'>In-Depth Questions About KMFX EA</h2>", unsafe_allow_html=True)
-st.markdown("<p style='text-align:center; opacity:0.9; margin-bottom:1.8rem;'>"
-            "Diretsong sagot sa mga tanong ng seryosong traders — walang paligoy-ligoy, puro facts.", unsafe_allow_html=True)
+st.markdown(
+    "<p style='text-align:center; opacity:0.9; margin-bottom:1.8rem;'>"
+    "Diretsong sagot sa mga tanong ng seryosong traders — walang paligoy-ligoy, puro facts at transparency.</p>",
+    unsafe_allow_html=True
+)
 
 faqs = [
     ("1. Ano ang edge ng KMFX EA kumpara sa ibang Gold EAs sa market?", """
-- Tunay na focused sa XAUUSD volatility patterns na pinag-aralan mula 2021–2025 backtests
-- Walang over-optimization — daan-daang forward tests + real FTMO challenge proof
-- 1% strict risk + dynamic filters para sa news spikes (hindi basta indicator-based)
+- Tunay na focused sa XAUUSD volatility patterns na pinag-aralan mula 2021–2025 backtests  
+- Walang over-optimization — daan-daang forward tests + real FTMO challenge proof  
+- 1% strict risk + dynamic filters para sa news spikes (hindi basta indicator-based)  
 - Galing sa 12 taon na personal trading journey, hindi copy-paste o generic code
     """),
     ("2. Paano n'yo napatunayan na hindi overfitted yung strategy?", """
-- 5-Year Backtest (2021–2025): +3,071% na may realistic slippage & spread
-- Out-of-sample forward testing 2025: consistent gains sa live-like conditions
-- Real FTMO Phase 1 pass (13 days, +10.41%, 2.98% DD) — hindi lang curve-fitted
+- 5-Year Backtest (2021–2025): +3,071% na may realistic slippage & spread  
+- Out-of-sample forward testing 2025: consistent gains sa live-like conditions  
+- Real FTMO Phase 1 pass (13 days, +10.41%, 2.98% DD) — hindi lang curve-fitted  
 - Strict walk-forward validation, walang look-ahead bias o magic parameters
     """),
     ("3. Ano ang worst-case drawdown scenario base sa history?", """
-- Max historical DD sa backtest: ~12–15% sa malalakas na Gold crashes (2022 bear market)
-- Real FTMO run: 2.98% max DD lang (conservative live settings)
-- Built-in recovery filters: kung tumaas ang DD, nagti-tighten ang entries
+- Max historical DD sa backtest: ~12–15% sa malalakas na Gold crashes (2022 bear market)  
+- Real FTMO run: 2.98% max DD lang (conservative live settings)  
+- Built-in recovery filters: kung tumaas ang DD, nagti-tighten ang entries  
 - Designed para tumagal — hindi blow-up kahit sa prolonged sideways o volatility spikes
     """),
     ("4. Paano kung magbago ang market behavior ng Gold?", """
-- May adaptive filters (news volatility, session checks, momentum rules)
-- Regular forward testing at community feedback para ma-spot agad ang weaknesses
-- Hindi static — pinagsama price action + risk management na flexible sa conditions
+- May adaptive filters (news volatility, session checks, momentum rules)  
+- Regular forward testing at community feedback para ma-spot agad ang weaknesses  
+- Hindi static — pinagsama price action + risk management na flexible sa conditions  
 - Long-term: future updates may mas advanced adaptation (pero priority muna stability)
     """),
     ("5. Paano sumali o makakuha ng access sa KMFX EA?", """
-- Available sa community members at trusted users na sumali sa vision
-- May profit-sharing model base sa contribution at participation
-- Para sa interesadong sumali: message sa group o admin para sa details at verification
+- Available sa community members at trusted users na sumali sa vision  
+- May profit-sharing model base sa contribution at participation  
+- Para sa interesadong sumali: message sa group o admin para sa details at verification  
 - Goal: i-scale responsibly para mapanatili ang performance at transparency
     """),
     ("6. May plan ba kayo magdagdag ng ibang pairs (EURUSD, indices, crypto)?", """
-- Sa ngayon: Gold lang muna para focused at optimized (pinakamagandang results)
-- Future versions: possible multi-pair pag na-master na ang Gold edge
+- Sa ngayon: Gold lang muna para focused at optimized (pinakamagandang results)  
+- Future versions: possible multi-pair pag na-master na ang Gold edge  
 - Priority: stability at low drawdown kaysa magmadali sa maraming instruments
     """),
     ("7. Paano kung gusto kong i-backtest o i-verify mismo yung performance?", """
-- Pwede — may documented stats, sample reports, at live metrics sa dashboard
-- FTMO Phase 1 certificate + backtest summary visible sa community
-- Hindi full code release (security), pero transparent sa key performance data
+- Pwede — may documented stats, sample reports, at live metrics sa dashboard  
+- FTMO Phase 1 certificate + backtest summary visible sa community  
+- Hindi full code release (security), pero transparent sa key performance data  
 - Sumali sa community para makita real-time results sa actual accounts
     """),
     ("8. Ano ang exit strategy kung biglang magbago ang market o mag-fail?", """
-- Auto DD limits + manual override option (pero recommended wag gamitin sa live)
-- Growth Fund buffer para sa reinvestment sa new challenges kung kailangan
-- Community feedback loop — kung consistent na underperform, titigil o i-a-adjust
+- Auto DD limits + manual override option (pero recommended wag gamitin sa live)  
+- Growth Fund buffer para sa reinvestment sa new challenges kung kailangan  
+- Community feedback loop — kung consistent na underperform, titigil o i-a-adjust  
 - Long-term mindset: sustainable passive income, hindi get-rich-quick
     """),
     ("9. Paano nyo pinoprotektahan ang system laban sa copy-paste o piracy?", """
-- Encrypted license key (XOR + unique per user/account)
-- MT5 login binding option para ma-lock sa specific accounts
-- Revoke capability kung may violation o unauthorized use
+- Encrypted license key (XOR + unique per user/account)  
+- MT5 login binding option para ma-lock sa specific accounts  
+- Revoke capability kung may violation o unauthorized use  
 - Community-first approach: trusted users muna para mapanatili ang integrity
     """),
     ("10. Ano ang ultimate vision mo para sa KMFX EA sa susunod na 5–10 taon?", """
-- Build KMFX EA Foundations: education at tools para sa aspiring Pinoy traders
-- Scale sa multiple funded accounts + real personal at community portfolios
-- Create legacy: passive income para sa marami, mas maraming oras sa pamilya at pananampalataya
+- Build KMFX EA Foundations: education at tools para sa aspiring Pinoy traders  
+- Scale sa multiple funded accounts + real personal at community portfolios  
+- Create legacy: passive income para sa marami, mas maraming oras sa pamilya at pananampalataya  
 - Patunayan na possible ang consistent trading gamit discipline, automation, at God's plan
     """)
 ]
 
-
-for q, a in faqs:
-    with st.expander(q):
-        st.markdown(a.strip())
+for question, answer in faqs:
+    with st.expander(question):
+        st.markdown(answer.strip())
 
 st.markdown("</div>", unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# MEMBER LOGIN SECTION (full 3 tabs)
+# MEMBER LOGIN SECTION
 # ────────────────────────────────────────────────
-st.markdown("<div class='glass-card' style='text-align:center; padding:2.8rem 3rem; max-width:820px; margin:3rem auto;'>", unsafe_allow_html=True)
+st.markdown("<div class='glass-card' style='text-align:center; padding:2.5rem; max-width:820px; margin:3rem auto;'>", unsafe_allow_html=True)
 st.markdown("<h2 class='gold-text' style='margin-bottom:1.2rem;'>Already a Pioneer or Member?</h2>", unsafe_allow_html=True)
-st.markdown("<p style='font-size:1.25rem; opacity:0.9; margin-bottom:2rem;'>"
-            "Access your elite dashboard, realtime balance, profit shares, EA versions, and empire tools</p>", unsafe_allow_html=True)
 
 tab_owner, tab_admin, tab_client = st.tabs(["👑 Owner Login", "🛠️ Admin Login", "👥 Client Login"])
 
 with tab_owner:
     with st.form("owner_login_form", clear_on_submit=True):
-        st.markdown("<p style='opacity:0.8; margin-bottom:1rem;'>Owner-only access</p>", unsafe_allow_html=True)
         owner_username = st.text_input("Username", placeholder="e.g. kingminted", key="owner_user")
         owner_password = st.text_input("Password", type="password", key="owner_pass")
         if st.form_submit_button("Login as Owner →", type="primary", use_container_width=True):
             success = login_user(owner_username.strip().lower(), owner_password, expected_role="owner")
             if success:
-                st.success("Owner login successful! Redirecting...")
+                st.success("Owner login successful!")
                 st.session_state.role = "owner"
                 st.switch_page("pages/👤_Admin_Management.py")
             else:
-                st.error("Login failed – check credentials or role")
+                st.error("Login failed – check credentials")
 
 with tab_admin:
     with st.form("admin_login_form", clear_on_submit=True):
-        st.markdown("<p style='opacity:0.8; margin-bottom:1rem;'>Admin access</p>", unsafe_allow_html=True)
-        admin_username = st.text_input("Username", placeholder="Your admin username", key="admin_user")
+        admin_username = st.text_input("Username", placeholder="Admin username", key="admin_user")
         admin_password = st.text_input("Password", type="password", key="admin_pass")
         if st.form_submit_button("Login as Admin →", type="primary", use_container_width=True):
             success = login_user(admin_username.strip().lower(), admin_password, expected_role="admin")
             if success:
-                st.success("Admin login successful! Redirecting...")
+                st.success("Admin login successful!")
                 st.session_state.role = "admin"
                 st.switch_page("pages/👤_Admin_Management.py")
             else:
-                st.error("Login failed – check credentials or role")
+                st.error("Login failed – check credentials")
 
 with tab_client:
     with st.form("client_login_form", clear_on_submit=True):
-        st.markdown("<p style='opacity:0.8; margin-bottom:1rem;'>Client / Pioneer access</p>", unsafe_allow_html=True)
         client_username = st.text_input("Username", placeholder="Your username", key="client_user")
         client_password = st.text_input("Password", type="password", key="client_pass")
         if st.form_submit_button("Login as Client →", type="primary", use_container_width=True):
             success = login_user(client_username.strip().lower(), client_password, expected_role="client")
             if success:
-                st.success("Welcome back! Redirecting to dashboard...")
+                st.success("Welcome back!")
                 st.session_state.role = "client"
                 st.switch_page("pages/🏠_Dashboard.py")
             else:
-                st.error("Login failed – check credentials or role")
+                st.error("Login failed – check credentials")
 
 st.markdown("</div>", unsafe_allow_html=True)
 
