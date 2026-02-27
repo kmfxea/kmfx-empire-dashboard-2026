@@ -117,7 +117,7 @@ sidebar_bg   = "rgba(248,251,255,0.95)" if theme == "light" else "rgba(10,13,20,
 # ELITE FULL CODE - FULLY OPTIMIZED CSS (UI/UX PRO)
 # ────────────────────────────────────────────────
 st.markdown(f"""
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
 <style>
     :root {{
         --accent-glow: {accent_glow if theme=='dark' else 'rgba(0,0,0,0.1)'};
@@ -157,24 +157,20 @@ st.markdown(f"""
         box-shadow: 0px 1px 2px rgba(255, 215, 0, 0.05); /* Very subtle gold glow */
     }}
 
-    /* --- METRIC CARDS (GOLD GRADIENT & FONT STYLE) --- */
+    /* --- METRIC CARDS (WHITE TEXT ENHANCEMENT) --- */
     [data-testid="stMetricLabel"] {{
-        color: rgba(255, 255, 255, 0.7) !important;
+        color: var(--metric-white) !important;
         font-size: clamp(0.9rem, 2vw, 1.1rem) !important;
         font-weight: 500 !important;
         letter-spacing: 1px !important;
+        opacity: 0.8;
     }}
 
     [data-testid="stMetricValue"] {{
-        /* Match Title Font and Color */
-        font-family: 'Poppins', sans-serif !important;
-        background: var(--gold-gradient) !important;
-        -webkit-background-clip: text !important;
-        -webkit-text-fill-color: transparent !important;
-        
+        color: var(--metric-white) !important;
         font-size: clamp(1.8rem, 4vw, 2.5rem) !important;
-        font-weight: 700 !important; /* Bold */
-        text-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
+        font-weight: 700 !important;
+        text-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
     }}
 
     [data-testid="stMetric"] {{
@@ -216,17 +212,14 @@ st.markdown(f"""
         border-color: {accent_primary}88;
     }}
 
-    /* --- BRAND TITLE EFFECT (MATCHED FONT) --- */
-    .brand-title {{
-        font-family: 'Poppins', sans-serif !important; /* Poppins Font */
+    /* Luxury Gold Text Effect */
+    .gold-text {{
         background: var(--gold-gradient);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        font-weight: 700; /* Bold */
-        letter-spacing: 1px;
+        font-weight: 700;
+        letter-spacing: 0.8px;
         filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.3));
-        font-size: 3rem; /* Adjust size as needed */
-        margin-bottom: 0.5rem;
     }}
 
     /* Luxury Primary Button */
