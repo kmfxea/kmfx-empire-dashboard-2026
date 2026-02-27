@@ -123,6 +123,8 @@ st.markdown(f"""
         --accent-glow: {accent_glow if theme=='dark' else 'rgba(0,0,0,0.1)'};
         --gold-gradient: linear-gradient(135deg, #FFD700 0%, #B8860B 100%);
         --metric-white: #FFFFFF;
+        /* Define maximum width for content */
+        --max-app-width: 1300px; 
     }}
 
     /* Global Reset & Fluid Typography */
@@ -135,6 +137,14 @@ st.markdown(f"""
     .stApp {{
         background: {bg_color};
         color: {text_primary};
+    }}
+
+    /* --- CENTERED LAYOUT STRATEGY (LAPTOP) --- */
+    .main .block-container {{
+        max-width: var(--max-app-width) !important;
+        padding-top: 2rem !important;
+        padding-bottom: 2rem !important;
+        margin: 0 auto !important; /* Forces centering */
     }}
 
     /* --- 3D SEPARATOR (ENGRAVED STYLE) --- */
@@ -192,7 +202,7 @@ st.markdown(f"""
         box-shadow: {card_shadow};
         transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
         margin: 1.5rem auto;
-        max-width: 1150px;
+        max-width: 100%; /* Will stay within the main container */
         width: 100%;
     }}
 
@@ -258,6 +268,11 @@ st.markdown(f"""
         [data-testid="stMetricValue"] {{ font-size: 1.8rem !important; }}
         button[kind="primary"] {{
             width: 100% !important;
+            padding: 1rem !important;
+        }}
+        /* Remove max-width on mobile to use full screen */
+        .main .block-container {{
+            max-width: 100% !important;
             padding: 1rem !important;
         }}
     }}
