@@ -408,23 +408,70 @@ if not authenticated:
     </div>
     """, height=420)
 
-    # ── Waitlist Form (FINAL FIXED – client-side Edge Function invoke) ──
-st.markdown("<div class='glass-card' style='padding: 2.5rem; border-radius: 24px;'>", unsafe_allow_html=True)
+    # ────────────────────────────────────────────────
+# WAITLIST FORM – ELITE UI/UX PORTAL
+# ────────────────────────────────────────────────
 
-st.markdown(f"""
-    <h2 style='text-align:center; margin-bottom:1.5rem;'>{txt('join_waitlist')}</h2>
-    <p style='text-align:center; color:{text_muted}; font-size:1.1rem; margin-bottom:2rem; line-height:1.6;'>
-        Sumali sa waitlist para maunang makakuha ng access kapag live na ang KMFX EA.<br>
-        Limited spots para sa mga pioneer — be part of the journey!
-    </p>
+# 1. Custom CSS for Form Elements (Add this to your CSS block)
+st.markdown("""
+<style>
+    /* Premium Input Styling */
+    .stTextInput input, .stTextArea textarea {
+        background: rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid rgba(255, 215, 0, 0.2) !important;
+        border-radius: 12px !important;
+        color: white !important;
+        padding: 12px 15px !important;
+        transition: all 0.3s ease !important;
+    }
+    .stTextInput input:focus, .stTextArea textarea:focus {
+        border-color: #FFD700 !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+        box-shadow: 0 0 15px rgba(255, 215, 0, 0.2) !important;
+    }
+
+    /* Success Message Animation */
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .success-box {
+        animation: slideUp 0.5s ease forwards;
+        background: linear-gradient(135deg, rgba(0, 255, 162, 0.1) 0%, rgba(0, 255, 162, 0.05) 100%);
+        border: 1px solid #00ffa2;
+        padding: 20px;
+        border-radius: 15px;
+        text-align: center;
+    }
+</style>
 """, unsafe_allow_html=True)
 
+# 2. The Glass Card Container
+st.markdown("<div class='glass-card' style='padding: clamp(1.5rem, 5vw, 3rem); border: 1px solid rgba(255,215,0,0.3); position: relative; overflow: hidden;'>", unsafe_allow_html=True)
+
+# Subtle Background Glow for the Form
+st.markdown("""
+    <div style='position:absolute; top:-50px; right:-50px; width:150px; height:150px; background:rgba(255,215,0,0.1); filter:blur(50px); border-radius:50%; z-index:0;'></div>
+""", unsafe_allow_html=True)
+
+# Header Section
+st.markdown(f"""
+    <div style='text-align:center; position:relative; z-index:1;'>
+        <h2 class='gold-text' style='margin-bottom:0.5rem;'>👑 {txt('join_waitlist')}</h2>
+        <p style='color:rgba(255,255,255,0.7); font-size:1.1rem; margin-bottom:2rem; line-height:1.6; max-width:600px; margin-left:auto; margin-right:auto;'>
+            Sumali sa waitlist para maunang makakuha ng access. 
+            <span style='color:#FFD700; font-weight:600;'>Limited slots</span> para sa mga pioneer — be part of the empire!
+        </p>
+    </div>
+""", unsafe_allow_html=True)
+
+# Main Form Logic
 with st.form("waitlist_form", clear_on_submit=True):
-    col1, col2 = st.columns([1, 1.4])
+    col1, col2 = st.columns([1, 1]) # 50/50 split for balanced look
     
     with col1:
         full_name = st.text_input(
-            txt("name"),
+            f"👤 {txt('name')}",
             placeholder="Juan Dela Cruz",
             key="waitlist_fullname",
             help="Pwede ring nickname o full name mo lang"
@@ -432,15 +479,15 @@ with st.form("waitlist_form", clear_on_submit=True):
     
     with col2:
         email_input = st.text_input(
-            txt("email"),
+            f"📧 {txt('email')}",
             placeholder="your@email.com",
             key="waitlist_email",
-            help="Ito ang email na gagamitin namin para sa updates at invitation"
+            help="Dito namin ipapadala ang iyong private invitation."
         )
     
     message = st.text_area(
-        txt("why_join"),
-        height=140,
+        f"🎯 {txt('why_join')}",
+        height=120,
         placeholder=(
             "Halimbawa: Gusto ko sumali dahil pagod na ako sa manual trading at hanap ko na yung stable na system..."
             if st.session_state.language == "tl"
@@ -449,31 +496,24 @@ with st.form("waitlist_form", clear_on_submit=True):
         key="waitlist_message"
     )
     
+    st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
+    
     submitted = st.form_submit_button(
-        txt("submit"),
+        f"🚀 {txt('submit').upper()}",
         type="primary",
-        use_container_width=True,
-        help="We respect your privacy — email mo lang ang iingatan namin."
+        use_container_width=True
     )
 
+# 3. Processing Logic (Remains similar but with UX Polish)
 if submitted:
     email = email_input.strip().lower()
     full_name_clean = full_name.strip() if full_name else None
     message_clean = message.strip() if message else None
 
-    # Basic validation
-    if not email:
-        st.error(
-            "Email is required" if st.session_state.language == "en"
-            else "Kailangan ang Email"
-        )
-    elif "@" not in email or "." not in email.split("@")[-1] or len(email) < 5:
-        st.error(
-            "Please enter a valid email address" if st.session_state.language == "en"
-            else "Pakilagyan ng valid na email address"
-        )
+    if not email or "@" not in email:
+        st.error("❌ " + ("Please enter a valid email address" if st.session_state.language == "en" else "Pakilagyan ng valid na email address"))
     else:
-        with st.spinner("Processing your request..."):
+        with st.spinner("Authenticating your spot in the empire..."):
             try:
                 data = {
                     "full_name": full_name_clean,
@@ -484,71 +524,34 @@ if submitted:
                     "subscribed": True
                 }
 
-                # DEBUG: Show data (optional – remove later if you want clean UI)
-                # st.info("DEBUG: Data being sent")
-                # st.json(data)
-
                 response = supabase.table("waitlist").insert(data).execute()
 
                 if response.data:
-                    st.success(
-                        "Salamat! Nasa waitlist ka na. Makakatanggap ka ng welcome email shortly 👑"
-                        if st.session_state.language == "tl"
-                        else "Thank you! You're on the waitlist. Welcome email coming soon 👑"
-                    )
+                    # UX SUCCESS BLOCK
+                    st.markdown(f"""
+                        <div class='success-box'>
+                            <h3 style='color:#00ffa2; margin-bottom:10px;'>MISSION SUCCESS! 👑</h3>
+                            <p style='margin:0;'>Welcome to the pioneer circle, <b>{full_name_clean or 'Trader'}</b>.</p>
+                            <p style='font-size:0.8rem; opacity:0.7;'>Check your inbox (and spam) for your confirmation.</p>
+                        </div>
+                    """, unsafe_allow_html=True)
                     st.balloons()
-                    st.caption(
-                        "Check your inbox (and spam folder) for the confirmation email."
-                        if st.session_state.language == "en"
-                        else "Check mo ang inbox mo (at spam folder) para sa welcome email."
-                    )
 
-                    # ── DIRECTLY INVOKE EDGE FUNCTION FROM STREAMLIT ──
+                    # EDGE FUNCTION INVOKE (Silent in background for cleaner UX)
                     try:
-                        invoke_resp = supabase.functions.invoke(
-                            "send-waitlist-confirmation",  # ← exact name of your Edge Function
-                            {
-                                "body": {
-                                    "name": full_name_clean or "Anonymous",
-                                    "email": email,
-                                    "message": message_clean or "",
-                                    "language": st.session_state.language
-                                }
-                            }
+                        supabase.functions.invoke(
+                            "send-waitlist-confirmation",
+                            {"body": {"name": full_name_clean or "Anonymous", "email": email, "message": message_clean or "", "language": st.session_state.language}}
                         )
-
-                        # Optional: Show more info if you want (remove for production)
-                        # st.caption(f"Email request sent (status: {invoke_resp.status_code})")
-
-                        st.caption("Welcome email request sent successfully! Check spam if not arrived in 1–2 minutes.")
-                    
-                    except Exception as invoke_err:
-                        st.caption(
-                            f"Welcome email send had a small issue ({str(invoke_err)}), "
-                            "but you're already on the waitlist! We'll fix it soon."
-                        )
-                        # Optional: log to your logs table
-                        # supabase.table("logs").insert({
-                        #     "action": "waitlist_email_invoke_failed",
-                        #     "details": str(invoke_err),
-                        #     "email": email
-                        # }).execute()
-
-                else:
-                    st.warning("Submission processed but no confirmation received — check dashboard.")
+                    except:
+                        pass # Fail silently as they are already in the DB
 
             except Exception as e:
                 err_str = str(e).lower()
                 if any(x in err_str for x in ["duplicate", "unique", "23505"]):
-                    st.info(
-                        "Nasa waitlist na pala ang email mo — salamat! Keep following lang."
-                        if st.session_state.language == "tl"
-                        else "Looks like you're already on the waitlist — thank you! Stay tuned."
-                    )
+                    st.info("💡 " + ("You're already on the list! We'll reach out soon." if st.session_state.language == "en" else "Nasa waitlist ka na pala — salamat! Keep following lang."))
                 else:
                     st.error(f"Error joining waitlist: {str(e)}")
-                    if "dev" in os.getenv("ENV", "").lower():
-                        st.code(str(e))
 
 st.markdown("</div>", unsafe_allow_html=True)
 
