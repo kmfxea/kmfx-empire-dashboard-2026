@@ -137,6 +137,16 @@ st.markdown(f"""
         color: {text_primary};
     }}
 
+    /* --- 3D SEPARATOR (ENGRAVED STYLE) --- */
+    hr {{
+        border: 0;
+        height: 1px;
+        background: rgba(255, 255, 255, 0.05); /* Light top edge */
+        border-bottom: 1px solid rgba(0, 0, 0, 0.5); /* Dark bottom shadow */
+        margin: 2.5rem 0 !important;
+        box-shadow: 0px 1px 2px rgba(255, 215, 0, 0.05); /* Very subtle gold glow */
+    }}
+
     /* --- METRIC CARDS (WHITE TEXT ENHANCEMENT) --- */
     [data-testid="stMetricLabel"] {{
         color: var(--metric-white) !important;
