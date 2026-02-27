@@ -440,33 +440,44 @@ if not authenticated:
 # 1. Custom CSS for Form Elements (Add this to your CSS block)
 st.markdown("""
 <style>
-    /* Premium Input Styling */
-    .stTextInput input, .stTextArea textarea {
-        background: rgba(255, 255, 255, 0.05) !important;
+    /* 1. White Background for Text Inputs (Name & Email) */
+    .stTextInput input {
+        background: rgba(255, 255, 255, 0.15) !important; /* White transparent */
+        color: white !important;
         border: 1px solid rgba(255, 215, 0, 0.2) !important;
         border-radius: 12px !important;
-        color: white !important;
         padding: 12px 15px !important;
-        transition: all 0.3s ease !important;
-    }
-    .stTextInput input:focus, .stTextArea textarea:focus {
-        border-color: #FFD700 !important;
-        background: rgba(255, 255, 255, 0.08) !important;
-        box-shadow: 0 0 15px rgba(255, 215, 0, 0.2) !important;
     }
 
-    /* Success Message Animation */
-    @keyframes slideUp {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
+    /* 2. White Background for Text Area (Message) */
+    .stTextArea textarea {
+        background: rgba(255, 255, 255, 0.15) !important; /* White transparent */
+        color: white !important;
+        border: 1px solid rgba(255, 215, 0, 0.2) !important;
+        border-radius: 12px !important;
+        padding: 12px 15px !important;
     }
+
+    /* 3. Focus State Styling */
+    .stTextInput input:focus, .stTextArea textarea:focus {
+        border-color: #FFD700 !important;
+        background: rgba(255, 255, 255, 0.2) !important; /* Lighter white on focus */
+        box-shadow: 0 0 10px rgba(255, 215, 0, 0.2) !important;
+    }
+
+    /* Placeholder text color */
+    .stTextInput input::placeholder, .stTextArea textarea::placeholder {
+        color: rgba(255, 255, 255, 0.5) !important;
+    }
+
+    /* Success Box Styling */
     .success-box {
-        animation: slideUp 0.5s ease forwards;
-        background: linear-gradient(135deg, rgba(0, 255, 162, 0.1) 0%, rgba(0, 255, 162, 0.05) 100%);
+        background: linear-gradient(135deg, rgba(0, 255, 162, 0.15) 0%, rgba(0, 255, 162, 0.08) 100%);
         border: 1px solid #00ffa2;
         padding: 20px;
         border-radius: 15px;
         text-align: center;
+        color: white;
     }
 </style>
 """, unsafe_allow_html=True)
