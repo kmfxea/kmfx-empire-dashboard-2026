@@ -117,123 +117,65 @@ if current_role == "client":
     if not user:
         user = {"title": "Member", "balance": 0.0, "email": "—", "contact_no": "—", "address": "—"}
 
-    # ─── PREMIUM FLIP CARD – FIXED OVERFLOW & RENDERING ───
+    # ─── PREMIUM FLIP CARD (original stable fix - ATM size) ───
     my_title = user.get("title", "Member").upper()
     card_title = f"{my_title} CARD" if my_title != "NONE" else "MEMBER CARD"
     balance = user.get("balance", 0.0)
 
     st.markdown(f"""
-    <style>
-      .flip-card-container {{
-        perspective: 1800px;
-        max-width: 640px;
-        margin: 2.5rem auto;
-        width: 100%;
-      }}
-      .flip-card-outer {{
-        position: relative;
-        width: 100%;
-        aspect-ratio: 85.6 / 53.98;
-        max-height: 85vh;
-      }}
-      .flip-card {{
-        width: 100%;
-        height: 100%;
-        perspective: 1800px;
-      }}
-      .flip-card-inner {{
-        position: relative;
-        width: 100%;
-        height: 100%;
-        transition: transform 0.92s cubic-bezier(0.68, -0.55, 0.265, 1.5);
-        transform-style: preserve-3d;
-      }}
-      .flip-card:hover .flip-card-inner,
-      .flip-card:active .flip-card-inner {{
-        transform: rotateY(180deg);
-      }}
-      .flip-card-front, .flip-card-back {{
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        backface-visibility: hidden;
-        -webkit-backface-visibility: hidden;
-        border-radius: 16px;
-      }}
-      .flip-card-back {{
-        transform: rotateY(180deg);
-      }}
-      .card-content {{
-        background: linear-gradient(135deg, #0a0a0a, #1a1a1a);
-        backdrop-filter: blur(16px);
-        height: 100%;
-        padding: 6% 7%;
-        box-shadow: 0 18px 48px rgba(0,255,170,0.22);
-        color: white;
-        border: 1.8px solid {accent_gold};
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        overflow: hidden;
-      }}
-      .name-container {{
-        text-align: center;
-        flex-grow: 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        overflow: hidden;
-        padding: 0 5%;
-      }}
-      .name-text {{
-        margin: 0;
-        font-size: clamp(1.5rem, 6.5vw, 2.8rem);
-        letter-spacing: 2px;
-        line-height: 1.1;
-        word-break: break-word;
-        overflow-wrap: break-word;
-        hyphens: auto;
-        max-width: 100%;
-        white-space: normal;
-      }}
-      @media (max-width: 576px) {{
-        .flip-card-outer {{ aspect-ratio: 86 / 54; }}
-        .name-text {{ font-size: clamp(1.4rem, 6vw, 2.4rem) !important; }}
-      }}
-    </style>
-
-    <div class="flip-card-container">
-      <div class="flip-card-outer">
+    <div style="perspective: 1800px; max-width: 640px; margin: 2.5rem auto; width: 100%;">
+      <div class="flip-card-outer" style="position: relative; width: 100%; aspect-ratio: 85.6 / 53.98; max-height: 85vh;">
         <div class="flip-card">
           <div class="flip-card-inner">
             <div class="flip-card-front">
-              <div class="card-content">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3%;">
-                  <h2 style="margin:0; font-size: clamp(1.8rem, 6.5vw, 2.8rem); color: {accent_gold}; letter-spacing: 4px; text-shadow: 0 0 14px {accent_gold};">KMFX EA</h2>
-                  <h3 style="margin:0; font-size: clamp(1.0rem, 3.8vw, 1.6rem); color: {accent_gold};">{card_title}</h3>
+              <div style="
+                background: linear-gradient(135deg, #0a0a0a, #1a1a1a);
+                backdrop-filter: blur(16px);
+                border-radius: 16px;
+                height: 100%;
+                padding: 5% 7% 5% 7%;
+                box-shadow: 0 18px 48px rgba(0,255,170,0.22);
+                color: white;
+                border: 1.8px solid {accent_gold};
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+              ">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4%;">
+                  <h2 style="margin:0; font-size: clamp(1.9rem, 7vw, 3.1rem); color: {accent_gold}; letter-spacing: 4px; text-shadow: 0 0 14px {accent_gold};">KMFX EA</h2>
+                  <h3 style="margin:0; font-size: clamp(1.1rem, 4vw, 1.7rem); color: {accent_gold};">{card_title}</h3>
                 </div>
 
-                <div class="name-container">
-                  <h1 class="name-text" style="color: white;">{my_name.upper()}</h1>
+                <div style="text-align: center; flex-grow: 1; display: flex; align-items: center; justify-content: center; padding: 0 4%;">
+                  <h1 style="margin:0; font-size: clamp(1.8rem, 7vw, 3.0rem); letter-spacing: 3px; line-height: 1.15; word-break: break-word; overflow-wrap: break-word;">{my_name.upper()}</h1>
                 </div>
 
-                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 3%;">
-                  <div style="font-size: clamp(0.9rem, 3vw, 1.15rem); opacity: 0.9;">Elite Empire Member</div>
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 4%;">
+                  <div style="font-size: clamp(0.95rem, 3.2vw, 1.25rem); opacity: 0.9;">Elite Empire Member</div>
                   <div style="text-align: right;">
-                    <p style="margin:0 0 0.3rem 0; font-size: clamp(0.85rem, 2.8vw, 1.0rem); opacity: 0.9;">Available Balance</p>
+                    <p style="margin:0 0 0.3rem 0; font-size: clamp(0.9rem, 3vw, 1.1rem); opacity: 0.9;">Available Balance</p>
                     <h2 style="margin:0; color: {accent_primary}; text-shadow: 0 0 18px {accent_primary};">${balance:,.2f}</h2>
                   </div>
                 </div>
 
-                <p style="text-align:center; margin:1.2rem 0 0; opacity:0.7; font-size:0.85rem;">Built by Faith • Shared for Generations • 2026 👑</p>
+                <p style="text-align:center; margin:1.4rem 0 0; opacity:0.7; font-size:0.9rem;">Built by Faith • Shared for Generations • 2026 👑</p>
               </div>
             </div>
 
             <div class="flip-card-back">
-              <div class="card-content">
-                <h2 style="text-align:center; color: {accent_gold}; margin:0 0 1.2rem; font-size: clamp(1.4rem, 4.8vw, 1.9rem);">Membership Details</h2>
+              <div style="
+                background: linear-gradient(135deg, #1a1a1a, #0a0a0a);
+                backdrop-filter: blur(16px);
+                border-radius: 16px;
+                height: 100%;
+                padding: 5% 7%;
+                box-shadow: 0 18px 48px rgba(0,255,170,0.22);
+                color: white;
+                border: 1.8px solid {accent_gold};
+              ">
+                <h2 style="text-align:center; color: {accent_gold}; margin:0 0 1.2rem; font-size: clamp(1.5rem, 5vw, 2rem);">Membership Details</h2>
                 
-                <div style="font-size: clamp(0.92rem, 3.2vw, 1.08rem); line-height: 1.8; overflow-y: auto; max-height: 65%;">
+                <div style="font-size: clamp(0.97rem, 3.4vw, 1.15rem); line-height: 1.85;">
                   <strong style="color:{accent_gold};">Full Name:</strong> {my_name}<br>
                   <strong style="color:{accent_gold};">Title:</strong> {my_title}<br>
                   <strong style="color:{accent_gold};">Username:</strong> {my_username}<br>
@@ -244,13 +186,41 @@ if current_role == "client":
                   <strong style="color:{accent_gold};">Shared Accounts:</strong> {len(my_accounts)} active
                 </div>
 
-                <p style="text-align:center; margin-top:1.4rem; opacity:0.75; font-size:0.9rem;">KMFX Elite Access • 2026</p>
+                <p style="text-align:center; margin-top:1.6rem; opacity:0.75; font-size:0.95rem;">KMFX Elite Access • 2026</p>
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
+
+    <style>
+      .flip-card-outer {{ width: 100%; max-width: 640px; margin: 0 auto; }}
+      .flip-card {{ width: 100%; height: 100%; perspective: 1800px; }}
+      .flip-card-inner {{ 
+        position: relative; 
+        width: 100%; 
+        height: 100%; 
+        transition: transform 0.92s cubic-bezier(0.68, -0.55, 0.265, 1.5); 
+        transform-style: preserve-3d; 
+      }}
+      .flip-card:hover .flip-card-inner, .flip-card:active .flip-card-inner {{ transform: rotateY(180deg); }}
+      .flip-card-front, .flip-card-back {{ 
+        position: absolute; 
+        width: 100%; 
+        height: 100%; 
+        -webkit-backface-visibility: hidden; 
+        backface-visibility: hidden; 
+        border-radius: 16px; 
+      }}
+      .flip-card-back {{ transform: rotateY(180deg); }}
+      @media (max-width: 576px) {{ 
+        .flip-card-outer {{ aspect-ratio: 86 / 54; }} 
+      }}
+      @media (min-width: 577px) and (max-width: 992px) {{ 
+        .flip-card-outer {{ aspect-ratio: 85.6 / 53.98; max-height: 420px; }} 
+      }}
+    </style>
 
     <p style="text-align:center; opacity:0.75; margin:1.2rem 0 2.5rem; font-size:0.95rem;">
       Hover or tap card to flip ↺ (ATM-card size feel)
