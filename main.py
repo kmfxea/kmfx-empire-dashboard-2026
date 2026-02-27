@@ -1074,71 +1074,168 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# LOGIN SECTION UI
+# LOGIN SECTION – FIXED & COMPLETE (February 2026 version)
 # ────────────────────────────────────────────────
-st.markdown("<div style='margin-top: 4rem;'></div>", unsafe_allow_html=True)
 
-# Header with Glow Effect
+# Early redirect if already logged in (MUST be before any UI)
+if is_authenticated():
+    # Optional: role-based redirect if you want different landing pages
+    role = st.session_state.get("role", "client").lower()
+    if role in ["owner", "admin"]:
+        st.switch_page("pages/👤_Admin_Management.py")
+    else:
+        st.switch_page("pages/🏠_Dashboard.py")
+
+# ── Custom CSS (keep your existing one, but make sure these are present) ──
+st.markdown("""
+<style>
+    .login-box {
+        background: rgba(20, 20, 35, 0.5);
+        border: 1px solid rgba(255, 215, 0, 0.2);
+        border-radius: 15px;
+        padding: 2.2rem;
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(10px);
+        max-width: 480px;
+        margin: 2rem auto;
+    }
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+        background: rgba(0,0,0,0.25);
+        padding: 8px;
+        border-radius: 12px;
+        justify-content: center;
+    }
+    .stTabs [data-baseweb="tab"] {
+        background: transparent;
+        color: #FFD700;
+        font-weight: 600;
+    }
+    .stTabs [aria-selected="true"] {
+        background: linear-gradient(135deg, #FFD700 0%, #B8860B 100%) !important;
+        color: black !important;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+st.markdown("<div style='height: 3rem;'></div>", unsafe_allow_html=True)
+
 st.markdown("""
     <div style='text-align:center;'>
-        <h1>MEMBER ACCESS</h1>
-        <p class='golden-subtitle'>SECURE GATEWAY TO THE EMPIRE</p>
+        <h1 style='color:#FFD700; text-shadow: 0 0 15px rgba(255,215,0,0.6);'>MEMBER ACCESS</h1>
+        <p style='color:#FFD700; opacity:0.75; letter-spacing:2px; font-size:1.1rem;'>
+            SECURE GATEWAY TO THE EMPIRE
+        </p>
     </div>
 """, unsafe_allow_html=True)
 
-st.markdown("<br>", unsafe_allow_html=True)
+st.markdown("<br><br>", unsafe_allow_html=True)
 
-# Main Login Container
-col_l, col_mid, col_r = st.columns([1, 2, 1])
-
+col_l, col_mid, col_r = st.columns([1, 3, 1])
 with col_mid:
-    # Applying the styled container
     st.markdown("<div class='login-box'>", unsafe_allow_html=True)
-    
-    # Elegant Tabs for Roles
+
     tab_owner, tab_admin, tab_client = st.tabs(["👑 OWNER", "🛠️ ADMIN", "👥 CLIENT"])
 
-    # --- Dummy function for context, remove this if you have it elsewhere ---
-    def login_user(u, p, expected_role): return True 
-
-    def render_elegant_login(role_label, redirect_page):
-        # Role sub-label - Gold instead of grey
-        st.markdown(f"<p style='text-align:center; font-size:0.8rem; color:#FFD700; opacity:0.6; margin-bottom:15px; margin-top:-10px;'>Authorized {role_label} Entry Only</p>", unsafe_allow_html=True)
+    def render_secure_login(role_label: str, redirect_page: str):
+        expected_role = role_label.lower()
         
-        with st.form(key=f"login_{role_label.lower()}"):
-            user = st.text_input("Username", key=f"u_{role_label}", placeholder="Enter Username")
-            pwd = st.text_input("Password", type="password", key=f"p_{role_label}", placeholder="Enter Password")
-            
-            st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
-            
-            submit = st.form_submit_button(f"ENTER {role_label} DASHBOARD", use_container_width=True)
-            
-            if submit:
-                # YOUR ACTUAL LOGIC HERE
-                if login_user(user.strip().lower(), pwd, expected_role=role_label.lower()):
-                    st.session_state.role = role_label.lower()
-                    st.toast(f"Access Granted: Welcome {role_label}!", icon="👑")
-                    # st.switch_page(redirect_page) # Uncomment this
-                else:
-                    st.error("Access Denied: Invalid Credentials")
+        # Very unique keys to prevent ANY widget/form conflict across tabs
+        form_key   = f"login_form_{expected_role}_v2026"
+        user_key   = f"username_{expected_role}_{form_key}"
+        pwd_key    = f"password_{expected_role}_{form_key}"
+        submit_key = f"submit_{expected_role}_{form_key}"
 
+        st.markdown(
+            f"<p style='text-align:center; font-size:0.9rem; color:#FFD700; opacity:0.7; margin:0 0 1.2rem 0;'>"
+            f"Authorized {role_label} Access Only</p>",
+            unsafe_allow_html=True
+        )
+
+        with st.form(key=form_key, clear_on_submit=False):
+            username = st.text_input(
+                "Username",
+                placeholder="yourusername",
+                key=user_key,
+                autocomplete="username"
+            )
+            password = st.text_input(
+                "Password",
+                type="password",
+                placeholder="••••••••",
+                key=pwd_key,
+                autocomplete="current-password"
+            )
+
+            st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)
+
+            submitted = st.form_submit_button(
+                f"ENTER {role_label.upper()} DASHBOARD",
+                type="primary",
+                use_container_width=True,
+                key=submit_key
+            )
+
+            if submitted:
+                if not username.strip() or not password:
+                    st.error("Username and password are required")
+                    return
+
+                with st.spinner("Verifying access..."):
+                    success, user_data = login_user(
+                        username.strip().lower(),
+                        password,
+                        expected_role=expected_role
+                    )
+
+                    if success and user_data:
+                        # Set session state BEFORE navigation
+                        st.session_state.authenticated   = True
+                        st.session_state.username        = user_data.get("username", username.lower())
+                        st.session_state.full_name       = user_data.get("full_name", username)
+                        st.session_state.role            = expected_role
+                        st.session_state.just_logged_in  = True
+
+                        log_action("Login Success", f"{role_label} → {username} (IP: Tokyo)")
+
+                        st.toast(f"Welcome back, {role_label}!", icon="👑")
+                        st.success(f"Access granted → Redirecting...")
+
+                        # This should now reliably switch pages
+                        st.switch_page(redirect_page)
+
+                    else:
+                        st.error("Invalid credentials or role mismatch")
+
+    # ── Render each tab ──
     with tab_owner:
-        render_elegant_login("Owner", "pages/👤_Admin_Management.py")
-    
+        render_secure_login("Owner", "pages/👤_Admin_Management.py")
+
     with tab_admin:
-        render_elegant_login("Admin", "pages/👤_Admin_Management.py")
-        
+        render_secure_login("Admin", "pages/👤_Admin_Management.py")
+
     with tab_client:
-        render_elegant_login("Client", "pages/🏠_Dashboard.py")
+        render_secure_login("Client", "pages/🏠_Dashboard.py")
 
     st.markdown("</div>", unsafe_allow_html=True)
 
-    # Footer link for support - Gold instead of grey
     st.markdown("""
-        <p style='text-align:center; margin-top:25px; font-size:0.75rem; color:#FFD700; opacity:0.4;'>
-            Forgot access? Contact the KMFX Support Team.
+        <p style='text-align:center; margin-top:1.8rem; font-size:0.85rem; color:#FFD700; opacity:0.6;'>
+            Forgotten access? Contact KMFX Support.
         </p>
     """, unsafe_allow_html=True)
+
+# ── Keep your existing footer ──
+st.markdown("---")
+st.markdown("""
+    <div style="text-align:center; padding:2rem; opacity:0.5; font-size:0.85rem;">
+        KMFX EA v2.1 • © 2026 • Built by Faith, Shared for Generations 👑
+    </div>
+""", unsafe_allow_html=True)
+
+# Safety stop – only show public content if not authenticated
+if not is_authenticated():
+    st.stop()
 
 # ────────────────────────────────────────────────
 # FOOTER
