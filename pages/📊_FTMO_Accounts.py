@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
-from datetime import date, datetime
+from datetime import datetime
 from utils.auth import require_auth
 from utils.sidebar import render_sidebar
 from utils.supabase_client import supabase
