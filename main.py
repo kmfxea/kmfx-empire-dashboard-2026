@@ -671,146 +671,89 @@ st.write("""
 st.markdown("</div>", unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# 🎨 CUSTOM CSS FOR PREMIUM UI
+# 1. THE FULL JOURNEY SECTION (RESTORED TO ORIGINAL LENGTH)
 # ────────────────────────────────────────────────
-st.markdown("""
-<style>
-    /* Main Background - Deep Dark Blue */
-    .stApp {
-        background-color: #050509;
-        color: #E0E0E0;
-    }
+if "show_full_journey" not in st.session_state:
+    st.session_state.show_full_journey = False
 
-    /* Container Styling - Frosted Glass Effect */
-    .login-box {
-        background: rgba(10, 10, 20, 0.6);
-        border: 1px solid rgba(255, 215, 0, 0.2);
-        border-radius: 15px;
-        padding: 2rem;
-        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
-        backdrop-filter: blur(5px);
-        -webkit-backdrop-filter: blur(5px);
-    }
+st.markdown("<div class='glass-card' style='text-align:center; margin:5rem auto; padding:3rem;'>", unsafe_allow_html=True)
+st.markdown("<h2 class='gold-text'>Want the Full Story Behind KMFX EA?</h2>", unsafe_allow_html=True)
+st.markdown("<p style='font-size:1.4rem; opacity:0.9;'>From OFW in Saudi to building an automated empire — built by faith, lessons, and persistence.</p>", unsafe_allow_html=True)
 
-    /* Titles */
-    h1 {
-        color: #FFD700 !important;
-        font-family: 'Helvetica Neue', sans-serif;
-        text-shadow: 0 0 15px rgba(255,215,0,0.4);
-    }
+if st.button("👑 Read My Full Trading Journey (2014–2026)", type="primary", use_container_width=True):
+    st.session_state.show_full_journey = True
+    st.rerun()
 
-    /* Subtitles - Golden Accent instead of Grey */
-    .subtitle {
-        color: #FFD700;
-        opacity: 0.8;
-        letter-spacing: 3px;
-        font-weight: 300;
-        font-size: 0.9rem;
-    }
+if st.session_state.show_full_journey:
+    st.markdown(f"<div class='glass-card' style='padding:3rem; margin-top:2rem; border-left:6px solid var(--gold);'>", unsafe_allow_html=True)
+    st.markdown("<h2 class='gold-text' style='text-align:center;'>My Trading Journey: From 2014 to KMFX EA 2026</h2>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center; font-style:italic; font-size:1.2rem;'>'Built by faith, shared for generations.'</p>", unsafe_allow_html=True)
 
-    /* Input Fields Styling */
-    .stTextInput>div>div>input {
-        background-color: rgba(255, 255, 255, 0.05) !important;
-        color: white !important;
-        border: 1px solid rgba(255, 215, 0, 0.3) !important;
-        border-radius: 10px;
-    }
+    # 2014 Section
+    st.markdown("### 🌍 2014: The Beginning in Saudi Arabia")
+    c1, c2 = st.columns(2)
+    with c1: st.image("assets/saudi1.jpg", caption="Team Saudi Boys 🇸🇦", use_column_width=True)
+    with c2: st.image("assets/saudi2.jpg", caption="Selfie with STC Cap", use_column_width=True)
+    st.write("""
+    Noong 2014, nandoon ako sa Saudi Arabia bilang Telecom Technician sa STC. Everyday routine: work sa site, init ng desert... pero tuwing Friday off day ko, dun ko natuklasan ang Philippine stock market.
+    Nag-bukas ako ng account sa First Metro Sec. Emotions? Grabe. Sobrang saya kapag green, pero kapag red, lungkot talaga dahil sayang ang overtime. 
+    Around 2016, naging close friends ko sina Ramil, Mheg, at Christy. Sila ang naging foundation ng 'team' feeling bago pa naging pro ang lahat.
+    """)
 
-    /* Submit Button - Solid Gold */
-    div.stButton > button {
-        background: linear-gradient(45deg, #B8860B, #FFD700);
-        color: #000000;
-        border: none;
-        border-radius: 10px;
-        font-weight: bold;
-        transition: all 0.3s ease;
-        margin-top: 10px;
-    }
+    # 2017 Section
+    st.markdown("### 🏠 2017: Umuwi sa Pinas at Crypto Era")
+    c3, c4 = st.columns(2)
+    with c3: st.image("assets/family1.jpg", caption="Date with her ❤️", use_column_width=True)
+    with c4: st.image("assets/family2.jpg", caption="Selfie My Family 👨‍👩‍👧", use_column_width=True)
+    st.write("""
+    Umuwi ako sa Pinas para mag-start ng family life. Dun din sumabog ang crypto wave! Na-scam ako sa Auroramining at natalo sa futures dahil sa FOMO at panic. 
+    Walang solid strategy pa noon, emosyon ang nagdedesisyon. Pero yung fire sa trading? Lalong lumakas. Ang mga losses na yan ang naging stepping stones para matuto akong tanggalin ang emosyon sa system.
+    """)
 
-    div.stButton > button:hover {
-        transform: scale(1.02);
-        box-shadow: 0 0 20px rgba(255,215,0,0.5);
-    }
-    
-    /* Tabs Styling */
-    [data-testid="stTabs"] button {
-        color: #FFD700 !important;
-        font-weight: bold;
-    }
-    
-    [data-testid="stTabs"] button[aria-selected="true"] {
-        border-bottom: 2px solid #FFD700 !important;
-    }
+    # 2019-2021 Section
+    st.markdown("### 🦠 2019–2021: Pandemic Days & Biggest Lesson")
+    c5, c6 = st.columns(2)
+    with c5: st.image("assets/klever1.jpg", caption="Max gain almost $20k+ 🔥", use_column_width=True)
+    with c6: st.image("assets/klever2.jpg", caption="Klever Exchange Setup", use_column_width=True)
+    st.write("""
+    Sa gitna ng quarantine, natagpuan ko ang Klever token (KLV). Ginamit ko ang 'Ninja Move' feature para sa automated quick flips. 
+    Sobrang laki ng gains! Pero nung nag-crash ang BTC (60k to 20k), dun ko naintindihan na 90% ng traders natatalo dahil sa emosyon. 
+    Kailangan ng automation para tanggalin ang greed at fear.
+    """)
 
-</style>
-""", unsafe_allow_html=True)
+    # 2024-2025 Section
+    st.markdown("### 🤖 2024–2025: The Professional Shift")
+    c7, c8 = st.columns(2)
+    with c7: st.image("assets/ai1.jpg", caption="New Tech Found", use_column_width=True)
+    with c8: st.image("assets/ai2.jpg", caption="Using Old Laptop to Build", use_column_width=True)
+    st.write("""
+    Halos isang taon akong nag-self study ng MQL5 programming. Gabi-gabi, after work, nakaupo sa laptop para i-code ang strategy ko sa Gold (XAUUSD). 
+    Pinagsama ko lahat ng lessons mula 2014. No Martingale, No Grid, Strict 1% Risk. 
+    January 2025: Breakthrough! Fully working na ang KMFX EA.
+    """)
 
-# ────────────────────────────────────────────────
-# LOGIN SECTION UI
-# ────────────────────────────────────────────────
-st.markdown("<div style='margin-top: 4rem;'></div>", unsafe_allow_html=True)
+    # 2026 Section
+    st.markdown("### 🏆 2025–2026: FTMO Challenges & Comeback")
+    c9, c10 = st.columns(2)
+    with c9: st.image("assets/ftmo.jpeg", caption="Passed Phase 1 in 13 Days! 🎉", use_column_width=True)
+    with c10: st.image("assets/ongoing.jpg", caption="100% Trust Mode 🚀", use_column_width=True)
+    st.write("""
+    December 2025: PASSED Phase 1 in 13 days! +10.41% gain, 2.98% max DD. 
+    Pero nung Phase 2, nag-fail ako dahil nag-intervene ako manually out of fear. 
+    Lesson learned: Full trust lang sa system. Ngayong 2026, ang focus ko ay 100% hands-off para sa legacy at community.
+    """)
 
-# Header with Glow Effect
-st.markdown("""
-    <div style='text-align:center;'>
-        <h1>MEMBER ACCESS</h1>
-        <p class='subtitle'>SECURE GATEWAY TO THE EMPIRE</p>
-    </div>
-""", unsafe_allow_html=True)
+    st.markdown("### ✨ Realization & Future Vision")
+    st.image("assets/journey_vision.jpg", use_column_width=True, caption="Built by Faith, Shared for Generations 👑")
+    st.write("""
+    Ang KMFX EA ay hindi lang tungkol sa pera; ito ay tungkol sa legacy. 
+    Ang dream ko ay makapag-iwan ng system na makakatulong sa susunod na henerasyon ng Pinoy traders para maiwasan nila ang sakit na pinagdaanan ko.
+    """)
 
-st.markdown("<br>", unsafe_allow_html=True)
-
-# Main Login Container
-col_l, col_mid, col_r = st.columns([1, 1.5, 1])
-
-with col_mid:
-    # Applying the styled container
-    st.markdown("<div class='login-box'>", unsafe_allow_html=True)
-    
-    # Elegant Tabs for Roles
-    tab_owner, tab_admin, tab_client = st.tabs(["👑 OWNER", "🛠️ ADMIN", "👥 CLIENT"])
-
-    # Placeholder for your actual login logic function
-    def login_user(u, p, expected_role): return True 
-
-    def render_elegant_login(role_label, redirect_page):
-        # Changed opacity to golden hue instead of just dull grey
-        st.markdown(f"<p style='text-align:center; font-size:0.8rem; color:#FFD700; opacity:0.7; margin-bottom:15px;'>Authorized {role_label} Entry Only</p>", unsafe_allow_html=True)
-        
-        with st.form(key=f"login_{role_label.lower()}"):
-            user = st.text_input("Username", key=f"u_{role_label}", placeholder="Enter Username")
-            pwd = st.text_input("Password", type="password", key=f"p_{role_label}", placeholder="Enter Password")
-            
-            st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
-            
-            submit = st.form_submit_button(f"ENTER {role_label} DASHBOARD", use_container_width=True)
-            
-            if submit:
-                # YOUR ACTUAL LOGIC HERE
-                if login_user(user.strip().lower(), pwd, expected_role=role_label.lower()):
-                    st.session_state.role = role_label.lower()
-                    st.toast(f"Access Granted: Welcome {role_label}!", icon="👑")
-                    # st.switch_page(redirect_page) # Uncomment this
-                else:
-                    st.error("Access Denied: Invalid Credentials")
-
-    with tab_owner:
-        render_elegant_login("Owner", "pages/👤_Admin_Management.py")
-    
-    with tab_admin:
-        render_elegant_login("Admin", "pages/👤_Admin_Management.py")
-        
-    with tab_client:
-        render_elegant_login("Client", "pages/🏠_Dashboard.py")
-
+    if st.button("Close Journey", use_container_width=True):
+        st.session_state.show_full_journey = False
+        st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
-
-    # Footer link for support - Gold instead of grey
-    st.markdown("""
-        <p style='text-align:center; margin-top:25px; font-size:0.75rem; color:#FFD700; opacity:0.5;'>
-            Forgot access? Contact the KMFX Support Team.
-        </p>
-    """, unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
 # 2. WHY CHOOSE KMFX EA? (FULL GRID)
@@ -1053,43 +996,127 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
+# 🎨 CUSTOM CSS FOR PREMIUM UI (FIXED)
+# ────────────────────────────────────────────────
+st.markdown("""
+<style>
+    /* 1. Main Background - Deep Dark Blue/Black */
+    .stApp {
+        background-color: #0A0A12;
+        color: #FFFFFF;
+    }
+
+    /* 2. Login Container - Frosted Glass Effect */
+    .login-box {
+        background: rgba(20, 20, 35, 0.5);
+        border: 1px solid rgba(255, 215, 0, 0.2);
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+    }
+
+    /* 3. Titles - Golden Glow */
+    h1 {
+        color: #FFD700 !important;
+        text-shadow: 0 0 15px rgba(255,215,0,0.5);
+        font-family: 'Helvetica Neue', sans-serif;
+    }
+
+    /* 4. Subtitles - Gold with opacity, no grey */
+    .golden-subtitle {
+        color: #FFD700;
+        opacity: 0.8;
+        letter-spacing: 3px;
+        font-weight: 300;
+        font-size: 0.85rem;
+    }
+
+    /* 5. Input Fields Styling */
+    .stTextInput>div>div>input {
+        background-color: rgba(255, 255, 255, 0.03) !important;
+        color: white !important;
+        border: 1px solid rgba(255, 215, 0, 0.3) !important;
+        border-radius: 8px;
+    }
+
+    /* 6. Submit Button - Solid Gold */
+    div.stButton > button {
+        background: linear-gradient(45deg, #B8860B, #FFD700) !important;
+        color: #000000 !important;
+        border: none !important;
+        border-radius: 8px !important;
+        font-weight: bold !important;
+        transition: all 0.3s ease;
+    }
+
+    div.stButton > button:hover {
+        transform: scale(1.02);
+        box-shadow: 0 0 15px rgba(255,215,0,0.4);
+    }
+    
+    /* 7. Tabs Styling */
+    [data-testid="stTabs"] button {
+        color: #FFD700 !important;
+        opacity: 0.7;
+        font-weight: bold;
+    }
+    
+    [data-testid="stTabs"] button[aria-selected="true"] {
+        opacity: 1 !important;
+        border-bottom: 2px solid #FFD700 !important;
+    }
+
+</style>
+""", unsafe_allow_html=True)
+
+# ────────────────────────────────────────────────
 # LOGIN SECTION UI
 # ────────────────────────────────────────────────
-st.markdown("<div style='margin-top: 6rem;'></div>", unsafe_allow_html=True)
+st.markdown("<div style='margin-top: 4rem;'></div>", unsafe_allow_html=True)
 
 # Header with Glow Effect
 st.markdown("""
     <div style='text-align:center;'>
-        <h1 style='color: #FFD700; text-shadow: 0 0 20px rgba(255,215,0,0.5); margin-bottom:0;'>MEMBER ACCESS</h1>
-        <p style='opacity:0.7; letter-spacing: 2px;'>SECURE GATEWAY TO THE EMPIRE</p>
+        <h1>MEMBER ACCESS</h1>
+        <p class='golden-subtitle'>SECURE GATEWAY TO THE EMPIRE</p>
     </div>
 """, unsafe_allow_html=True)
+
+st.markdown("<br>", unsafe_allow_html=True)
 
 # Main Login Container
 col_l, col_mid, col_r = st.columns([1, 2, 1])
 
 with col_mid:
+    # Applying the styled container
     st.markdown("<div class='login-box'>", unsafe_allow_html=True)
     
     # Elegant Tabs for Roles
     tab_owner, tab_admin, tab_client = st.tabs(["👑 OWNER", "🛠️ ADMIN", "👥 CLIENT"])
 
+    # --- Dummy function for context, remove this if you have it elsewhere ---
+    def login_user(u, p, expected_role): return True 
+
     def render_elegant_login(role_label, redirect_page):
-        st.markdown(f"<p style='text-align:center; font-size:0.9rem; opacity:0.6; margin-bottom:20px;'>Authorized {role_label} Entry Only</p>", unsafe_allow_html=True)
+        # Role sub-label - Gold instead of grey
+        st.markdown(f"<p style='text-align:center; font-size:0.8rem; color:#FFD700; opacity:0.6; margin-bottom:15px; margin-top:-10px;'>Authorized {role_label} Entry Only</p>", unsafe_allow_html=True)
         
         with st.form(key=f"login_{role_label.lower()}"):
-            user = st.text_input("Username", key=f"u_{role_label}")
-            pwd = st.text_input("Password", type="password", key=f"p_{role_label}")
+            user = st.text_input("Username", key=f"u_{role_label}", placeholder="Enter Username")
+            pwd = st.text_input("Password", type="password", key=f"p_{role_label}", placeholder="Enter Password")
             
-            st.markdown("<div style='height:15px;'></div>", unsafe_allow_html=True)
+            st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
             
             submit = st.form_submit_button(f"ENTER {role_label} DASHBOARD", use_container_width=True)
             
             if submit:
+                # YOUR ACTUAL LOGIC HERE
                 if login_user(user.strip().lower(), pwd, expected_role=role_label.lower()):
                     st.session_state.role = role_label.lower()
                     st.toast(f"Access Granted: Welcome {role_label}!", icon="👑")
-                    st.switch_page(redirect_page)
+                    # st.switch_page(redirect_page) # Uncomment this
                 else:
                     st.error("Access Denied: Invalid Credentials")
 
@@ -1104,9 +1131,9 @@ with col_mid:
 
     st.markdown("</div>", unsafe_allow_html=True)
 
-    # Footer link for support
+    # Footer link for support - Gold instead of grey
     st.markdown("""
-        <p style='text-align:center; margin-top:25px; font-size:0.8rem; opacity:0.5;'>
+        <p style='text-align:center; margin-top:25px; font-size:0.75rem; color:#FFD700; opacity:0.4;'>
             Forgot access? Contact the KMFX Support Team.
         </p>
     """, unsafe_allow_html=True)
