@@ -996,62 +996,113 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# LOGIN SECTION UI
+# LOGIN SECTION UI - Clean White + Black High Contrast
 # ────────────────────────────────────────────────
-st.markdown("<div style='margin-top: 6rem;'></div>", unsafe_allow_html=True)
 
-# Header with Glow Effect
+st.markdown("<div style='margin-top: 5rem;'></div>", unsafe_allow_html=True)
+
+# Header
 st.markdown("""
     <div style='text-align:center;'>
-        <h1 style='color: #FFD700; text-shadow: 0 0 20px rgba(255,215,0,0.5); margin-bottom:0;'>MEMBER ACCESS</h1>
-        <p style='opacity:0.7; letter-spacing: 2px;'>SECURE GATEWAY TO THE EMPIRE</p>
+        <h1 style='
+            color: #1a1a1a;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 0.4rem;
+        '>MEMBER ACCESS</h1>
+        <p style='
+            color: #555;
+            font-size: 0.95rem;
+            letter-spacing: 1.2px;
+            margin-top: 0;
+        '>SECURE ENTRY</p>
     </div>
 """, unsafe_allow_html=True)
 
-# Main Login Container
-col_l, col_mid, col_r = st.columns([1, 2, 1])
-
+# Center column
+col_l, col_mid, col_r = st.columns([1, 2.8, 1])
 with col_mid:
-    st.markdown("<div class='login-box'>", unsafe_allow_html=True)
-    
-    # Elegant Tabs for Roles
-    tab_owner, tab_admin, tab_client = st.tabs(["👑 OWNER", "🛠️ ADMIN", "👥 CLIENT"])
 
-    def render_elegant_login(role_label, redirect_page):
-        st.markdown(f"<p style='text-align:center; font-size:0.9rem; opacity:0.6; margin-bottom:20px;'>Authorized {role_label} Entry Only</p>", unsafe_allow_html=True)
-        
-        with st.form(key=f"login_{role_label.lower()}"):
-            user = st.text_input("Username", key=f"u_{role_label}")
-            pwd = st.text_input("Password", type="password", key=f"p_{role_label}")
-            
-            st.markdown("<div style='height:15px;'></div>", unsafe_allow_html=True)
-            
-            submit = st.form_submit_button(f"ENTER {role_label} DASHBOARD", use_container_width=True)
-            
+    # White login card with very subtle shadow
+    st.markdown("""
+        <div style="
+            background: white;
+            border-radius: 16px;
+            padding: 2.2rem 2rem;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.08);
+            border: 1px solid #eaeaea;
+        ">
+    """, unsafe_allow_html=True)
+
+    # Tabs – cleaner look
+    tab_owner, tab_admin, tab_client = st.tabs(["OWNER", "ADMIN", "CLIENT"])
+
+    def render_clean_login(role_label, redirect_page):
+        st.markdown(f"""
+            <p style="
+                text-align: center;
+                color: #777;
+                font-size: 0.88rem;
+                margin: 0 0 1.6rem 0;
+            ">Authorized {role_label} Access Only</p>
+        """, unsafe_allow_html=True)
+
+        with st.form(key=f"login_{role_label.lower()}", clear_on_submit=False):
+            # ── Username field ──
+            st.markdown("<div style='margin-bottom: 1.1rem;'>", unsafe_allow_html=True)
+            user = st.text_input(
+                "Username",
+                placeholder="Enter username",
+                key=f"u_{role_label}",
+                label_visibility="collapsed"
+            )
+            st.markdown("</div>", unsafe_allow_html=True)
+
+            # ── Password field ──
+            st.markdown("<div style='margin-bottom: 1.4rem;'>", unsafe_allow_html=True)
+            pwd = st.text_input(
+                "Password",
+                type="password",
+                placeholder="Enter password",
+                key=f"p_{role_label}",
+                label_visibility="collapsed"
+            )
+            st.markdown("</div>", unsafe_allow_html=True)
+
+            # Submit button – full width, strong contrast
+            submit = st.form_submit_button(
+                f"LOGIN AS {role_label}",
+                use_container_width=True,
+                type="primary"
+            )
+
             if submit:
                 if login_user(user.strip().lower(), pwd, expected_role=role_label.lower()):
                     st.session_state.role = role_label.lower()
-                    st.toast(f"Access Granted: Welcome {role_label}!", icon="👑")
+                    st.toast(f"Welcome back, {role_label}", icon="✔️")
                     st.switch_page(redirect_page)
                 else:
-                    st.error("Access Denied: Invalid Credentials")
+                    st.error("Invalid username or password")
 
     with tab_owner:
-        render_elegant_login("Owner", "pages/👤_Admin_Management.py")
-    
+        render_clean_login("OWNER", "pages/👤_Admin_Management.py")
+
     with tab_admin:
-        render_elegant_login("Admin", "pages/👤_Admin_Management.py")
-        
+        render_clean_login("ADMIN", "pages/👤_Admin_Management.py")
+
     with tab_client:
-        render_elegant_login("Client", "pages/🏠_Dashboard.py")
+        render_clean_login("CLIENT", "pages/🏠_Dashboard.py")
 
-    st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)   # close card
 
-    # Footer link for support
+    # Tiny support text at bottom
     st.markdown("""
-        <p style='text-align:center; margin-top:25px; font-size:0.8rem; opacity:0.5;'>
-            Forgot access? Contact the KMFX Support Team.
-        </p>
+        <div style='text-align:center; margin-top: 1.8rem;'>
+            <p style='
+                color: #888;
+                font-size: 0.82rem;
+            '>Forgot access? Contact support</p>
+        </div>
     """, unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
