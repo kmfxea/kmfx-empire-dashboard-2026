@@ -671,258 +671,146 @@ st.write("""
 st.markdown("</div>", unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# FULL TRADING JOURNEY EXPANDER – YOUR ORIGINAL LONG STORY FULLY RESTORED + FIXED IMAGES
+# 🎨 CUSTOM CSS FOR PREMIUM UI
 # ────────────────────────────────────────────────
-if "show_full_journey" not in st.session_state:
-    st.session_state.show_full_journey = False
+st.markdown("""
+<style>
+    /* Main Background - Deep Dark Blue */
+    .stApp {
+        background-color: #050509;
+        color: #E0E0E0;
+    }
 
-st.markdown(
-    "<div class='glass-card' style='text-align:center; margin:5rem auto; padding:3rem; max-width:1100px; border-radius:24px;'>",
-    unsafe_allow_html=True,
-)
+    /* Container Styling - Frosted Glass Effect */
+    .login-box {
+        background: rgba(10, 10, 20, 0.6);
+        border: 1px solid rgba(255, 215, 0, 0.2);
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+    }
 
-st.markdown(f"<h2 class='gold-text'>Want the Full Story Behind KMFX EA?</h2>", unsafe_allow_html=True)
-st.markdown(
-    "<p style='font-size:1.4rem; opacity:0.9; line-height:1.6;'>From OFW in Saudi to building an automated empire — built by faith, lessons, and persistence.</p>",
-    unsafe_allow_html=True,
-)
+    /* Titles */
+    h1 {
+        color: #FFD700 !important;
+        font-family: 'Helvetica Neue', sans-serif;
+        text-shadow: 0 0 15px rgba(255,215,0,0.4);
+    }
 
-if st.button("👑 Read My Full Trading Journey (2014–2026)", type="primary", use_container_width=True):
-    st.session_state.show_full_journey = True
-    st.rerun()
+    /* Subtitles - Golden Accent instead of Grey */
+    .subtitle {
+        color: #FFD700;
+        opacity: 0.8;
+        letter-spacing: 3px;
+        font-weight: 300;
+        font-size: 0.9rem;
+    }
 
-if st.session_state.get("show_full_journey", False):
-    st.markdown(
-        f"<div class='glass-card' style='padding:3rem; margin:3rem auto; max-width:1100px; border-left:6px solid {accent_gold}; border-radius:16px;'>",
-        unsafe_allow_html=True,
-    )
+    /* Input Fields Styling */
+    .stTextInput>div>div>input {
+        background-color: rgba(255, 255, 255, 0.05) !important;
+        color: white !important;
+        border: 1px solid rgba(255, 215, 0, 0.3) !important;
+        border-radius: 10px;
+    }
 
-    st.markdown(
-        "<h2 class='gold-text' style='text-align:center;'>My Trading Journey: From 2014 to KMFX EA 2026</h2>",
-        unsafe_allow_html=True,
-    )
+    /* Submit Button - Solid Gold */
+    div.stButton > button {
+        background: linear-gradient(45deg, #B8860B, #FFD700);
+        color: #000000;
+        border: none;
+        border-radius: 10px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        margin-top: 10px;
+    }
 
-    st.markdown(
-        "<p style='text-align:center; font-style:italic; font-size:1.3rem; opacity:0.9;'>"
-        "Ako si <strong>Mark Jeff Blando</strong> (Codename: <em>Kingminted</em>) — "
-        "simula 2014 hanggang ngayon 2026, pinagdaanan ko ang lahat: losses, wins, scams, pandemic gains, "
-        "at sa wakas, pagbuo ng sariling automated system.<br><br>"
-        "Ito ang kwento ko — <strong>built by faith, shared for generations</strong>.</p>",
-        unsafe_allow_html=True,
-    )
+    div.stButton > button:hover {
+        transform: scale(1.02);
+        box-shadow: 0 0 20px rgba(255,215,0,0.5);
+    }
+    
+    /* Tabs Styling */
+    [data-testid="stTabs"] button {
+        color: #FFD700 !important;
+        font-weight: bold;
+    }
+    
+    [data-testid="stTabs"] button[aria-selected="true"] {
+        border-bottom: 2px solid #FFD700 !important;
+    }
 
-    # 2014: The Beginning in Saudi Arabia
-    st.markdown(
-        f"<h3 style='color:{accent_gold}; text-align:center; font-size:1.8rem; margin:2rem 0;'>🌍 2014: The Beginning in Saudi Arabia</h3>",
-        unsafe_allow_html=True,
-    )
-    col1, col2 = st.columns(2)
-    with col1:
-        resized1 = make_same_size("assets/saudi1.jpg", target_width=800, target_height=700)
-        if resized1:
-            st.image(resized1, use_column_width=True, caption="Team Saudi Boys 🇸🇦")
-        else:
-            st.image("assets/saudi1.jpg", use_column_width=True, caption="Team Saudi Boys 🇸🇦")
-    with col2:
-        resized2 = make_same_size("assets/saudi2.jpg", target_width=800, target_height=700)
-        if resized2:
-            st.image(resized2, use_column_width=True, caption="Selfie with STC Cap")
-        else:
-            st.image("assets/saudi2.jpg", use_column_width=True, caption="Selfie with STC Cap")
-    st.write("""
-Noong 2014, nandoon ako sa Saudi Arabia bilang Telecom Technician sa STC.
-Everyday routine: work sa site, init ng desert... pero tuwing **Friday — off day ko** — may oras akong mag-explore online.
-Nag-start ako mag-search ng ways para magdagdag ng income. Alam mo naman OFW life: padala sa pamilya, savings, pero gusto ko rin ng something para sa future.
-Dun ko natuklasan ang **Philippine stock market**. Nagbukas ako ng account sa First Metro Sec, nag-download ng app, nagbasa ng news, PSE index... at sinubukan lahat ng basic — buy low sell high, tips sa forums, trial-and-error.
-**Emotions? Grabe.** Sobrang saya kapag green — parang nanalo sa lotto! Pero kapag red? Lungkot talaga, "sayang 'yung overtime ko."
-Paulit-ulit 'yun — wins, losses, lessons. Hindi pa seryoso noon, more like hobby lang habang nasa abroad... pero dun talaga nagsimula ang passion ko sa trading.
-Around 2016, naging close friends ko sina Ramil, Mheg, at Christy. Nagsha-share kami ng ideas sa chat, stock picks, charts kahit liblib na oras.
-Yun 'yung simula ng **"team" feeling** — hindi pa pro, pero may spark na.
-*Little did I know, 'yung mga simpleng usapan na 'yun ang magiging foundation ng KMFX EA years later.*
-    """)
+</style>
+""", unsafe_allow_html=True)
 
-    # 2017: Umuwi sa Pinas at Crypto Era
-    st.markdown(
-        f"<h3 style='color:{accent_gold}; text-align:center; font-size:1.8rem; margin:2rem 0;'>🏠 2017: Umuwi sa Pinas at Crypto Era</h3>",
-        unsafe_allow_html=True,
-    )
-    col1, col2 = st.columns(2)
-    with col1:
-        resized1 = make_same_size("assets/family1.jpg", target_width=800, target_height=700)
-        if resized1:
-            st.image(resized1, use_column_width=True, caption="Date with her ❤️")
-        else:
-            st.image("assets/family1.jpg", use_column_width=True, caption="Date with her ❤️")
-    with col2:
-        resized2 = make_same_size("assets/family2.jpg", target_width=800, target_height=700)
-        if resized2:
-            st.image(resized2, use_column_width=True, caption="Selfie My Family 👨‍👩‍👧")
-        else:
-            st.image("assets/family2.jpg", use_column_width=True, caption="Selfie My Family 👨‍👩‍👧")
-    st.write("""
-Noong 2017, desisyon ko na — umuwi na ako sa Pilipinas para mag-start ng family life.
-Matagal na rin akong OFW, at 30+ na si misis 😊. Gusto ko nang makasama sila araw-araw, hindi na video call lang tuwing weekend.
-Yung feeling ng pagbalik? Airport pickup, yakap ng pamilya, settle sa Quezon City. **Parang fresh start** — walang desert heat, puro quality time na.
-Pero dun din sumabog ang **crypto wave**! Bitcoin skyrocket hanggang ₱1M+ — grabe 'yung hype!
-From stock learnings ko sa PSE, na-curious ako agad. 24/7 market kasi — mas madali mag-trade kahit busy sa bahay.
-Ginamit ko 'yung basics: charts, news, patterns. Pero newbie pa rin talaga ako sa crypto.
-Na-scam ako sa Auroramining (fake cloud mining). Sinubukan futures — leverage, high risk, manalo bigla tapos natatalo rin agad.
-Walang solid strategy pa, walang discipline. Emosyon ang nagdedesisyon: FOMO kapag pump, panic kapag dump.
-Paulit-ulit na cycle ng highs at lows... pero dun talaga natuto ako ng malalim na lessons sa volatility at risk.
-Yung panahon na 'yun: mix ng saya sa family life at excitement (at sakit) sa crypto world.
-Hindi pa stable, pero 'yung fire sa trading? **Lalong lumakas.**
-*Little did I know, 'yung mga losses at scams na 'yun ang magiging stepping stones para sa KMFX EA — natuto akong tanggalin emotions at mag-build ng system.*
-    """)
+# ────────────────────────────────────────────────
+# LOGIN SECTION UI
+# ────────────────────────────────────────────────
+st.markdown("<div style='margin-top: 4rem;'></div>", unsafe_allow_html=True)
 
-    # 2019–2021: Pandemic Days & Biggest Lesson
-    st.markdown(
-        f"<h3 style='color:{accent_gold}; text-align:center; font-size:1.8rem; margin:2rem 0;'>🦠 2019–2021: Pandemic Days & Biggest Lesson</h3>",
-        unsafe_allow_html=True,
-    )
-    col1, col2 = st.columns(2)
-    with col1:
-        resized1 = make_same_size("assets/klever1.jpg", target_width=800, target_height=700)
-        if resized1:
-            st.image(resized1, use_column_width=True, caption="Part of Gain almost 20k$+ Max gain 🔥")
-        else:
-            st.image("assets/klever1.jpg", use_column_width=True, caption="Part of Gain almost 20k$+ Max gain 🔥")
-    with col2:
-        resized2 = make_same_size("assets/klever2.jpg", target_width=800, target_height=700)
-        if resized2:
-            st.image(resized2, use_column_width=True, caption="Klever Exchange Set Buy Sell Instant")
-        else:
-            st.image("assets/klever2.jpg", use_column_width=True, caption="Klever Exchange Set Buy Sell Instant")
-    st.write("""
-Noong 2019 hanggang 2021, dumating ang pandemic — isa sa pinakamahaba sa mundo.
-Lahat kami nasa bahay, walang labas, puro quarantine.
-Pero sa gitna ng gulo, natagpuan ko 'yung **Klever token (KLV)**. May feature na "Ninja Move" — set buy order tapos instant sell sa target. Parang automated quick flips.
-Ginawa ko 'yun religiously — sobrang laki ng gains! Kasama ko si Michael, nag-team up kami, nag-celebrate sa chat kapag green. Feeling jackpot!
-Yung bull run noon, parang lahat may pera. Sobrang saya — "finally, may solid way na 'to."
-Pero bigla, glitch sa platform — half lang ng profits 'yung nabalik. Sakit sa puso 'yun.
-Pero dun dumating ang **pinakamalaking realization**: May pera talaga sa market kung may right strategy + discipline + emotion control. Hindi sa luck o hype.
-**90% ng traders natatalo** hindi dahil sa strategy — kundi sa emotions: greed, fear, FOMO, revenge trading.
-Ako mismo, nahuhulog pa rin noon sa ganun.
-After 2021 crash (BTC 60k → 20k) — market bloodbath. Dun ako nag-decide: lumayo muna, mag-reflect, mag-heal, mag-build ng matibay na foundation.
-Yung pandemic days: family time sa bahay, pero dinagdagan ng market lessons na magiging key sa KMFX EA later.
-*From home setups, laptop sa kama, hanggang sa pag-unawa na automation + no-emotion ang susi.*
-    """)
+# Header with Glow Effect
+st.markdown("""
+    <div style='text-align:center;'>
+        <h1>MEMBER ACCESS</h1>
+        <p class='subtitle'>SECURE GATEWAY TO THE EMPIRE</p>
+    </div>
+""", unsafe_allow_html=True)
 
-    # 2024–2025: The Professional Shift
-    st.markdown(
-        f"<h3 style='color:{accent_gold}; text-align:center; font-size:1.8rem; margin:2rem 0;'>🤖 2024–2025: The Professional Shift</h3>",
-        unsafe_allow_html=True,
-    )
-    col1, col2 = st.columns(2)
-    with col1:
-        resized1 = make_same_size("assets/ai1.jpg", target_width=800, target_height=700)
-        if resized1:
-            st.image(resized1, use_column_width=True, caption="New Tech Found")
-        else:
-            st.image("assets/ai1.jpg", use_column_width=True, caption="New Tech Found")
-    with col2:
-        resized2 = make_same_size("assets/ai2.jpg", target_width=800, target_height=700)
-        if resized2:
-            st.image(resized2, use_column_width=True, caption="Using Old Laptop to Build")
-        else:
-            st.image("assets/ai2.jpg", use_column_width=True, caption="Using Old Laptop to Build")
-    st.write("""
-Noong 2024-2025, biglang nauso ang AI sa lahat — news, work, trading.
-Nakita ko 'yung potential: bakit hindi gamitin 'yung tech para tanggalin 'yung human weaknesses? Emotions, late decisions, overtrading — lahat nawawala sa automation.
-Dun ko naisip: oras na gumawa ng sariling **Expert Advisor (EA)**.
-Buong halos isang taon akong nag-self-study ng **MQL5 programming**. Gabi-gabi, after work at family time — nakaupo sa laptop, nagbabasa, nanonood tutorials, nagko-code, nagde-debug.
-Pinagsama ko lahat ng natutunan mula 2014: stock basics, crypto volatility, pandemic lessons, Klever moves, at lahat ng sakit sa manual trading.
-Narealize ko 'yung **formula ng professional trader**:
-- Solid strategy (entries, exits, indicators)
-- Iron-clad risk management (1% risk per trade, no martingale)
-- Psychology — discipline, patience, trust the system
-Goal ko: maging ganun — hindi na trial-and-error trader, kundi consistent, emotion-free pro.
-**January 2025: Breakthrough!** Fully working na 'yung KMFX EA — focused sa Gold (XAUUSD).
-Agad testing kasama sina Weber (super active), Jai, Sheldon, Ramil. Real-time results, adjustments.
-End of 2025: Pioneer community formed — mga believers na sumali at naging part ng journey.
-*Parang rebirth. Mula sa losses dati, hanggang sa tool na makakatulong sa marami. Built by faith, fueled by persistence.*
-    """)
+st.markdown("<br>", unsafe_allow_html=True)
 
-    # 2025–2026: FTMO Challenges & Comeback
-    st.markdown(
-        f"<h3 style='color:{accent_gold}; text-align:center; font-size:1.8rem; margin:2rem 0;'>🏆 2025–2026: FTMO Challenges & Comeback</h3>",
-        unsafe_allow_html=True,
-    )
-    col1, col2 = st.columns(2)
-    with col1:
-        resized1 = make_same_size("assets/ftmo.jpeg", target_width=800, target_height=700)
-        if resized1:
-            st.image(resized1, use_column_width=True, caption="Passed Phase 1 in 13 days! 🎉")
-        else:
-            st.image("assets/ftmo.jpeg", use_column_width=True, caption="Passed Phase 1 in 13 days! 🎉")
-    with col2:
-        resized2 = make_same_size("assets/ongoing.jpg", target_width=800, target_height=700)
-        if resized2:
-            st.image(resized2, use_column_width=True, caption="Current challenge - full trust mode 🚀")
-        else:
-            st.image("assets/ongoing.jpg", use_column_width=True, caption="Current challenge - full trust mode 🚀")
-    st.write("""
-First Taste of Pro Validation – Then the Hard Reset
-End of 2025 hanggang 2026: pinaka-exciting at challenging phase.
-After 1 year ng building at testing, ready na subukan sa **FTMO** — goal: funded account, live market proof.
-December 13, 2025: Start ng first 10K Challenge.
-December 26, 2025: **PASSED Phase 1 in 13 days!** +10.41% gain, 2.98% max DD.
-Stats:
-- $10,000 → $11,040.58
-- 118 trades (longs only)
-- 52% win rate, +12,810 pips
-- Profit factor 1.52
-- Avg duration ~43 minutes
-"Yes, it works!" moment — share agad sa group, salamat sa testers.
-Pero Phase 2: Failed — emotional intervention. Nag-adjust manually out of fear.
-Key insight: Untouched sim run = +$2,000 more — madali sanang na-pass.
-**Big lesson**: Emotions ang tunay na kalaban. Full trust lang — run and forget mode. Surrender sa process, tulad ng surrender sa God's plan.
-January 2026: New challenge — 100% hands-off, pure automated.
-Confidence high. Comeback stronger — para sa legacy, community, financial freedom.
-*Built by faith, tested by fire.*
-    """)
+# Main Login Container
+col_l, col_mid, col_r = st.columns([1, 1.5, 1])
 
-    # Realization & Future Vision – VISION IMAGE FULL SIZE, NO RESIZE
-    st.markdown(
-        f"<h3 style='color:{accent_gold}; text-align:center; font-size:1.8rem; margin:2rem 0;'>✨ Realization & Future Vision</h3>",
-        unsafe_allow_html=True,
-    )
-    try:
-        vision_image = Image.open("assets/journey_vision.jpg")
-        st.image(
-            vision_image,
-            use_column_width=True,
-            caption="Built by Faith, Shared for Generations 👑"
-        )
-    except Exception as e:
-        st.warning(f"Vision image not found or failed to load: {str(e)}")
-        st.info("Image: assets/journey_vision.jpg")
-        st.image("assets/journey_vision.jpg", use_column_width=True, caption="Built by Faith, Shared for Generations 👑")
+with col_mid:
+    # Applying the styled container
+    st.markdown("<div class='login-box'>", unsafe_allow_html=True)
+    
+    # Elegant Tabs for Roles
+    tab_owner, tab_admin, tab_client = st.tabs(["👑 OWNER", "🛠️ ADMIN", "👥 CLIENT"])
 
-    st.write("""
-Mula noong 2014, ramdam na ramdam ko na may malaking plano si Lord para sa akin.
-Hindi aksidente 'yung involvement ko sa market — stocks, crypto, gold, highs at lows.
-Lahat ng losses, scams, emotional rollercoasters, pandemic gains, FTMO failures... part ng preparation.
-Purpose ko na 'to — hindi lang para sa sarili ko, kundi para makatulong sa marami na nahihirapan pero may pangarap na financially free.
-Kaya binuo ko ang **KMFX EA** — tool na tanggalin ang human error, bigyan ng consistency, at patunayan na kaya maging pro trader kahit nagsimula sa zero.
-*Built by faith, tested by fire, ready na ibahagi.*
-**Dream ko ngayon**:
-- KMFX EA Foundations — full guide mula basics hanggang pro level
-- Para maiwasan ng baguhan ang sakit ng ulo na pinagdaanan ko
-- Passive income para sa lahat na sumali at naniwala
-- Financial freedom — mas maraming oras sa Panginoon, pamilya, peaceful life
-Hindi 'to tungkol sa pera lang. Tungkol sa **legacy** — makapag-iwan ng something na makakatulong sa susunod na henerasyon.
-Na patunayan na kapag may faith, discipline, at tamang system — kaya baguhin ang buhay.
-**KMFX EA: Built by Faith, Shared for Generations**
-— Mark Jeff Blando | Founder & Developer | 2014 hanggang ngayon 👑
-    """)
+    # Placeholder for your actual login logic function
+    def login_user(u, p, expected_role): return True 
+
+    def render_elegant_login(role_label, redirect_page):
+        # Changed opacity to golden hue instead of just dull grey
+        st.markdown(f"<p style='text-align:center; font-size:0.8rem; color:#FFD700; opacity:0.7; margin-bottom:15px;'>Authorized {role_label} Entry Only</p>", unsafe_allow_html=True)
+        
+        with st.form(key=f"login_{role_label.lower()}"):
+            user = st.text_input("Username", key=f"u_{role_label}", placeholder="Enter Username")
+            pwd = st.text_input("Password", type="password", key=f"p_{role_label}", placeholder="Enter Password")
+            
+            st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
+            
+            submit = st.form_submit_button(f"ENTER {role_label} DASHBOARD", use_container_width=True)
+            
+            if submit:
+                # YOUR ACTUAL LOGIC HERE
+                if login_user(user.strip().lower(), pwd, expected_role=role_label.lower()):
+                    st.session_state.role = role_label.lower()
+                    st.toast(f"Access Granted: Welcome {role_label}!", icon="👑")
+                    # st.switch_page(redirect_page) # Uncomment this
+                else:
+                    st.error("Access Denied: Invalid Credentials")
+
+    with tab_owner:
+        render_elegant_login("Owner", "pages/👤_Admin_Management.py")
+    
+    with tab_admin:
+        render_elegant_login("Admin", "pages/👤_Admin_Management.py")
+        
+    with tab_client:
+        render_elegant_login("Client", "pages/🏠_Dashboard.py")
 
     st.markdown("</div>", unsafe_allow_html=True)
 
-    if st.button("Close Journey", use_container_width=True):
-        st.session_state.show_full_journey = False
-        st.rerun()
-
-st.markdown("</div>", unsafe_allow_html=True)
+    # Footer link for support - Gold instead of grey
+    st.markdown("""
+        <p style='text-align:center; margin-top:25px; font-size:0.75rem; color:#FFD700; opacity:0.5;'>
+            Forgot access? Contact the KMFX Support Team.
+        </p>
+    """, unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
 # 2. WHY CHOOSE KMFX EA? (FULL GRID)
@@ -1165,113 +1053,62 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# LOGIN SECTION UI - Clean White + Black High Contrast
+# LOGIN SECTION UI
 # ────────────────────────────────────────────────
+st.markdown("<div style='margin-top: 6rem;'></div>", unsafe_allow_html=True)
 
-st.markdown("<div style='margin-top: 5rem;'></div>", unsafe_allow_html=True)
-
-# Header
+# Header with Glow Effect
 st.markdown("""
     <div style='text-align:center;'>
-        <h1 style='
-            color: #1a1a1a;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            margin-bottom: 0.4rem;
-        '>MEMBER ACCESS</h1>
-        <p style='
-            color: #555;
-            font-size: 0.95rem;
-            letter-spacing: 1.2px;
-            margin-top: 0;
-        '>SECURE ENTRY</p>
+        <h1 style='color: #FFD700; text-shadow: 0 0 20px rgba(255,215,0,0.5); margin-bottom:0;'>MEMBER ACCESS</h1>
+        <p style='opacity:0.7; letter-spacing: 2px;'>SECURE GATEWAY TO THE EMPIRE</p>
     </div>
 """, unsafe_allow_html=True)
 
-# Center column
-col_l, col_mid, col_r = st.columns([1, 2.8, 1])
+# Main Login Container
+col_l, col_mid, col_r = st.columns([1, 2, 1])
+
 with col_mid:
+    st.markdown("<div class='login-box'>", unsafe_allow_html=True)
+    
+    # Elegant Tabs for Roles
+    tab_owner, tab_admin, tab_client = st.tabs(["👑 OWNER", "🛠️ ADMIN", "👥 CLIENT"])
 
-    # White login card with very subtle shadow
-    st.markdown("""
-        <div style="
-            background: white;
-            border-radius: 16px;
-            padding: 2.2rem 2rem;
-            box-shadow: 0 6px 24px rgba(0,0,0,0.08);
-            border: 1px solid #eaeaea;
-        ">
-    """, unsafe_allow_html=True)
-
-    # Tabs – cleaner look
-    tab_owner, tab_admin, tab_client = st.tabs(["OWNER", "ADMIN", "CLIENT"])
-
-    def render_clean_login(role_label, redirect_page):
-        st.markdown(f"""
-            <p style="
-                text-align: center;
-                color: #777;
-                font-size: 0.88rem;
-                margin: 0 0 1.6rem 0;
-            ">Authorized {role_label} Access Only</p>
-        """, unsafe_allow_html=True)
-
-        with st.form(key=f"login_{role_label.lower()}", clear_on_submit=False):
-            # ── Username field ──
-            st.markdown("<div style='margin-bottom: 1.1rem;'>", unsafe_allow_html=True)
-            user = st.text_input(
-                "Username",
-                placeholder="Enter username",
-                key=f"u_{role_label}",
-                label_visibility="collapsed"
-            )
-            st.markdown("</div>", unsafe_allow_html=True)
-
-            # ── Password field ──
-            st.markdown("<div style='margin-bottom: 1.4rem;'>", unsafe_allow_html=True)
-            pwd = st.text_input(
-                "Password",
-                type="password",
-                placeholder="Enter password",
-                key=f"p_{role_label}",
-                label_visibility="collapsed"
-            )
-            st.markdown("</div>", unsafe_allow_html=True)
-
-            # Submit button – full width, strong contrast
-            submit = st.form_submit_button(
-                f"LOGIN AS {role_label}",
-                use_container_width=True,
-                type="primary"
-            )
-
+    def render_elegant_login(role_label, redirect_page):
+        st.markdown(f"<p style='text-align:center; font-size:0.9rem; opacity:0.6; margin-bottom:20px;'>Authorized {role_label} Entry Only</p>", unsafe_allow_html=True)
+        
+        with st.form(key=f"login_{role_label.lower()}"):
+            user = st.text_input("Username", key=f"u_{role_label}")
+            pwd = st.text_input("Password", type="password", key=f"p_{role_label}")
+            
+            st.markdown("<div style='height:15px;'></div>", unsafe_allow_html=True)
+            
+            submit = st.form_submit_button(f"ENTER {role_label} DASHBOARD", use_container_width=True)
+            
             if submit:
                 if login_user(user.strip().lower(), pwd, expected_role=role_label.lower()):
                     st.session_state.role = role_label.lower()
-                    st.toast(f"Welcome back, {role_label}", icon="✔️")
+                    st.toast(f"Access Granted: Welcome {role_label}!", icon="👑")
                     st.switch_page(redirect_page)
                 else:
-                    st.error("Invalid username or password")
+                    st.error("Access Denied: Invalid Credentials")
 
     with tab_owner:
-        render_clean_login("OWNER", "pages/👤_Admin_Management.py")
-
+        render_elegant_login("Owner", "pages/👤_Admin_Management.py")
+    
     with tab_admin:
-        render_clean_login("ADMIN", "pages/👤_Admin_Management.py")
-
+        render_elegant_login("Admin", "pages/👤_Admin_Management.py")
+        
     with tab_client:
-        render_clean_login("CLIENT", "pages/🏠_Dashboard.py")
+        render_elegant_login("Client", "pages/🏠_Dashboard.py")
 
-    st.markdown("</div>", unsafe_allow_html=True)   # close card
+    st.markdown("</div>", unsafe_allow_html=True)
 
-    # Tiny support text at bottom
+    # Footer link for support
     st.markdown("""
-        <div style='text-align:center; margin-top: 1.8rem;'>
-            <p style='
-                color: #888;
-                font-size: 0.82rem;
-            '>Forgot access? Contact support</p>
-        </div>
+        <p style='text-align:center; margin-top:25px; font-size:0.8rem; opacity:0.5;'>
+            Forgot access? Contact the KMFX Support Team.
+        </p>
     """, unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
