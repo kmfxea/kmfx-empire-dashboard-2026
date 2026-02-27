@@ -2,7 +2,7 @@
 Centralized Supabase client with caching, timeouts, and retry.
 Gamitin 'to sa lahat ng files para consistent at stable ang connection.
 """
-from supabase import create_client, Client
+from supabase import create_client, Client, ClientOptions
 import streamlit as st
 import os
 import time
@@ -14,16 +14,8 @@ def get_supabase() -> Client:
     Cached Supabase client — hindi na nagrerecreate sa bawat rerun.
     Priority: Streamlit secrets > environment variables > error
     """
-    url = (
-        st.secrets.get("SUPABASE_URL")
-        or os.getenv("SUPABASE_URL")
-        or os.getenv("SUPABASE_URL")  # double-check env for local
-    )
-    key = (
-        st.secrets.get("SUPABASE_KEY")
-        or os.getenv("SUPABASE_KEY")
-        or os.getenv("SUPABASE_ANON_KEY")  # common fallback name
-    )
+    url = st.secrets.get("SUPABASE_URL") or os.getenv("SUPABASE_URL")
+    key = st.secrets.get("SUPABASE_KEY") or os.getenv("SUPABASE_KEY") or os.getenv("SUPABASE_ANON_KEY")
 
     if not url or not key:
         raise ValueError(
@@ -43,24 +35,29 @@ def get_supabase() -> Client:
         pool=15.0
     )
 
-    # Create client with timeout
+    # Correct way: use ClientOptions for timeouts (fixes AttributeError on options.headers)
+    client_options = ClientOptions(
+        http_timeout=timeout
+    )
+
+    # Create client
     client = create_client(
         supabase_url=url,
         supabase_key=key,
-        options={"http": {"timeout": timeout}}
+        options=client_options
     )
 
     # Simple retry wrapper for first query (wake-up robustness)
     def retry_first_query(max_retries=2):
         for attempt in range(max_retries):
             try:
-                # Test ping
+                # Test ping (head request to avoid fetching data)
                 client.table("users").select("count(*)", count="exact", head=True).execute()
                 return client
             except (ConnectError, ReadTimeout) as e:
                 if attempt == max_retries - 1:
                     raise Exception(f"Supabase connection failed after {max_retries} retries: {str(e)}")
-                time.sleep(2 ** attempt)  # exponential backoff: 1s, 2s, ...
+                time.sleep(2 ** attempt)  # exponential backoff: 1s → 2s → ...
 
     # Run retry on first use
     retry_first_query()
