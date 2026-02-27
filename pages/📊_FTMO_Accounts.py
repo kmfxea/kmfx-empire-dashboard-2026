@@ -73,7 +73,7 @@ if current_role in ["owner", "admin"]:
             notes = st.text_area("Notes (Optional)")
 
             st.subheader("🌱 Growth Fund Allocation (Optional)")
-            gf_pct = st.number_input("Growth Fund % from Gross Profit", 0.0, 50.0, 0.0, 0.5)  # default 0
+            gf_pct = st.number_input("Growth Fund % from Gross Profit", 0.0, 50.0, 0.0, 0.5)
             if gf_pct > 0:
                 st.success(f"✅ {gf_pct:.1f}% auto-allocated to Growth Fund")
             else:
