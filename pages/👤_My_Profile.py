@@ -102,63 +102,132 @@ if current_role == "client":
 
     user, my_accounts, my_withdrawals, my_proofs = fetch_client_data()
 
-    # ─── PREMIUM FLIP CARD ───
+        # ─── PREMIUM FLIP CARD (more card-like aspect ratio) ───
     my_title = user.get("title", "Member").upper()
     card_title = f"{my_title} CARD" if my_title != "NONE" else "MEMBER CARD"
     balance = user.get("balance", 0.0)
 
     st.markdown(f"""
-    <div style="perspective: 1500px; max-width: 620px; margin: 2.5rem auto; width: 100%;">
-      <div class="flip-card">
-        <div class="flip-card-inner">
-          <div class="flip-card-front">
-            <div style="background: linear-gradient(135deg, #000000, #1f1f1f); backdrop-filter: blur(20px); border-radius: 20px; padding: 2.2rem; min-height: 380px; box-shadow: 0 20px 50px rgba(0,255,170,0.25); color: white; border: 2px solid {accent_gold}; display: flex; flex-direction: column; justify-content: space-between;">
-              <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h2 style="margin:0; font-size: clamp(2.4rem, 6vw, 3.4rem); color: {accent_gold}; letter-spacing: 5px; text-shadow: 0 0 16px {accent_gold};">KMFX EA</h2>
-                <h3 style="margin:0; font-size: clamp(1.4rem, 4vw, 1.9rem); color: {accent_gold};">{card_title}</h3>
-              </div>
-              <div style="text-align: center; flex-grow: 1; display: flex; align-items: center; justify-content: center;">
-                <h1 style="margin:0; font-size: clamp(2.2rem, 7vw, 3.2rem); letter-spacing: 4px;">{my_name.upper()}</h1>
-              </div>
-              <div style="display: flex; justify-content: space-between; align-items: flex-end;">
-                <div style="font-size: clamp(1.1rem, 3vw, 1.4rem); opacity: 0.9;">Elite Empire Member</div>
-                <div style="text-align: right;">
-                  <p style="margin:0; opacity: 0.9;">Available Balance</p>
-                  <h2 style="margin:0; color: {accent_primary}; text-shadow: 0 0 20px {accent_primary};">${balance:,.2f}</h2>
+    <div style="perspective: 1800px; max-width: 640px; margin: 2.5rem auto; width: 100%;">
+      <div class="flip-card-outer" style="position: relative; width: 100%; aspect-ratio: 85.6 / 53.98; max-height: 85vh;">
+        <div class="flip-card">
+          <div class="flip-card-inner">
+            <div class="flip-card-front">
+              <div style="
+                background: linear-gradient(135deg, #0a0a0a, #1a1a1a);
+                backdrop-filter: blur(16px);
+                border-radius: 16px;
+                height: 100%;
+                padding: 5% 6% 5% 6%;
+                box-shadow: 0 18px 48px rgba(0,255,170,0.22);
+                color: white;
+                border: 1.8px solid {accent_gold};
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+              ">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4%;">
+                  <h2 style="margin:0; font-size: clamp(1.9rem, 7vw, 3.1rem); color: {accent_gold}; letter-spacing: 4px; text-shadow: 0 0 14px {accent_gold};">KMFX EA</h2>
+                  <h3 style="margin:0; font-size: clamp(1.1rem, 4vw, 1.7rem); color: {accent_gold};">{card_title}</h3>
                 </div>
+
+                <div style="text-align: center; flex-grow: 1; display: flex; align-items: center; justify-content: center;">
+                  <h1 style="margin:0; font-size: clamp(2rem, 8.5vw, 3.4rem); letter-spacing: 3px; line-height: 1.15;">{my_name.upper()}</h1>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 4%;">
+                  <div style="font-size: clamp(0.95rem, 3.2vw, 1.25rem); opacity: 0.9;">Elite Empire Member</div>
+                  <div style="text-align: right;">
+                    <p style="margin:0 0 0.3rem 0; font-size: clamp(0.9rem, 3vw, 1.1rem); opacity: 0.9;">Available Balance</p>
+                    <h2 style="margin:0; color: {accent_primary}; text-shadow: 0 0 18px {accent_primary};">${balance:,.2f}</h2>
+                  </div>
+                </div>
+
+                <p style="text-align:center; margin:1.4rem 0 0; opacity:0.7; font-size:0.9rem;">Built by Faith • Shared for Generations • 2026 👑</p>
               </div>
-              <p style="text-align:center; margin:1.2rem 0 0; opacity:0.75; font-size:0.95rem;">Built by Faith • Shared for Generations • 2026 👑</p>
             </div>
-          </div>
-          <div class="flip-card-back">
-            <div style="background: linear-gradient(135deg, #1f1f1f, #000000); backdrop-filter: blur(20px); border-radius: 20px; padding: 2.2rem; min-height: 380px; box-shadow: 0 20px 50px rgba(0,255,170,0.25); color: white; border: 2px solid {accent_gold};">
-              <h2 style="text-align:center; color: {accent_gold}; margin:0 0 1.4rem; font-size:1.8rem;">Membership Details</h2>
-              <div style="height:40px; background:#333; border-radius:10px; margin-bottom:1.6rem;"></div>
-              <div style="font-size:1.05rem; line-height:1.9;">
-                <strong style="color:{accent_gold};">Full Name:</strong> {my_name}<br>
-                <strong style="color:{accent_gold};">Title:</strong> {my_title}<br>
-                <strong style="color:{accent_gold};">Username:</strong> {my_username}<br>
-                <strong style="color:{accent_gold};">Email:</strong> {user.get('email','—')}<br>
-                <strong style="color:{accent_gold};">Contact:</strong> {user.get('contact_no') or user.get('phone','—')}<br>
-                <strong style="color:{accent_gold};">Address:</strong> {user.get('address','—')}<br>
-                <strong style="color:{accent_gold};">Balance:</strong> <span style="color:{accent_primary};">${balance:,.2f}</span><br>
-                <strong style="color:{accent_gold};">Shared Accounts:</strong> {len(my_accounts)} active
+
+            <div class="flip-card-back">
+              <div style="
+                background: linear-gradient(135deg, #1a1a1a, #0a0a0a);
+                backdrop-filter: blur(16px);
+                border-radius: 16px;
+                height: 100%;
+                padding: 5% 6%;
+                box-shadow: 0 18px 48px rgba(0,255,170,0.22);
+                color: white;
+                border: 1.8px solid {accent_gold};
+              ">
+                <h2 style="text-align:center; color: {accent_gold}; margin:0 0 1.2rem; font-size: clamp(1.5rem, 5vw, 2rem);">Membership Details</h2>
+                
+                <div style="font-size: clamp(0.97rem, 3.4vw, 1.15rem); line-height: 1.85;">
+                  <strong style="color:{accent_gold};">Full Name:</strong> {my_name}<br>
+                  <strong style="color:{accent_gold};">Title:</strong> {my_title}<br>
+                  <strong style="color:{accent_gold};">Username:</strong> {my_username}<br>
+                  <strong style="color:{accent_gold};">Email:</strong> {user.get('email','—')}<br>
+                  <strong style="color:{accent_gold};">Contact:</strong> {user.get('contact_no') or user.get('phone','—')}<br>
+                  <strong style="color:{accent_gold};">Address:</strong> {user.get('address','—')}<br>
+                  <strong style="color:{accent_gold};">Balance:</strong> <span style="color:{accent_primary};">${balance:,.2f}</span><br>
+                  <strong style="color:{accent_gold};">Shared Accounts:</strong> {len(my_accounts)} active
+                </div>
+
+                <p style="text-align:center; margin-top:1.6rem; opacity:0.75; font-size:0.95rem;">KMFX Elite Access • 2026</p>
               </div>
-              <p style="text-align:center; margin-top:1.8rem; opacity:0.75;">KMFX Elite Access • 2026</p>
             </div>
           </div>
         </div>
       </div>
     </div>
+
     <style>
-      .flip-card {{ background:transparent; width:100%; min-height:380px; perspective:1200px; }}
-      .flip-card-inner {{ position:relative; width:100%; height:100%; transition: transform 0.9s cubic-bezier(0.68,-0.55,0.265,1.55); transform-style:preserve-3d; }}
-      .flip-card:hover .flip-card-inner {{ transform: rotateY(180deg); }}
-      .flip-card-front, .flip-card-back {{ position:absolute; width:100%; height:100%; -webkit-backface-visibility:hidden; backface-visibility:hidden; border-radius:20px; }}
-      .flip-card-back {{ transform: rotateY(180deg); }}
-      @media (max-width: 768px) {{ .flip-card {{ min-height:340px; }} }}
+      .flip-card-outer {{
+        width: 100%;
+        max-width: 640px;
+        margin: 0 auto;
+      }}
+      .flip-card {{
+        width: 100%;
+        height: 100%;
+        perspective: 1800px;
+      }}
+      .flip-card-inner {{
+        position: relative;
+        width: 100%;
+        height: 100%;
+        transition: transform 0.92s cubic-bezier(0.68, -0.55, 0.265, 1.5);
+        transform-style: preserve-3d;
+      }}
+      .flip-card:hover .flip-card-inner,
+      .flip-card:active .flip-card-inner {{
+        transform: rotateY(180deg);
+      }}
+      .flip-card-front, .flip-card-back {{
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        -webkit-backface-visibility: hidden;
+        backface-visibility: hidden;
+        border-radius: 16px;
+      }}
+      .flip-card-back {{
+        transform: rotateY(180deg);
+      }}
+      @media (max-width: 576px) {{
+        .flip-card-outer {{
+          aspect-ratio: 86 / 54;   /* very close to real card */
+        }}
+      }}
+      @media (min-width: 577px) and (max-width: 992px) {{
+        .flip-card-outer {{
+          aspect-ratio: 85.6 / 53.98;
+          max-height: 420px;
+        }}
+      }}
     </style>
-    <p style="text-align:center; opacity:0.8; margin-top:1rem;">Hover or tap card to flip ↺</p>
+
+    <p style="text-align:center; opacity:0.75; margin:1.2rem 0 2.5rem; font-size:0.95rem;">
+      Hover or tap card to flip ↺  (ATM-card size feel)
+    </p>
     """, unsafe_allow_html=True)
 
     # ─── QUICK LOGIN QR ───
