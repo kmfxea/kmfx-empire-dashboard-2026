@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
-from datetime import datetime
+from datetime import date, datetime
 from utils.auth import require_auth
 from utils.sidebar import render_sidebar
 from utils.supabase_client import supabase
@@ -28,7 +28,7 @@ current_role = st.session_state.get("role", "guest").lower()
 def fetch_ftmo_data():
     accs = supabase.table("ftmo_accounts").select("*").order("created_date", desc=True).execute().data or []
     users = supabase.table("users").select("id, full_name, role, title").execute().data or []
-   
+  
     uid_to_display = {}
     display_to_uid = {}
     uid_to_name = {}
@@ -41,16 +41,16 @@ def fetch_ftmo_data():
             uid_to_display[uid] = display
             display_to_uid[display] = uid
             uid_to_name[uid] = u["full_name"]
-   
+  
     special = ["Contributor Pool", "Manual Payout (Temporary)"]  # Removed "Growth Fund" (auto only)
     for s in special:
         display_to_uid[s] = None
-   
+  
     part_options = special + list(display_to_uid.keys())
     contrib_options = list(uid_to_display.values())
-   
+  
     owner_display = next((d for d, uid in display_to_uid.items() if uid and any(uu["role"] == "owner" for uu in users if str(uu["id"]) == uid)), "King Minted")
-   
+  
     return accs, uid_to_display, display_to_uid, uid_to_name, part_options, contrib_options, owner_display
 
 accounts, uid_to_display, display_to_uid, uid_to_name, part_options, contrib_options, owner_display = fetch_ftmo_data()
@@ -81,7 +81,7 @@ if current_role in ["owner", "admin"]:
 
             st.subheader("🌳 Unified Profit Distribution Tree (%)")
             st.info("Flexible: Optional 'Contributor Pool' (0 or 1 row) • Fixed shares (50/50 etc.) or pro-rata • Total + GF = exactly 100%")
-            
+           
             default_rows = [
                 {"display_name": owner_display, "role": "Founder/Owner", "percentage": max(100.0 - gf_pct, 0.0)}
             ]
@@ -153,7 +153,7 @@ if current_role in ["owner", "admin"]:
                     values.append(gf_pct)
                 fig = go.Figure(data=[go.Sankey(
                     node=dict(pad=15, thickness=20, label=labels),
-                    link=dict(source=[0]*len(values), target=list(range(1, len(labels))), value=values)
+                    link=dict(source=[0]*len(values), target=list(range(1, len(labels)+1)), value=values)
                 )])
                 fig.update_layout(height=400)
                 st.plotly_chart(fig, use_container_width=True)
@@ -165,7 +165,7 @@ if current_role in ["owner", "admin"]:
                     contrib_labels = [f"{row['display_name']} ({row['units']}u @ ₱{row['php_per_unit']:,.0f})" for _, row in edited_contrib.iterrows()]
                     fig = go.Figure(data=[go.Sankey(
                         node=dict(pad=15, thickness=20, label=labels + contrib_labels),
-                        link=dict(source=[0]*len(values), target=list(range(1, len(values))), value=values)
+                        link=dict(source=[0]*len(values), target=list(range(1, len(values)+1)), value=values)
                     )])
                     fig.update_layout(height=400)
                     st.plotly_chart(fig, use_container_width=True)
@@ -329,7 +329,6 @@ if current_role in ["owner", "admin"]:
                         } for p in legacy])
                         st.info("🔄 Legacy → Saving will migrate to v2")
 
-                    # No auto-add of Contributor Pool anymore
                     current_part = current_part[~current_part["display_name"].str.lower().str.contains("growth fund", na=False)]
 
                     edited_tree = st.data_editor(
@@ -476,7 +475,6 @@ if current_role in ["owner", "admin"]:
                                         "current_equity": new_equity,
                                         "withdrawable_balance": new_withdrawable,
                                         "notes": new_notes or None,
-                                        "created_date": date.today().isoformat(),   # ← FIXED HERE
                                         "participants": final_part_old,
                                         "contributors": final_contrib_old,
                                         "participants_v2": final_part_v2,
@@ -498,7 +496,7 @@ if current_role in ["owner", "admin"]:
 
 else:
     # ────────────────────────────────────────────────
-    # CLIENT VIEW (read-only) – unchanged from your original
+    # CLIENT VIEW (read-only)
     # ────────────────────────────────────────────────
     my_name = st.session_state.full_name
     my_accounts = [a for a in accounts if any(
