@@ -1,69 +1,33 @@
+# utils/supabase_client.py
 """
-Centralized Supabase client with caching, timeouts, and retry.
-Gamitin 'to sa lahat ng files para consistent at stable ang connection.
+Centralized Supabase client with caching
+Gamitin 'to sa lahat ng files para iwas sa paulit-ulit na create_client
 """
-from supabase import create_client, Client, ClientOptions
+
+from supabase import create_client, Client
 import streamlit as st
 import os
-import time
-from httpx import Timeout, ConnectError, ReadTimeout
+from dotenv import load_dotenv
 
-@st.cache_resource(show_spinner="Connecting to Supabase...")
+load_dotenv()  # para sa local dev (.env file)
+
+@st.cache_resource
 def get_supabase() -> Client:
     """
-    Cached Supabase client — hindi na nagrerecreate sa bawat rerun.
-    Priority: Streamlit secrets > environment variables > error
+    Cached Supabase client — hindi na nagrerecreate sa bawat rerun
+    Priority: Streamlit secrets > .env > error
     """
     url = st.secrets.get("SUPABASE_URL") or os.getenv("SUPABASE_URL")
-    key = st.secrets.get("SUPABASE_KEY") or os.getenv("SUPABASE_KEY") or os.getenv("SUPABASE_ANON_KEY")
+    key = st.secrets.get("SUPABASE_KEY") or os.getenv("SUPABASE_KEY")
 
     if not url or not key:
         raise ValueError(
-            "Missing Supabase credentials!\n\n"
-            "1. Go to Streamlit Cloud → Manage app → Secrets\n"
-            "2. Add:\n"
-            "   SUPABASE_URL = https://your-project-ref.supabase.co\n"
-            "   SUPABASE_KEY = eyJhbGciOiJIUzI1NiIs... (anon key)\n\n"
-            "Or for local dev: create .env with the same keys."
+            "Kailangan ng SUPABASE_URL at SUPABASE_KEY.\n"
+            "Ilagay sa Streamlit Cloud Secrets o sa .env file."
         )
 
-    # Long timeouts to survive free-tier sleep/wake-up (30-60s common)
-    timeout = Timeout(
-        connect=15.0,    # time to establish connection
-        read=90.0,       # time to wait for response data
-        write=30.0,
-        pool=15.0
-    )
-
-    # Correct way: use ClientOptions for timeouts (fixes AttributeError on options.headers)
-    client_options = ClientOptions(
-        http_timeout=timeout
-    )
-
-    # Create client
-    client = create_client(
-        supabase_url=url,
-        supabase_key=key,
-        options=client_options
-    )
-
-    # Simple retry wrapper for first query (wake-up robustness)
-    def retry_first_query(max_retries=2):
-        for attempt in range(max_retries):
-            try:
-                # Test ping (head request to avoid fetching data)
-                client.table("users").select("count(*)", count="exact", head=True).execute()
-                return client
-            except (ConnectError, ReadTimeout) as e:
-                if attempt == max_retries - 1:
-                    raise Exception(f"Supabase connection failed after {max_retries} retries: {str(e)}")
-                time.sleep(2 ** attempt)  # exponential backoff: 1s → 2s → ...
-
-    # Run retry on first use
-    retry_first_query()
-
-    return client
+    return create_client(url, key)
 
 
-# Global singleton access — import lang 'to sa ibang files
+# Global access — import lang 'to sa ibang files
 supabase = get_supabase()

@@ -1,3 +1,4 @@
+# pages/💳_Withdrawals.py
 import streamlit as st
 import requests
 from datetime import date
@@ -7,15 +8,15 @@ from datetime import date
 # ────────────────────────────────────────────────
 from utils.auth import require_auth
 from utils.sidebar import render_sidebar
-from utils.supabase_client import supabase, upload_to_supabase  # ← FIXED: added upload_to_supabase
+from utils.supabase_client import supabase
 
 render_sidebar()
 require_auth(min_role="client")  # clients request, admin/owner manage
 
 # ─── THEME (consistent across app) ───
 accent_primary = "#00ffaa"
-accent_gold = "#ffd700"
-accent_glow = "#00ffaa40"
+accent_gold    = "#ffd700"
+accent_glow    = "#00ffaa40"
 
 # ─── SCROLL-TO-TOP (same as Dashboard) ───
 st.markdown("""
@@ -70,8 +71,7 @@ st.caption("🔄 Withdrawals auto-refresh every 10s • Proofs permanent & fully
 # ─── CLIENT VIEW ───
 if current_role == "client":
     my_name = st.session_state.get("full_name", "")
-    my_data = user_map.get(my_name, {"id": None, "balance": 0})
-    my_balance = my_data["balance"]
+    my_balance = user_map.get(my_name, {"balance": 0})["balance"]
     my_withdrawals = [w for w in withdrawals if w.get("client_name") == my_name]
 
     st.subheader(f"Your Withdrawals • Available: **${my_balance:,.2f}**")
@@ -83,7 +83,7 @@ if current_role == "client":
                 amount = st.number_input("Amount (USD)", min_value=1.0, max_value=my_balance, step=100.0, format="%.2f")
                 method = st.selectbox("Method", ["USDT", "Bank Transfer", "Wise", "PayPal", "GCash", "Other"])
                 details = st.text_area("Payout Details (Wallet/Address/Bank Info)", placeholder="e.g. USDT: 0x... or Bank: Account #12345")
-                proof = st.file_uploader("Upload Proof * (Permanent)", type=["png", "jpg", "jpeg", "pdf", "gif"])
+                proof = st.file_uploader("Upload Proof * (Permanent)", type=["png","jpg","jpeg","pdf","gif"])
                 submitted = st.form_submit_button("Submit Request", type="primary", use_container_width=True)
 
                 if submitted:
@@ -94,12 +94,11 @@ if current_role == "client":
                     else:
                         with st.spinner("Submitting request..."):
                             try:
-                                url, storage_path = upload_to_supabase(
+                                url, storage_path = upload_to_supabase(  # assuming helper exists
                                     file=proof,
                                     bucket="client_files",
                                     folder="withdrawals"
                                 )
-
                                 # Save proof permanently
                                 supabase.table("client_files").insert({
                                     "original_name": proof.name,
@@ -143,20 +142,22 @@ if current_role == "client":
             }.get(w.get("status"), "#888888")
             st.markdown(f"""
             <div style="
-                background:rgba(30,35,45,0.7);
-                backdrop-filter:blur(12px);
-                border-radius:16px;
-                padding:1.6rem;
-                margin-bottom:1.2rem;
+                background:rgba(30,35,45,0.7); 
+                backdrop-filter:blur(12px); 
+                border-radius:16px; 
+                padding:1.6rem; 
+                margin-bottom:1.2rem; 
                 border-left:6px solid {status_color};
             ">
                 <h4 style="margin:0;">${w['amount']:,.2f} • <span style="color:{status_color};">{w['status']}</span></h4>
                 <small>Method: {w.get('method', '—')} • Requested: {w.get('date_requested', '—')}</small>
             </div>
             """, unsafe_allow_html=True)
+
             if w.get("details"):
                 with st.expander("Payout Details"):
                     st.write(w["details"])
+
             st.divider()
     else:
         st.info("No withdrawal requests yet")
@@ -173,14 +174,15 @@ else:
                 "Paid": "#2ed573",
                 "Rejected": "#ff4757"
             }.get(w.get("status"), "#888888")
+
             with st.container():
                 st.markdown(f"""
                 <div style="
-                    background:rgba(30,35,45,0.7);
-                    backdrop-filter:blur(12px);
-                    border-radius:16px;
-                    padding:1.8rem;
-                    margin-bottom:1.6rem;
+                    background:rgba(30,35,45,0.7); 
+                    backdrop-filter:blur(12px); 
+                    border-radius:16px; 
+                    padding:1.8rem; 
+                    margin-bottom:1.6rem; 
                     border-left:6px solid {status_color};
                     border:1px solid rgba(100,100,100,0.25);
                 ">
@@ -188,6 +190,7 @@ else:
                     <small>Method: {w.get('method', '—')} • Requested: {w.get('date_requested', '—')} • Balance: ${client_balance:,.2f}</small>
                 </div>
                 """, unsafe_allow_html=True)
+
                 if w.get("details"):
                     with st.expander("Payout Details"):
                         st.write(w["details"])
