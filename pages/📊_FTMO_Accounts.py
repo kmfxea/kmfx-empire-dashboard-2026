@@ -10,14 +10,14 @@ render_sidebar()
 require_auth()  # Allow both owner/admin and client
 
 # ────────────────────────────────────────────────
-# THEME COLORS
+# THEME COLORS (match Dashboard)
 # ────────────────────────────────────────────────
 accent_primary = "#00ffaa"
 accent_gold = "#ffd700"
 accent_glow = "#00ffaa40"
 
 st.header("📊 FTMO Accounts Management 🚀")
-st.markdown("**Empire core** • Flexible profit trees • Optional Contributor Pool & Growth Fund • Fixed splits (50/50 etc.) or pro-rata • Exact 100% validation • Auto v2 migration • Realtime previews")
+st.markdown("**Empire core** • Flexible trees • Optional Contributor Pool & Growth Fund • Fixed 50/50 or pro-rata • Exact 100% validation • Auto v2 migration • Realtime previews")
 
 current_role = st.session_state.get("role", "guest").lower()
 
@@ -42,7 +42,7 @@ def fetch_ftmo_data():
             display_to_uid[display] = uid
             uid_to_name[uid] = u["full_name"]
    
-    special = ["Contributor Pool", "Manual Payout (Temporary)"]
+    special = ["Contributor Pool", "Manual Payout (Temporary)"]  # Removed "Growth Fund" (auto only)
     for s in special:
         display_to_uid[s] = None
    
@@ -73,14 +73,14 @@ if current_role in ["owner", "admin"]:
             notes = st.text_area("Notes (Optional)")
 
             st.subheader("🌱 Growth Fund Allocation (Optional)")
-            gf_pct = st.number_input("Growth Fund % from Gross Profit", 0.0, 50.0, 0.0, 0.5)
+            gf_pct = st.number_input("Growth Fund % from Gross Profit", 0.0, 50.0, 0.0, 0.5)  # default 0
             if gf_pct > 0:
                 st.success(f"✅ {gf_pct:.1f}% auto-allocated to Growth Fund")
             else:
-                st.info("ℹ️ No Growth Fund – perfect for fixed splits")
+                st.info("ℹ️ No Growth Fund – perfect for fixed shares")
 
             st.subheader("🌳 Unified Profit Distribution Tree (%)")
-            st.info("Flexible: Optional Contributor Pool (0 or 1) • Fixed shares e.g. 50/50 • Total + GF must = exactly 100%")
+            st.info("Flexible: Optional 'Contributor Pool' (0 or 1 row) • Fixed shares (50/50 etc.) or pro-rata • Total + GF = exactly 100%")
             
             default_rows = [
                 {"display_name": owner_display, "role": "Founder/Owner", "percentage": max(100.0 - gf_pct, 0.0)}
@@ -314,7 +314,7 @@ if current_role in ["owner", "admin"]:
                     current_part = pd.DataFrame(cur["participants_v2"] if use_v2 else cur.get("participants", []))
                     current_gf_pct = sum(row.get("percentage", 0.0) for _, row in current_part.iterrows() if "growth fund" in row.get("display_name", "").lower())
 
-                    st.subheader("🌱 Growth Fund Allocation (Optional)")
+                    st.subheader("🌱 Growth Fund Allocation (Optional per Account)")
                     gf_pct = st.number_input("Growth Fund % from Gross Profit", min_value=0.0, max_value=50.0, value=current_gf_pct, step=0.5)
 
                     st.subheader("🌳 Unified Profit Tree (%)")
@@ -329,6 +329,7 @@ if current_role in ["owner", "admin"]:
                         } for p in legacy])
                         st.info("🔄 Legacy → Saving will migrate to v2")
 
+                    # No auto-add of Contributor Pool anymore
                     current_part = current_part[~current_part["display_name"].str.lower().str.contains("growth fund", na=False)]
 
                     edited_tree = st.data_editor(
@@ -496,7 +497,7 @@ if current_role in ["owner", "admin"]:
 
 else:
     # ────────────────────────────────────────────────
-    # CLIENT VIEW (read-only)
+    # CLIENT VIEW (read-only) – unchanged from your original
     # ────────────────────────────────────────────────
     my_name = st.session_state.full_name
     my_accounts = [a for a in accounts if any(
@@ -588,7 +589,7 @@ else:
         st.info("No accounts yet • Owner launches empire growth")
 
 # ────────────────────────────────────────────────
-# FOOTER
+# DASHBOARD-STYLE FOOTER
 # ────────────────────────────────────────────────
 st.markdown(f"""
 <div class="glass-card" style="padding:4rem 2rem; text-align:center; margin:5rem auto; max-width:1100px;
