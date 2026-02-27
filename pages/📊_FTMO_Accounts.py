@@ -476,6 +476,7 @@ if current_role in ["owner", "admin"]:
                                         "current_equity": new_equity,
                                         "withdrawable_balance": new_withdrawable,
                                         "notes": new_notes or None,
+                                        "created_date": date.today().isoformat(),   # ← FIXED HERE
                                         "participants": final_part_old,
                                         "contributors": final_contrib_old,
                                         "participants_v2": final_part_v2,
