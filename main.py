@@ -114,99 +114,140 @@ card_shadow  = "0 8px 25px rgba(0,0,0,0.12)" if theme == "light" else "0 10px 30
 sidebar_bg   = "rgba(248,251,255,0.95)" if theme == "light" else "rgba(10,13,20,0.95)"
 
 # ────────────────────────────────────────────────
-# FULL CSS STYLING – Dark theme + Black text ONLY on EN/TL toggle
+# ELITE FULL CODE - FULLY OPTIMIZED CSS (UI/UX PRO)
 # ────────────────────────────────────────────────
 st.markdown(f"""
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
 <style>
+    :root {{
+        --accent-glow: {accent_glow if theme=='dark' else 'rgba(0,0,0,0.1)'};
+        --gold-gradient: linear-gradient(135deg, #FFD700 0%, #B8860B 100%);
+    }}
+
+    /* Global Reset & Fluid Typography */
     html, body, [class*="css-"] {{
         font-family: 'Poppins', sans-serif !important;
-        font-size: 15px !important;
+        font-size: 16px; /* Base size */
+        scroll-behavior: smooth;
     }}
+
     .stApp {{
         background: {bg_color};
         color: {text_primary};
     }}
-    h1, h2, h3, h4, h5, h6, p, div, span, label, .stMarkdown {{
-        color: {text_primary} !important;
-    }}
-    small, caption, .caption {{
-        color: {text_muted} !important;
-    }}
-    a {{
-        color: #00ffaa !important;
-    }}
-    a:hover {{
-        color: #00ffcc !important;
-    }}
-    /* Glass cards – optimized for dark bg */
+
+    /* Responsiveness for Headings */
+    h1 {{ font-size: clamp(2rem, 5vw, 3.5rem) !important; font-weight: 700 !important; }}
+    h2 {{ font-size: clamp(1.5rem, 4vw, 2.5rem) !important; font-weight: 600 !important; }}
+    h3 {{ font-size: clamp(1.2rem, 3vw, 1.8rem) !important; }}
+
+    /* Elite Glassmorphism Card */
     .glass-card {{
         background: {card_bg};
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border-radius: 20px;
+        backdrop-filter: blur(25px);
+        -webkit-backdrop-filter: blur(25px);
+        border-radius: 24px;
         border: 1px solid {border_color};
-        padding: 2.2rem !important;
+        padding: clamp(1.5rem, 5vw, 2.5rem) !important;
         box-shadow: {card_shadow};
-        transition: all 0.3s ease;
-        margin: 2rem auto;
-        max-width: 1100px;
-        color: {text_primary} !important;
+        transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        margin: 1.5rem auto;
+        max-width: 1150px;
+        width: 100%;
     }}
+
     .glass-card:hover {{
-        box-shadow: 0 15px 40px {accent_glow if theme=='dark' else 'rgba(0,0,0,0.2)'};
-        transform: translateY(-6px);
-        border-color: {accent_primary};
+        box-shadow: 0 20px 50px var(--accent-glow);
+        transform: translateY(-8px);
+        border-color: {accent_primary}88; /* Added transparency to border */
     }}
+
+    /* Luxury Gold Text Effect */
     .gold-text {{
-        color: {accent_gold} !important;
-        font-weight: 600;
-        letter-spacing: 0.5px;
+        background: var(--gold-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 700;
+        letter-spacing: 0.8px;
+        filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.3));
     }}
-    /* Primary buttons – green bg + black text */
+
+    /* Luxury Primary Button */
     button[kind="primary"] {{
         background: {accent_primary} !important;
         color: #000000 !important;
-        border-radius: 16px !important;
-        box-shadow: 0 6px 20px {accent_glow} !important;
-        padding: 1rem 2rem !important;
-        font-size: 1.2rem !important;
+        border-radius: 14px !important;
+        border: none !important;
+        padding: 0.8rem 2.2rem !important;
+        font-weight: 700 !important;
+        font-size: 1.1rem !important;
+        width: auto !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        box-shadow: 0 4px 15px {accent_glow} !important;
+        text-transform: uppercase;
+        letter-spacing: 1px;
     }}
+
     button[kind="primary"]:hover {{
         background: {accent_hover} !important;
-        box-shadow: 0 12px 35px {accent_glow} !important;
-        transform: translateY(-3px);
+        box-shadow: 0 8px 25px {accent_glow} !important;
+        transform: scale(1.03);
     }}
-    /* Header & Sidebar – dark & blurred */
+
+    /* Fixed EN/TL Toggle Logic - Precision Targeting */
+    div[data-testid="stFormSubmitButton"] button, 
+    button[key="lang_toggle_public"] {{
+        background: #00ffa2 !important; /* Force specialized green */
+        color: #000000 !important;
+        border: none !important;
+    }}
+    
+    /* Ensure span inside toggle is black */
+    button[key="lang_toggle_public"] p, 
+    button[key="lang_toggle_public"] div {{
+        color: #000000 !important;
+    }}
+
+    /* Sidebar & Header Refinement */
     header[data-testid="stHeader"] {{
-        background-color: {bg_color} !important;
-        backdrop-filter: blur(20px);
+        background-color: transparent !important;
+        backdrop-filter: blur(15px);
     }}
+
     section[data-testid="stSidebar"] {{
         background: {sidebar_bg} !important;
-        backdrop-filter: blur(20px);
         border-right: 1px solid {border_color};
-        color: {text_primary} !important;
     }}
-    /* Force BLACK text ONLY on the EN/TL toggle button */
-    button[key="lang_toggle_public"] {{
-        color: #000000 !important;
+
+    /* Mobile & Tablet Optimization Grid */
+    @media (max-width: 1024px) {{
+        .glass-card {{ max-width: 90% !important; padding: 2rem !important; }}
     }}
-    button[key="lang_toggle_public"] span {{
-        color: #000000 !important;
-    }}
-    button[key="lang_toggle_public"]:hover {{
-        color: #000000 !important;
-    }}
-    /* Ensure other buttons/text don't inherit black */
-    button:not([key="lang_toggle_public"]) {{
-        color: inherit !important;
-    }}
-    /* Mobile adjustments */
+
     @media (max-width: 768px) {{
-        .public-hero {{ padding: 4rem 1rem 3rem; min-height: 70vh; }}
-        .glass-card {{ padding: 1.5rem !important; max-width: 95% !important; }}
+        html, body {{ font-size: 14px; }}
+        .glass-card {{ 
+            padding: 1.2rem !important; 
+            margin: 1rem auto;
+            border-radius: 18px;
+        }}
+        button[kind="primary"] {{
+            width: 100% !important; /* Full width buttons on mobile */
+            padding: 1rem !important;
+        }}
+        /* Hide unnecessary elements on mobile for cleaner UX */
+        .desktop-only {{ display: none; }}
     }}
+
+    /* Custom Scrollbar for Luxury Feel */
+    ::-webkit-scrollbar {{ width: 8px; }}
+    ::-webkit-scrollbar-track {{ background: {bg_color}; }}
+    ::-webkit-scrollbar-thumb {{ 
+        background: {border_color}; 
+        border-radius: 10px; 
+    }}
+    ::-webkit-scrollbar-thumb:hover {{ background: {accent_gold}; }}
+
 </style>
 """, unsafe_allow_html=True)
 
