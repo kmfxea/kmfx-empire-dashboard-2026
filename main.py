@@ -222,6 +222,18 @@ st.markdown(f"""
         filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.3));
     }}
 
+    /* --- BRAND TITLE EFFECT --- */
+    .brand-title {{
+        background: var(--gold-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 700;
+        letter-spacing: 1px;
+        filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.3));
+        font-size: 3rem; /* Adjust size as needed */
+        margin-bottom: 0.5rem;
+    }}
+
     /* Luxury Primary Button */
     button[kind="primary"] {{
         background: {accent_primary} !important;
@@ -360,13 +372,15 @@ if not authenticated:
     with logo_col:
         st.image("assets/logo.png", use_column_width=True)
 
-    # Hero
+    # Hero - MODIFIED
     hero_container = st.container()
     with hero_container:
-        st.markdown(f"<h1 class='gold-text' style='text-align: center;'>KMFX EA</h1>", unsafe_allow_html=True)
-        st.markdown(f"<h2 style='text-align: center; color:{text_primary};'>Automated Gold Trading for Financial Freedom</h2>", unsafe_allow_html=True)
-        st.markdown(f"<p style='text-align: center; font-size:1.4rem; color:{text_muted};'>Passed FTMO Phase 1 • +3,071% 5-Year Backtest • Building Legacies of Generosity</p>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; font-size:1.2rem;'>Mark Jeff Blando – Founder & Developer • 2026</p>", unsafe_allow_html=True)
+        # Pinalitan natin ang class mula 'gold-text' papuntang 'brand-title'
+        st.markdown(f"<h1 class='brand-title' style='text-align: center;'>KMFX EA</h1>", unsafe_allow_html=True)                
+        
+        st.markdown(f"<h2 style='text-align: center; color:{text_primary};'>Automated Gold Trading for Financial Freedom</h2>", unsafe_allow_html=True)                
+        st.markdown(f"<p style='text-align: center; font-size:1.4rem; color:{text_muted};'>Passed FTMO Phase 1 • +3,071% 5-Year Backtest • Building Legacies of Generosity</p>", unsafe_allow_html=True)                
+        st.markdown("<p style='text-align: center; font-size:1.2rem;'>Mark Jeff Blando – Founder & Developer • since 2014</p>", unsafe_allow_html=True)
 
     # Realtime Stats
     try:
