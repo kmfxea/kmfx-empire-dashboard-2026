@@ -1,8 +1,7 @@
-# pages/🏠_Dashboard.py
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
-from datetime import datetime
+import time
 
 # ────────────────────────────────────────────────
 # AUTH + SIDEBAR + REQUIRE AUTH (must be first)
@@ -11,54 +10,100 @@ from utils.auth import require_auth
 from utils.sidebar import render_sidebar
 from utils.supabase_client import supabase
 
-render_sidebar()
-require_auth(min_role="client")
+# Set page config for maximum width and title
+st.set_page_config(page_title="Empire Command Center", page_icon="🚀", layout="wide")
 
 # ─── THEME COLORS ───
 accent_primary = "#00ffaa"
 accent_gold    = "#ffd700"
-accent_glow    = "#00ffaa40"
-accent_hover   = "#00ffcc"
+accent_danger  = "#ff6b6b"
+accent_bg      = "#101010"
 
-# ─── WELCOME + BALLOONS ON FRESH LOGIN ───
-if st.session_state.get("just_logged_in", False):
-    st.balloons()
-    st.success(f"Welcome back, {st.session_state.full_name}! 🚀 Empire scaling mode activated.")
-    st.session_state.pop("just_logged_in", None)
+# Render sidebar at the very top to detect messages
+render_sidebar()
+require_auth(min_role="client")
 
-# ─── SCROLL-TO-TOP SCRIPT ───
-st.markdown("""
-<script>
-function forceScrollToTop() {
-    window.scrollTo({top: 0, behavior: 'smooth'});
-    document.body.scrollTop = 0;
-    document.documentElement.scrollTop = 0;
-    const main = parent.document.querySelector(".main .block-container");
-    if (main) main.scrollTop = 0;
-}
-const observer = new MutationObserver(() => {
-    setTimeout(forceScrollToTop, 300);
-    setTimeout(forceScrollToTop, 1200);
-    setTimeout(forceScrollToTop, 2500);
-});
-const target = parent.document.querySelector(".main") || document.body;
-observer.observe(target, { childList: true, subtree: true, attributes: true });
-setTimeout(forceScrollToTop, 800);
-setTimeout(forceScrollToTop, 2000);
-</script>
+# ─── CSS CUSTOM STYLING (THE "LUPET" VERSION) ───
+st.markdown(f"""
+<style>
+    /* Animated Gradient Background */
+    .stApp {{
+        background: linear-gradient(135deg, #101010 0%, #1a1a1a 100%);
+    }}
+
+    /* Global Card Style */
+    .glass-card {{
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }}
+    .glass-card:hover {{
+        border: 1px solid {accent_primary}60;
+        box-shadow: 0 4px 15px {accent_primary}20;
+    }}
+    
+    /* Metrics Styling */
+    .metric-container {{
+        text-align: center;
+        padding: 1rem;
+    }}
+    .metric-title {{
+        color: rgba(255,255,255,0.7);
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 0.5rem;
+    }}
+    .metric-value {{
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin: 0;
+        font-family: 'Courier New', monospace; /* Monospace for numbers */
+    }}
+    
+    /* Live Count Animation */
+    @keyframes countUp {{
+        from {{ opacity: 0; transform: translateY(10px); }}
+        to {{ opacity: 1; transform: translateY(0); }}
+    }}
+    .animate-number {{
+        animation: countUp 0.5s ease-out;
+    }}
+
+    /* Account Status Badges */
+    .status-badge {{
+        padding: 0.2rem 0.6rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }}
+</style>
 """, unsafe_allow_html=True)
 
+# ─── WELCOME + BALLOONS ───
+if st.session_state.get("just_logged_in", False):
+    st.balloons()
+    st.success(f"Welcome back, **{st.session_state.full_name}**! 🚀 Empire scaling mode activated.")
+    st.session_state.pop("just_logged_in", None)
+
 # ─── HEADER ───
-st.header("Elite Empire Command Center 🚀")
-st.markdown("**Realtime, fully automatic empire overview** • Every transaction syncs instantly • Trees update live • Empire scales itself")
+st.title("Elite Empire Command Center 🚀")
+st.markdown("Realtime, fully automatic empire overview • Every transaction syncs instantly • Empire scales itself")
+st.markdown("---")
 
 # ─── OPTIMIZED DATA FETCH ───
-@st.cache_data(ttl=30, show_spinner="Loading empire overview...")
+@st.cache_data(ttl=15, show_spinner="Syncing Empire Data...") # Reduced TTL for faster perception
 def fetch_empire_summary():
     try:
         # Fast totals from materialized views
-        gf_resp = supabase.table("mv_growth_fund_balance").select("balance").execute()
-        gf_balance = gf_resp.data[0].get("balance", 0.0) if gf_resp.data else 0.0
+        gf_resp = supabase.table("mv_growth_fund_balance").select("balance, target_amount").execute()
+        gf_data = gf_resp.data[0] if gf_resp.data else {"balance": 0.0, "target_amount": 100000.0}
+        
+        gf_balance = gf_data.get("balance", 0.0)
+        gf_target = gf_data.get("target_amount", 100000.0)
 
         empire_resp = supabase.table("mv_empire_summary").select("*").execute()
         empire = empire_resp.data[0] if empire_resp.data else {}
@@ -91,63 +136,74 @@ def fetch_empire_summary():
         for acc in accounts:
             contrib = acc.get("contributors_v2") or acc.get("contributors", [])
             for c in contrib:
-                user_id = c.get("user_id") or c.get("id")
-                name = user_map.get(user_id, c.get("display_name") or c.get("name", "Anonymous"))
                 funded = c.get("units", 0) * (c.get("php_per_unit", 0) or 0)
                 total_funded_php += funded
 
         return (
             accounts, total_accounts, total_equity, total_withdrawable,
-            gf_balance, total_gross, total_distributed,
+            gf_balance, gf_target, total_gross, total_distributed,
             total_client_balances, participant_shares, total_funded_php
         )
     except Exception as e:
         st.error(f"Dashboard data fetch error: {str(e)}")
-        return [], 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, {}, 0
+        return [], 0, 0.0, 0.0, 0.0, 100000.0, 0.0, 0.0, 0.0, {}, 0
 
 (
     accounts, total_accounts, total_equity, total_withdrawable,
-    gf_balance, total_gross, total_distributed,
+    gf_balance, gf_target, total_gross, total_distributed,
     total_client_balances, participant_shares, total_funded_php
 ) = fetch_empire_summary()
 
 # ─── METRICS GRID ───
-st.markdown(f"""
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.2rem; margin: 2rem 0;">
-    <div class="glass-card" style="text-align:center; padding:1.5rem; border-radius:12px;">
-        <h4 style="opacity:0.8; margin:0; font-size:1rem;">Active Accounts</h4>
-        <h2 style="margin:0.5rem 0 0; font-size:2.6rem; color:{accent_primary};">{total_accounts}</h2>
+st.subheader("📊 Executive Overview")
+m_col1, m_col2, m_col3, m_col4 = st.columns(4)
+
+def styled_metric(label, value, color="#FFFFFF", prefix=""):
+    return f"""
+    <div class="glass-card metric-container">
+        <div class="metric-title">{label}</div>
+        <div class="metric-value animate-number" style="color:{color};">{prefix}{value:,.0f}</div>
     </div>
-    <div class="glass-card" style="text-align:center; padding:1.5rem; border-radius:12px;">
-        <h4 style="opacity:0.8; margin:0; font-size:1rem;">Total Equity</h4>
-        <h2 style="margin:0.5rem 0 0; font-size:2.6rem; color:#00ffaa;">${total_equity:,.0f}</h2>
-    </div>
-    <div class="glass-card" style="text-align:center; padding:1.5rem; border-radius:12px;">
-        <h4 style="opacity:0.8; margin:0; font-size:1rem;">Withdrawable</h4>
-        <h2 style="margin:0.5rem 0 0; font-size:2.6rem; color:#ff6b6b;">${total_withdrawable:,.0f}</h2>
-    </div>
-    <div class="glass-card" style="text-align:center; padding:1.5rem; border-radius:12px;">
-        <h4 style="opacity:0.8; margin:0; font-size:1rem;">Empire Funded (PHP)</h4>
-        <h2 style="margin:0.5rem 0 0; font-size:2.6rem; color:{accent_gold};">₱{total_funded_php:,.0f}</h2>
-    </div>
-    <div class="glass-card" style="text-align:center; padding:1.5rem; border-radius:12px;">
-        <h4 style="opacity:0.8; margin:0; font-size:1rem;">Gross Profits</h4>
-        <h2 style="margin:0.5rem 0 0; font-size:2.6rem;">${total_gross:,.0f}</h2>
-    </div>
-    <div class="glass-card" style="text-align:center; padding:1.5rem; border-radius:12px;">
-        <h4 style="opacity:0.8; margin:0; font-size:1rem;">Distributed Shares</h4>
-        <h2 style="margin:0.5rem 0 0; font-size:2.6rem; color:#00ffaa;">${total_distributed:,.0f}</h2>
-    </div>
-    <div class="glass-card" style="text-align:center; padding:1.5rem; border-radius:12px;">
-        <h4 style="opacity:0.8; margin:0; font-size:1rem;">Client Balances</h4>
-        <h2 style="margin:0.5rem 0 0; font-size:2.6rem; color:{accent_gold};">${total_client_balances:,.0f}</h2>
-    </div>
-    <div class="glass-card" style="text-align:center; padding:1.5rem; border-radius:12px;">
-        <h4 style="opacity:0.8; margin:0; font-size:1rem;">Growth Fund</h4>
-        <h2 style="margin:0.5rem 0 0; font-size:2.8rem; color:{accent_gold};">${gf_balance:,.0f}</h2>
-    </div>
-</div>
-""", unsafe_allow_html=True)
+    """
+
+with m_col1:
+    st.markdown(styled_metric("Active Accounts", total_accounts, accent_primary), unsafe_allow_html=True)
+with m_col2:
+    st.markdown(styled_metric("Total Equity", total_equity, "#FFFFFF", "$"), unsafe_allow_html=True)
+with m_col3:
+    st.markdown(styled_metric("Withdrawable", total_withdrawable, accent_danger, "$"), unsafe_allow_html=True)
+with m_col4:
+    st.markdown(styled_metric("Empire Funded (PHP)", total_funded_php, accent_gold, "₱"), unsafe_allow_html=True)
+
+st.write("##") 
+
+m_col5, m_col6, m_col7, m_col8 = st.columns(4)
+with m_col5:
+    st.markdown(styled_metric("Gross Profits", total_gross, "#FFFFFF", "$"), unsafe_allow_html=True)
+with m_col6:
+    st.markdown(styled_metric("Distributed Shares", total_distributed, accent_primary, "$"), unsafe_allow_html=True)
+with m_col7:
+    st.markdown(styled_metric("Client Balances", total_client_balances, accent_gold, "$"), unsafe_allow_html=True)
+with m_col8:
+    st.markdown(styled_metric("Growth Fund", gf_balance, accent_gold, "$"), unsafe_allow_html=True)
+
+# ─── GROWTH FUND PROGRESS BAR ───
+st.write("##")
+st.subheader("📈 Growth Fund Progress")
+with st.container():
+    st.markdown(f"""
+    <div class="glass-card" style="padding: 1rem;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: rgba(255,255,255,0.7);">
+            <span>Current: <strong style="color:white;">${gf_balance:,.0f}</strong></span>
+            <span>Target: <strong style="color:{accent_gold};">${gf_target:,.0f}</strong></span>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    progress = min(gf_balance / gf_target, 1.0) if gf_target > 0 else 0
+    st.progress(progress)
+    st.markdown("</div>", unsafe_allow_html=True)
+
+st.markdown("---")
 
 # ─── QUICK ACTIONS ───
 st.subheader("⚡ Quick Actions")
@@ -156,22 +212,24 @@ current_role = st.session_state.get("role", "client").lower()
 
 with action_cols[0]:
     if current_role in ["owner", "admin"]:
-        if st.button("➕ Launch New Account", type="primary", use_container_width=True):
+        if st.button("➕ Launch New Account", use_container_width=True):
             st.switch_page("pages/📊_FTMO_Accounts.py")
     else:
         st.button("View My Shares", disabled=True, use_container_width=True)
 
 with action_cols[1]:
     if current_role in ["owner", "admin"]:
-        if st.button("💰 Record Profit", type="primary", use_container_width=True):
+        if st.button("💰 Record Profit", use_container_width=True):
             st.switch_page("pages/💰_Profit_Sharing.py")
     else:
-        if st.button("💳 Request Withdrawal", type="primary", use_container_width=True):
+        if st.button("💳 Request Withdrawal", use_container_width=True):
             st.switch_page("pages/💳_Withdrawals.py")
 
 with action_cols[2]:
-    if st.button("🌱 Growth Fund Details", type="primary", use_container_width=True):
+    if st.button("🌱 Growth Fund Details", use_container_width=True):
         st.switch_page("pages/🌱_Growth_Fund.py")
+
+st.markdown("---")
 
 # ─── EMPIRE FLOW TREES ───
 st.subheader("🌳 Empire Flow Trees (Realtime Auto-Sync)")
@@ -180,255 +238,142 @@ tab_part, tab_contrib = st.tabs(["Participant Shares Distribution", "Contributor
 with tab_part:
     if participant_shares:
         labels = ["Empire Shares"] + list(participant_shares.keys())
-        values = [0] + list(participant_shares.values())
+        values = list(participant_shares.values())
+        
         fig_part = go.Figure(go.Sankey(
             node=dict(
-                pad=20,
-                thickness=30,
-                label=labels,
-                color=["#00ffaa"] + [accent_primary] * len(participant_shares)
+                pad=20, thickness=20, line=dict(color="black", width=0.5),
+                label=labels, color=accent_primary
             ),
             link=dict(
                 source=[0] * len(participant_shares),
                 target=list(range(1, len(labels))),
-                value=values[1:]
+                value=values,
+                color="rgba(0,255,170,0.15)"
             )
         ))
-        fig_part.update_layout(height=600, title="Total Distributed Shares by Participant")
+        fig_part.update_layout(height=500, margin=dict(l=0, r=0, t=20, b=20), plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)')
         st.plotly_chart(fig_part, use_container_width=True)
     else:
-        st.info("No profit distributions yet • Record one in Profit Sharing page")
+        st.info("No profit distributions yet")
 
 with tab_contrib:
     funded_by = {}
     for acc in accounts:
         contrib = acc.get("contributors_v2") or acc.get("contributors", [])
         for c in contrib:
-            user_id = c.get("user_id") or c.get("id")
-            name = "Anonymous"
-            if user_id:
-                user = supabase.table("users").select("full_name").eq("id", user_id).single().execute()
-                if user.data:
-                    name = user.data.get("full_name", "Anonymous")
-            else:
-                name = c.get("display_name") or c.get("name", "Anonymous")
+            name = c.get("display_name") or c.get("name") or "Anonymous"
             funded = c.get("units", 0) * (c.get("php_per_unit", 0) or 0)
             funded_by[name] = funded_by.get(name, 0) + funded
 
     if funded_by:
-        labels = ["Empire Funded (PHP)"] + list(funded_by.keys())
-        values = [0] + list(funded_by.values())
+        labels = ["Total Funded (PHP)"] + list(funded_by.keys())
+        values = list(funded_by.values())
+        
         fig_contrib = go.Figure(go.Sankey(
             node=dict(
-                pad=20,
-                thickness=30,
-                label=labels,
-                color=["#ffd700"] + ["#ff6b6b"] * len(funded_by)
+                pad=20, thickness=20, line=dict(color="black", width=0.5),
+                label=labels, color=accent_gold
             ),
             link=dict(
                 source=[0] * len(funded_by),
                 target=list(range(1, len(labels))),
-                value=values[1:]
+                value=values,
+                color="rgba(255,215,0,0.1)"
             )
         ))
-        fig_contrib.update_layout(height=600, title="Total Funded by Contributors (PHP)")
+        fig_contrib.update_layout(height=500, margin=dict(l=0, r=0, t=20, b=20), plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)')
         st.plotly_chart(fig_contrib, use_container_width=True)
     else:
-        st.info("No contributors yet • Add in FTMO Accounts page")
+        st.info("No contributors yet")
 
-# ─── LIVE ACCOUNTS GRID + MINI TREES ───
-st.subheader("📊 Live Accounts (Realtime Metrics & Trees)")
+# ─── LIVE ACCOUNTS GRID ───
+st.subheader("📊 Live Accounts Status")
 if accounts:
     for acc in accounts:
         contrib = acc.get("contributors_v2") or acc.get("contributors", [])
         funded_php_acc = sum(c.get("units", 0) * (c.get("php_per_unit", 0) or 0) for c in contrib)
-        phase_emoji = {
-            "Challenge P1": "🔴", "Challenge P2": "🟡",
-            "Verification": "🟠", "Funded": "🟢", "Scaled": "💎"
-        }.get(acc.get("current_phase", ""), "⚪")
-
-        st.markdown(f"""
-        <div class="glass-card" style="padding:1.8rem; margin-bottom:1.5rem; border-radius:12px;">
-            <h3>{phase_emoji} {acc.get('name', 'Unnamed Account')}</h3>
-            <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:1rem; margin:1rem 0;">
-                <div><strong>Phase:</strong> {acc.get('current_phase', '—')}</div>
-                <div><strong>Equity:</strong> ${acc.get('current_equity', 0):,.0f}</div>
-                <div><strong>Withdrawable:</strong> ${acc.get('withdrawable_balance', 0):,.0f}</div>
-                <div><strong>Funded PHP:</strong> ₱{funded_php_acc:,.0f}</div>
+        phase_map = {
+            "Challenge P1": "🔴 Challenge P1", "Challenge P2": "🟡 Challenge P2",
+            "Verification": "🟠 Verification", "Funded": "🟢 Funded", "Scaled": "💎 Scaled"
+        }
+        phase_display = phase_map.get(acc.get("current_phase"), "⚪ Unknown")
+        
+        # Account Card
+        with st.container():
+            st.markdown(f"""
+            <div class="glass-card" style="margin-bottom: 1rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3 style="margin: 0; color: white;">{acc.get('name', 'Unnamed Account')}</h3>
+                    <span class="status-badge" style="background: rgba(255,255,255,0.05); color: #ccc;">{phase_display}</span>
+                </div>
+                <hr style="margin: 0.7rem 0; border: 1px solid rgba(255,255,255,0.05);">
+                <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:0.5rem; color: #ddd;">
+                    <div>Equity: <strong style="color:white;">${acc.get('current_equity', 0):,.0f}</strong></div>
+                    <div>Withdrawable: <strong style="color:{accent_danger};">${acc.get('withdrawable_balance', 0):,.0f}</strong></div>
+                    <div>Funded: <strong style="color:{accent_gold};">₱{funded_php_acc:,.0f}</strong></div>
+                </div>
             </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        tab_p, tab_c = st.tabs(["Participants Tree", "Contributors Tree"])
-        with tab_p:
-            parts = acc.get("participants_v2") or acc.get("participants", [])
-            if parts:
-                labels = ["Profits"] + [p.get("display_name") or p.get("name", "?") for p in parts]
-                vals = [p.get("percentage", 0) for p in parts]
-                fig_p = go.Figure(go.Sankey(
-                    node=dict(pad=15, thickness=20, label=labels),
-                    link=dict(source=[0]*len(vals), target=list(range(1,len(labels))), value=vals)
-                ))
-                fig_p.update_layout(height=350, title="Participants Share Flow")
-                st.plotly_chart(fig_p, use_container_width=True)
-            else:
-                st.info("No participants assigned yet")
-
-        with tab_c:
-            if contrib:
-                contrib_labels = ["Funded"]
-                contrib_vals = []
-                for c in contrib:
-                    user_id = c.get("user_id") or c.get("id")
-                    name = "Anonymous"
-                    if user_id:
-                        user = supabase.table("users").select("full_name").eq("id", user_id).single().execute()
-                        if user.data:
-                            name = user.data.get("full_name", "Anonymous")
-                    else:
-                        name = c.get("display_name") or c.get("name", "Anonymous")
-                    contrib_labels.append(name)
-                    contrib_vals.append(c.get("units", 0) * (c.get("php_per_unit", 0) or 0))
-                fig_c = go.Figure(go.Sankey(
-                    node=dict(pad=15, thickness=20, label=contrib_labels),
-                    link=dict(source=[0]*len(contrib_vals), target=list(range(1,len(contrib_labels))), value=contrib_vals)
-                ))
-                fig_c.update_layout(height=350, title="Contributors Funding Flow (PHP)")
-                st.plotly_chart(fig_c, use_container_width=True)
-            else:
-                st.info("No contributors yet")
+            """, unsafe_allow_html=True)
 else:
-    st.info("No live accounts yet • Launch one in FTMO Accounts page")
+    st.info("No live accounts yet")
 
-# ─── LATEST UPDATES SECTION (FIXED FOR YOUR SCHEMA) ───
-st.subheader("Latest Updates")
+# ─── LATEST UPDATES SECTION ───
+st.markdown("---")
+st.subheader("🔔 Latest Updates")
+up_col1, up_col2 = st.columns([1, 1])
 
-# 1. Latest Announcements – use 'date' column
-@st.cache_data(ttl=60)
-def get_latest_announcements(limit=3):
-    try:
-        ann = supabase.table("announcements") \
-            .select("title, message, date") \
-            .order("date", desc=True) \
-            .limit(limit) \
-            .execute().data or []
-        return ann
-    except Exception as e:
-        st.warning(f"Announcements fetch failed: {str(e)}")
-        return []
+with up_col1:
+    latest_ann = supabase.table("announcements").select("title, message, date").order("date", desc=True).limit(3).execute().data or []
+    if latest_ann:
+        st.markdown("#### 📢 Announcements")
+        for a in latest_ann:
+            with st.expander(f"{a['title']} - {a.get('date', '—')}"):
+                st.write(a['message'])
+    else:
+        st.info("No recent announcements")
 
-latest_ann = get_latest_announcements()
+with up_col2:
+    my_username = st.session_state.get("username", "")
+    unread_data = supabase.table("messages").select("id").eq("to_client", my_username).execute()
+    unread_count = len(unread_data.data)
 
-if latest_ann:
-    st.markdown("#### 📢 Latest Announcements")
-    for a in latest_ann:
-        st.markdown(f"**{a['title']}** • {a.get('date', '—')}")
-        preview = a['message'][:150] + "..." if len(a['message']) > 150 else a['message']
-        st.caption(preview)
-    if st.button("View All Announcements", use_container_width=True):
-        st.switch_page("pages/📢_Announcements.py")
-else:
-    st.info("No recent announcements yet")
-
-# 2. Latest Testimonials – use 'status' TEXT instead of 'approved' boolean
-@st.cache_data(ttl=60)
-def get_latest_testimonials(limit=3):
-    try:
-        tes = supabase.table("testimonials") \
-            .select("client_name, message, date_submitted") \
-            .eq("status", "Approved") \
-            .order("date_submitted", desc=True) \
-            .limit(limit) \
-            .execute().data or []
-        return tes
-    except Exception as e:
-        st.warning(f"Testimonials fetch failed: {str(e)}")
-        return []
-
-latest_tes = get_latest_testimonials()
-
-if latest_tes:
-    st.markdown("#### 📸 Recent Testimonials")
-    tes_cols = st.columns(3)
-    for i, t in enumerate(latest_tes):
-        with tes_cols[i % 3]:
-            st.markdown(f"**{t['client_name']}** • {t.get('date_submitted', '—')}")
-            preview = t['message'][:100] + "..." if len(t['message']) > 100 else t['message']
-            st.caption(preview)
-    if st.button("View All Testimonials", use_container_width=True):
-        st.switch_page("pages/📸_Testimonials.py")
-else:
-    st.info("No approved testimonials yet")
-
-# 3. Unread Messages Preview – use 'to_client' instead of 'to_username'
-@st.cache_data(ttl=30)
-def get_unread_messages_preview():
-    try:
-        my_username = st.session_state.get("username", "")
-        # Count messages sent to you (to_client = your username)
-        unread_count = supabase.table("messages") \
-            .select("count", count="exact") \
-            .eq("to_client", my_username) \
-            .execute().count or 0
-
-        latest = supabase.table("messages") \
-            .select("from_client, from_admin, message, timestamp") \
-            .eq("to_client", my_username) \
-            .order("timestamp", desc=True) \
-            .limit(2) \
-            .execute().data or []
-
-        return unread_count, latest
-    except Exception as e:
-        st.warning(f"Messages preview failed: {str(e)}")
-        return 0, []
-
-unread_count, latest_msgs = get_unread_messages_preview()
-
-if unread_count > 0:
-    st.markdown(f"#### 💬 You have **{unread_count} message{'s' if unread_count > 1 else ''}**")
-    for m in latest_msgs:
-        sender = m.get("from_client") or m.get("from_admin") or "Unknown"
-        preview = m['message'][:80] + "..." if len(m['message']) > 80 else m['message']
-        st.markdown(f"**From {sender}**: {preview}")
-    if st.button("Open Messages Inbox", type="primary", use_container_width=True):
-        st.switch_page("pages/💬_Messages.py")
-else:
-    st.info("No messages yet")
+    if unread_count > 0:
+        st.markdown(f"#### 💬 Messages ({unread_count} unread)")
+        if st.button("Open Inbox", type="primary", use_container_width=True):
+            st.switch_page("pages/💬_Messages.py")
+    else:
+        st.markdown("#### 💬 Messages")
+        st.info("Inbox clear")
 
 # ─── CLIENT BALANCES (OWNER/ADMIN ONLY) ───
 if st.session_state.get("role", "").lower() in ["owner", "admin"]:
+    st.markdown("---")
     st.subheader("👥 Client Balances (Realtime)")
     try:
         clients = supabase.table("users").select("full_name, balance").eq("role", "client").execute().data or []
         if clients:
-            df = pd.DataFrame([
-                {"Client": c["full_name"], "Balance": f"${c.get('balance', 0):,.2f}"}
-                for c in clients
-            ])
+            df = pd.DataFrame(clients)
+            df.columns = ["Client Name", "Balance"]
+            df["Balance"] = df["Balance"].apply(lambda x: f"${x:,.2f}")
             st.dataframe(df, use_container_width=True, hide_index=True)
         else:
-            st.info("No clients registered yet")
+            st.info("No clients registered")
     except Exception as e:
-        st.warning(f"Client list temporarily unavailable: {str(e)}")
+        st.warning(f"Client list unavailable: {str(e)}")
 
 # ─── MOTIVATIONAL FOOTER ───
 st.markdown(f"""
-<div class="glass-card" style="padding:4rem 2rem; text-align:center; margin:5rem auto; max-width:1100px;
-    border-radius:24px; border:2px solid {accent_primary}40;
-    background:linear-gradient(135deg, rgba(0,255,170,0.08), rgba(255,215,0,0.05));
-    box-shadow:0 20px 50px rgba(0,255,170,0.15);">
-    <h1 style="font-size:3.2rem; background:linear-gradient(90deg,{accent_primary},{accent_gold});
-               -webkit-background-clip:text; -webkit-text-fill-color:transparent;">
+<div style="padding:3rem 2rem; text-align:center; margin:3rem auto; max-width:1000px;
+    border-radius:24px; border:1px solid {accent_primary}20;
+    background: rgba(255, 255, 255, 0.01);">
+    <h1 style="font-size:2.5rem; color:white; margin-bottom:0.5rem;">
         Fully Automatic • Realtime • Exponential Empire
     </h1>
-    <p style="font-size:1.4rem; opacity:0.9; margin:1.5rem 0;">
-        Every transaction auto-syncs • Trees update instantly • Empire scales itself.
-    </p>
-    <h2 style="color:{accent_gold}; font-size:2.2rem; margin:1rem 0;">
+    <p style="font-size:1.2rem; opacity:0.8; margin:0.5rem 0;">
         Built by Faith, Shared for Generations 👑
-    </h2>
-    <p style="opacity:0.8; font-style:italic;">
+    </p>
+    <p style="opacity:0.6; font-style:italic; margin-top:1rem;">
         KMFX Pro • Cloud Edition 2026 • Mark Jeff Blando
     </p>
 </div>
