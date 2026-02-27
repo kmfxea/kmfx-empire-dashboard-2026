@@ -26,25 +26,10 @@ if st.session_state.get("just_logged_in", False):
     st.success(f"Welcome back, {st.session_state.full_name}! 🚀 Empire scaling mode activated.")
     st.session_state.pop("just_logged_in", None)
 
-# ─── SCROLL-TO-TOP SCRIPT ───
+# ─── SIMPLE SCROLL-TO-TOP (less aggressive) ───
 st.markdown("""
 <script>
-function forceScrollToTop() {
-    window.scrollTo({top: 0, behavior: 'smooth'});
-    document.body.scrollTop = 0;
-    document.documentElement.scrollTop = 0;
-    const main = parent.document.querySelector(".main .block-container");
-    if (main) main.scrollTop = 0;
-}
-const observer = new MutationObserver(() => {
-    setTimeout(forceScrollToTop, 300);
-    setTimeout(forceScrollToTop, 1200);
-    setTimeout(forceScrollToTop, 2500);
-});
-const target = parent.document.querySelector(".main") || document.body;
-observer.observe(target, { childList: true, subtree: true, attributes: true });
-setTimeout(forceScrollToTop, 800);
-setTimeout(forceScrollToTop, 2000);
+    parent.document.querySelector('.main').scrollTop = 0;
 </script>
 """, unsafe_allow_html=True)
 
@@ -56,14 +41,15 @@ st.markdown("**Realtime, fully automatic empire overview** • Every transaction
 @st.cache_data(ttl=30, show_spinner="Loading empire overview...")
 def fetch_empire_summary():
     try:
-        # Fast totals from materialized views
+        # Fast totals from materialized views (fallback gracefully)
         gf_resp = supabase.table("mv_growth_fund_balance").select("balance").execute()
         gf_balance = gf_resp.data[0].get("balance", 0.0) if gf_resp.data else 0.0
 
         empire_resp = supabase.table("mv_empire_summary").select("*").execute()
         empire = empire_resp.data[0] if empire_resp.data else {}
-        total_accounts = empire.get("total_accounts", 0)
-        total_equity = empire.get("total_equity", 0.0)
+
+        total_accounts    = empire.get("total_accounts", 0)
+        total_equity      = empire.get("total_equity", 0.0)
         total_withdrawable = empire.get("total_withdrawable", 0.0)
 
         client_resp = supabase.table("mv_client_balances").select("*").execute()
@@ -71,10 +57,10 @@ def fetch_empire_summary():
 
         # Lightweight raw data
         accounts = supabase.table("ftmo_accounts").select("*").execute().data or []
-        profits = supabase.table("profits").select("gross_profit").execute().data or []
+        profits  = supabase.table("profits").select("gross_profit").execute().data or []
         distributions = supabase.table("profit_distributions").select("share_amount, participant_name, is_growth_fund").execute().data or []
 
-        total_gross = sum(p.get("gross_profit", 0) for p in profits)
+        total_gross      = sum(p.get("gross_profit", 0) for p in profits)
         total_distributed = sum(d.get("share_amount", 0) for d in distributions if not d.get("is_growth_fund", False))
 
         participant_shares = {}
@@ -182,17 +168,8 @@ with tab_part:
         labels = ["Empire Shares"] + list(participant_shares.keys())
         values = [0] + list(participant_shares.values())
         fig_part = go.Figure(go.Sankey(
-            node=dict(
-                pad=20,
-                thickness=30,
-                label=labels,
-                color=["#00ffaa"] + [accent_primary] * len(participant_shares)
-            ),
-            link=dict(
-                source=[0] * len(participant_shares),
-                target=list(range(1, len(labels))),
-                value=values[1:]
-            )
+            node=dict(pad=20, thickness=30, label=labels, color=["#00ffaa"] + [accent_primary] * len(participant_shares)),
+            link=dict(source=[0] * len(participant_shares), target=list(range(1, len(labels))), value=values[1:])
         ))
         fig_part.update_layout(height=600, title="Total Distributed Shares by Participant")
         st.plotly_chart(fig_part, use_container_width=True)
@@ -207,9 +184,9 @@ with tab_contrib:
             user_id = c.get("user_id") or c.get("id")
             name = "Anonymous"
             if user_id:
-                user = supabase.table("users").select("full_name").eq("id", user_id).single().execute()
-                if user.data:
-                    name = user.data.get("full_name", "Anonymous")
+                user_resp = supabase.table("users").select("full_name").eq("id", user_id).single().execute()
+                if user_resp.data:
+                    name = user_resp.data.get("full_name", "Anonymous")
             else:
                 name = c.get("display_name") or c.get("name", "Anonymous")
             funded = c.get("units", 0) * (c.get("php_per_unit", 0) or 0)
@@ -219,17 +196,8 @@ with tab_contrib:
         labels = ["Empire Funded (PHP)"] + list(funded_by.keys())
         values = [0] + list(funded_by.values())
         fig_contrib = go.Figure(go.Sankey(
-            node=dict(
-                pad=20,
-                thickness=30,
-                label=labels,
-                color=["#ffd700"] + ["#ff6b6b"] * len(funded_by)
-            ),
-            link=dict(
-                source=[0] * len(funded_by),
-                target=list(range(1, len(labels))),
-                value=values[1:]
-            )
+            node=dict(pad=20, thickness=30, label=labels, color=["#ffd700"] + ["#ff6b6b"] * len(funded_by)),
+            link=dict(source=[0] * len(funded_by), target=list(range(1, len(labels))), value=values[1:])
         ))
         fig_contrib.update_layout(height=600, title="Total Funded by Contributors (PHP)")
         st.plotly_chart(fig_contrib, use_container_width=True)
@@ -238,10 +206,12 @@ with tab_contrib:
 
 # ─── LIVE ACCOUNTS GRID + MINI TREES ───
 st.subheader("📊 Live Accounts (Realtime Metrics & Trees)")
+
 if accounts:
     for acc in accounts:
         contrib = acc.get("contributors_v2") or acc.get("contributors", [])
         funded_php_acc = sum(c.get("units", 0) * (c.get("php_per_unit", 0) or 0) for c in contrib)
+
         phase_emoji = {
             "Challenge P1": "🔴", "Challenge P2": "🟡",
             "Verification": "🟠", "Funded": "🟢", "Scaled": "💎"
@@ -260,6 +230,7 @@ if accounts:
         """, unsafe_allow_html=True)
 
         tab_p, tab_c = st.tabs(["Participants Tree", "Contributors Tree"])
+
         with tab_p:
             parts = acc.get("participants_v2") or acc.get("participants", [])
             if parts:
@@ -282,9 +253,9 @@ if accounts:
                     user_id = c.get("user_id") or c.get("id")
                     name = "Anonymous"
                     if user_id:
-                        user = supabase.table("users").select("full_name").eq("id", user_id).single().execute()
-                        if user.data:
-                            name = user.data.get("full_name", "Anonymous")
+                        user_resp = supabase.table("users").select("full_name").eq("id", user_id).single().execute()
+                        if user_resp.data:
+                            name = user_resp.data.get("full_name", "Anonymous")
                     else:
                         name = c.get("display_name") or c.get("name", "Anonymous")
                     contrib_labels.append(name)
@@ -300,25 +271,22 @@ if accounts:
 else:
     st.info("No live accounts yet • Launch one in FTMO Accounts page")
 
-# ─── LATEST UPDATES SECTION (FIXED FOR YOUR SCHEMA) ───
+# ─── LATEST UPDATES SECTION ───
 st.subheader("Latest Updates")
 
-# 1. Latest Announcements – use 'date' column
+# Latest Announcements
 @st.cache_data(ttl=60)
 def get_latest_announcements(limit=3):
     try:
-        ann = supabase.table("announcements") \
+        return supabase.table("announcements") \
             .select("title, message, date") \
             .order("date", desc=True) \
             .limit(limit) \
             .execute().data or []
-        return ann
-    except Exception as e:
-        st.warning(f"Announcements fetch failed: {str(e)}")
+    except:
         return []
 
 latest_ann = get_latest_announcements()
-
 if latest_ann:
     st.markdown("#### 📢 Latest Announcements")
     for a in latest_ann:
@@ -330,23 +298,20 @@ if latest_ann:
 else:
     st.info("No recent announcements yet")
 
-# 2. Latest Testimonials – use 'status' TEXT instead of 'approved' boolean
+# Latest Testimonials
 @st.cache_data(ttl=60)
 def get_latest_testimonials(limit=3):
     try:
-        tes = supabase.table("testimonials") \
+        return supabase.table("testimonials") \
             .select("client_name, message, date_submitted") \
             .eq("status", "Approved") \
             .order("date_submitted", desc=True) \
             .limit(limit) \
             .execute().data or []
-        return tes
-    except Exception as e:
-        st.warning(f"Testimonials fetch failed: {str(e)}")
+    except:
         return []
 
 latest_tes = get_latest_testimonials()
-
 if latest_tes:
     st.markdown("#### 📸 Recent Testimonials")
     tes_cols = st.columns(3)
@@ -360,12 +325,11 @@ if latest_tes:
 else:
     st.info("No approved testimonials yet")
 
-# 3. Unread Messages Preview – use 'to_client' instead of 'to_username'
+# Unread Messages Preview
 @st.cache_data(ttl=30)
 def get_unread_messages_preview():
     try:
         my_username = st.session_state.get("username", "")
-        # Count messages sent to you (to_client = your username)
         unread_count = supabase.table("messages") \
             .select("count", count="exact") \
             .eq("to_client", my_username) \
@@ -379,12 +343,10 @@ def get_unread_messages_preview():
             .execute().data or []
 
         return unread_count, latest
-    except Exception as e:
-        st.warning(f"Messages preview failed: {str(e)}")
+    except:
         return 0, []
 
 unread_count, latest_msgs = get_unread_messages_preview()
-
 if unread_count > 0:
     st.markdown(f"#### 💬 You have **{unread_count} message{'s' if unread_count > 1 else ''}**")
     for m in latest_msgs:
