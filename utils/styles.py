@@ -17,19 +17,16 @@ def apply_global_styles(public: bool = True):
 
     # Color palette
     accent_primary = "#00ffaa"
-    accent_gold   = "#ffd700"
-    accent_glow   = "#00ffaa40"
-    accent_hover  = "#00ffcc"
-    gold_soft     = "#f0d060"           # softer gold for backgrounds / placeholders
-    gold_border   = "#e8c547"
-
-    bg_color      = "#0a0d14" if theme == "dark" else "#f8fbff"
-    card_bg       = "rgba(15,20,30,0.78)" if theme == "dark" else "rgba(255,255,255,0.82)"
-    border_color  = "rgba(100,100,100,0.18)" if theme == "dark" else "rgba(0,0,0,0.09)"
-    text_primary  = "#ffffff" if theme == "dark" else "#0f172a"
-    text_muted    = "#bbbbbb" if theme == "dark" else "#64748b"
-    card_shadow   = "0 10px 35px rgba(0,0,0,0.58)" if theme == "dark" else "0 8px 25px rgba(0,0,0,0.13)"
-    sidebar_bg    = "rgba(10,13,20,0.97)" if theme == "dark" else "rgba(248,251,255,0.97)"
+    accent_gold    = "#ffd700"
+    accent_glow    = "#00ffaa40"
+    accent_hover   = "#00ffcc"
+    bg_color       = "#0a0d14" if theme == "dark" else "#f8fbff"
+    card_bg        = "rgba(15,20,30,0.78)" if theme == "dark" else "rgba(255,255,255,0.82)"
+    border_color   = "rgba(100,100,100,0.18)" if theme == "dark" else "rgba(0,0,0,0.09)"
+    text_primary   = "#ffffff" if theme == "dark" else "#0f172a"
+    text_muted     = "#bbbbbb" if theme == "dark" else "#64748b"
+    card_shadow    = "0 10px 35px rgba(0,0,0,0.58)" if theme == "dark" else "0 8px 25px rgba(0,0,0,0.13)"
+    sidebar_bg     = "rgba(10,13,20,0.97)" if theme == "dark" else "rgba(248,251,255,0.97)"
 
     # ── Inject fonts + main CSS ────────────────────────────────────────
     st.markdown(f"""
@@ -40,8 +37,6 @@ def apply_global_styles(public: bool = True):
             --accent-gold:    {accent_gold};
             --accent-glow:    {accent_glow};
             --gold-gradient:  linear-gradient(135deg, #FFD700 0%, #B8860B 100%);
-            --gold-soft:      {gold_soft};
-            --gold-border:    {gold_border};
             --metric-white:   #FFFFFF;
             --max-app-width:  1320px;
         }}
@@ -133,14 +128,14 @@ def apply_global_styles(public: bool = True):
             box-shadow: 0 10px 25px {accent_glow}cc !important;
         }}
 
-        /* Form submit & lang toggle */
+        /* Form submit & lang toggle specificity */
         button[key="lang_toggle_public"],
         div[data-testid="stFormSubmitButton"] button {{
             background: #00ffa2 !important;
             color: #000000 !important;
         }}
 
-        /* ── FORM INPUTS (normal) ── */
+        /* ── FORM INPUTS (base for all) ── */
         .stTextInput input,
         .stTextArea textarea {{
             background: rgba(255,255,255,0.14) !important;
@@ -150,7 +145,7 @@ def apply_global_styles(public: bool = True):
             padding: 12px 16px !important;
         }}
 
-        /* ── GOLDEN USERNAME + PASSWORD FIELDS ── */
+        /* ── GOLDEN LOGIN FIELDS (username + password) ── */
         input[type="text"][aria-label*="username" i],
         input[type="text"][aria-label*="Username" i],
         input[type="text"][placeholder*="username" i],
@@ -158,25 +153,41 @@ def apply_global_styles(public: bool = True):
         input[type="password"],
         input[type="password"][aria-label*="password" i],
         input[type="password"][aria-label*="Password" i] {{
-            background: rgba(255, 215, 0, 0.08) !important;           /* subtle gold tint */
-            border: 1px solid var(--gold-border) !important;
-            color: var(--gold-soft) !important;
+            background: rgba(255, 215, 0, 0.11) !important;     /* light golden tint bg */
+            color: #000000 !important;                           /* BLACK text when typing */
+            border: 1px solid #d4a017 !important;               /* gold border */
+            caret-color: #000000 !important;                     /* black cursor */
         }}
 
+        /* Focused / active state */
         input[type="text"][aria-label*="username" i]:focus,
         input[type="text"][aria-label*="Username" i]:focus,
         input[type="password"]:focus {{
-            background: rgba(255, 215, 0, 0.22) !important;
-            border-color: var(--accent-gold) !important;
-            box-shadow: 0 0 16px rgba(255,215,0,0.45) !important;
-            color: white !important;
+            background: rgba(255, 215, 0, 0.24) !important;     /* stronger gold on focus */
+            border-color: #ffd700 !important;                    /* bright gold */
+            box-shadow: 0 0 14px rgba(255,215,0,0.55) !important;
+            color: #000000 !important;                           /* keep BLACK text */
         }}
 
+        /* Placeholder text = golden */
         input[type="text"][aria-label*="username" i]::placeholder,
         input[type="text"][aria-label*="Username" i]::placeholder,
         input[type="password"]::placeholder {{
-            color: rgba(255,215,0,0.55) !important;     /* golden placeholder */
-            opacity: 0.9 !important;
+            color: #c9a227 !important;                           /* golden placeholder */
+            opacity: 0.85 !important;
+            font-weight: 400;
+        }}
+
+        /* Make sure label is BLACK (Streamlit default label) */
+        .stTextInput > label,
+        .stTextInput > div > label {{
+            color: #000000 !important;
+            font-weight: 600 !important;
+        }}
+
+        /* Optional: if you have helper text or "Enter your username" as caption */
+        p[data-testid="stCaption"] {{
+            color: #111111 !important;
         }}
 
         /* ── SUCCESS BOX ── */
