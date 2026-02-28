@@ -53,7 +53,7 @@ else:
 # ────────────────────────────────────────────────
 # APPLY GLOBAL STYLES EARLY
 # ────────────────────────────────────────────────
-apply_global_styles(is_public=not authenticated)
+apply_global_styles(public=not authenticated)
 
 # ────────────────────────────────────────────────
 # QR AUTO-LOGIN (call EARLY, bago mag-redirect o mag-render)
