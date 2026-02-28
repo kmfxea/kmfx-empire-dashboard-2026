@@ -182,18 +182,18 @@ def apply_global_styles(public: bool = True):
             color: #000000 !important;
         }}
 
-        /* Golden placeholders */
+        /* Dark gray placeholders – mas madalas ginagamit sa modern UI */
         input[aria-label*="username" i]::placeholder,
         input[aria-label*="Username" i]::placeholder,
         input[type="password"]::placeholder,
         input[aria-label*="name" i]::placeholder,
         input[aria-label*="Name" i]::placeholder,
         input[type="email"]::placeholder,
-        textarea[data-testid="stTextArea"]::placeholder {{
-            color: {gold_placeholder} !important;
-            opacity: 0.82 !important;
+        textarea[data-testid="stTextArea"]::placeholder {
+            color: #333333 !important;
+            opacity: 0.70 !important;
             font-weight: 400;
-        }}
+        }
 
         /* ── GOLD GRADIENT LABELS for better visibility ── */
         .stTextInput > label,
