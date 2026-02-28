@@ -2,7 +2,7 @@
 # =====================================================================
 # KMFX EA - FULL CONSOLIDATED STYLES (v3.2 – Feb 2026)
 # Centralized, theme-aware CSS – call once per page
-# Merged from original main.py + fixes for consistency
+# Merged from original main.py + fixes for consistency + golden login fields
 # =====================================================================
 import streamlit as st
 
@@ -20,6 +20,12 @@ def apply_global_styles(public: bool = True):
     accent_gold    = "#ffd700"
     accent_glow    = "#00ffaa40"
     accent_hover   = "#00ffcc"
+    gold_border    = "#d4a017"
+    gold_focus     = "#ffd700"
+    gold_placeholder = "#c9a227"
+    gold_bg_normal = "rgba(255, 215, 0, 0.10)"
+    gold_bg_focus  = "rgba(255, 215, 0, 0.22)"
+
     bg_color       = "#0a0d14" if theme == "dark" else "#f8fbff"
     card_bg        = "rgba(15,20,30,0.78)" if theme == "dark" else "rgba(255,255,255,0.82)"
     border_color   = "rgba(100,100,100,0.18)" if theme == "dark" else "rgba(0,0,0,0.09)"
@@ -128,66 +134,89 @@ def apply_global_styles(public: bool = True):
             box-shadow: 0 10px 25px {accent_glow}cc !important;
         }}
 
-        /* Form submit & lang toggle specificity */
         button[key="lang_toggle_public"],
         div[data-testid="stFormSubmitButton"] button {{
             background: #00ffa2 !important;
             color: #000000 !important;
         }}
 
-        /* ── FORM INPUTS (base for all) ── */
+        /* ── FORM INPUTS (base style for non-golden fields) ── */
         .stTextInput input,
         .stTextArea textarea {{
-            background: rgba(255,255,255,0.14) !important;
+            background: rgba(255,255,255,0.09) !important;
             color: white !important;
-            border: 1px solid rgba(255,215,0,0.22) !important;
+            border: 1px solid rgba(255,215,0,0.18) !important;
             border-radius: 12px !important;
             padding: 12px 16px !important;
+            transition: all 0.25s ease;
         }}
 
-        /* ── GOLDEN LOGIN FIELDS (username + password) ── */
-        input[type="text"][aria-label*="username" i],
-        input[type="text"][aria-label*="Username" i],
-        input[type="text"][placeholder*="username" i],
-        input[type="text"][placeholder*="Username" i],
+        /* ── GOLDEN THEME FOR LOGIN / REGISTRATION FIELDS ── */
+        input[aria-label*="username" i],
+        input[aria-label*="Username" i],
         input[type="password"],
-        input[type="password"][aria-label*="password" i],
-        input[type="password"][aria-label*="Password" i] {{
-            background: rgba(255, 215, 0, 0.11) !important;     /* light golden tint bg */
-            color: #000000 !important;                           /* BLACK text when typing */
-            border: 1px solid #d4a017 !important;               /* gold border */
-            caret-color: #000000 !important;                     /* black cursor */
+        input[aria-label*="password" i],
+        input[aria-label*="name" i],
+        input[aria-label*="Name" i],
+        input[type="email"],
+        input[aria-label*="email" i],
+        input[aria-label*="Email" i],
+        textarea[data-testid="stTextArea"] {{
+            background: {gold_bg_normal} !important;
+            color: #000000 !important;
+            border: 1px solid {gold_border} !important;
+            caret-color: #000000 !important;
         }}
 
-        /* Focused / active state */
-        input[type="text"][aria-label*="username" i]:focus,
-        input[type="text"][aria-label*="Username" i]:focus,
-        input[type="password"]:focus {{
-            background: rgba(255, 215, 0, 0.24) !important;     /* stronger gold on focus */
-            border-color: #ffd700 !important;                    /* bright gold */
-            box-shadow: 0 0 14px rgba(255,215,0,0.55) !important;
-            color: #000000 !important;                           /* keep BLACK text */
+        /* Focused state - golden glow */
+        input[aria-label*="username" i]:focus,
+        input[aria-label*="Username" i]:focus,
+        input[type="password"]:focus,
+        input[aria-label*="name" i]:focus,
+        input[aria-label*="Name" i]:focus,
+        input[type="email"]:focus,
+        textarea[data-testid="stTextArea"]:focus {{
+            background: {gold_bg_focus} !important;
+            border-color: {gold_focus} !important;
+            box-shadow: 0 0 16px rgba(255,215,0,0.50) !important;
+            color: #000000 !important;
         }}
 
-        /* Placeholder text = golden */
-        input[type="text"][aria-label*="username" i]::placeholder,
-        input[type="text"][aria-label*="Username" i]::placeholder,
-        input[type="password"]::placeholder {{
-            color: #c9a227 !important;                           /* golden placeholder */
-            opacity: 0.85 !important;
+        /* Golden placeholders */
+        input[aria-label*="username" i]::placeholder,
+        input[aria-label*="Username" i]::placeholder,
+        input[type="password"]::placeholder,
+        input[aria-label*="name" i]::placeholder,
+        input[aria-label*="Name" i]::placeholder,
+        input[type="email"]::placeholder,
+        textarea[data-testid="stTextArea"]::placeholder {{
+            color: {gold_placeholder} !important;
+            opacity: 0.82 !important;
             font-weight: 400;
         }}
 
-        /* Make sure label is BLACK (Streamlit default label) */
+        /* Force BLACK labels */
         .stTextInput > label,
-        .stTextInput > div > label {{
+        .stTextInput > div > label,
+        .stTextArea > label,
+        .stTextArea > div > label {{
             color: #000000 !important;
             font-weight: 600 !important;
+            letter-spacing: 0.3px;
         }}
 
-        /* Optional: if you have helper text or "Enter your username" as caption */
-        p[data-testid="stCaption"] {{
-            color: #111111 !important;
+        /* Helper text / caption / error messages */
+        p[data-testid="stCaption"],
+        small,
+        .stTextInput div[role="alert"],
+        .stTextArea div[role="alert"] {{
+            color: #1a1a1a !important;
+        }}
+
+        /* Optional: make textarea a bit taller by default */
+        textarea[data-testid="stTextArea"] {{
+            min-height: 110px !important;
+            resize: vertical !important;
         }}
 
         /* ── SUCCESS BOX ── */
