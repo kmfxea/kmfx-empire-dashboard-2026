@@ -114,25 +114,45 @@ texts = {
 def txt(key):
     return texts.get(st.session_state.language, texts["en"]).get(key, key)
 
-# ── Small Golden Sliding Toggle ──
+# ────────────────────────────────────────────────
+# LANGUAGE SUPPORT
+# ────────────────────────────────────────────────
+if "language" not in st.session_state:
+    st.session_state.language = "en"
+
+texts = {
+    "en": {
+        "join_waitlist": "Join Waitlist – Early Access",
+        "name": "Full Name",
+        "email": "Email",
+        "why_join": "Why do you want to join KMFX? (optional)",
+        "submit": "Join Waitlist 👑",
+        "success": "Success! You're on the list. Check your email soon 🚀",
+    },
+    "tl": {
+        "join_waitlist": "Sumali sa Waitlist – Maagap na Access",
+        "name": "Buong Pangalan",
+        "email": "Email",
+        "why_join": "Bakit gusto mong sumali sa KMFX? (opsyonal)",
+        "submit": "Sumali sa Waitlist 👑",
+        "success": "Tagumpay! Nasa listahan ka na. Check mo ang email mo soon 🚀",
+    }
+}
+
+def txt(key):
+    return texts.get(st.session_state.language, texts["en"]).get(key, key)
+
+# ── Small Golden Sliding Toggle (NO visible checkbox) ──
 st.markdown("""
     <style>
         .lang-toggle-wrapper {
             display: flex;
             justify-content: flex-end;
             align-items: center;
-            margin: 1rem 0;
+            margin: 1rem 0 1.5rem auto;
             font-family: 'Poppins', sans-serif;
         }
-        
-        .lang-toggle-label {
-            color: #ffd700;
-            font-weight: 600;
-            font-size: 0.95rem;
-            margin-right: 10px;
-            letter-spacing: 0.5px;
-        }
-        
+
         /* Custom small toggle switch */
         .lang-toggle {
             position: relative;
@@ -140,13 +160,13 @@ st.markdown("""
             width: 54px;
             height: 28px;
         }
-        
+
         .lang-toggle input {
             opacity: 0;
             width: 0;
             height: 0;
         }
-        
+
         .slider {
             position: absolute;
             cursor: pointer;
@@ -155,11 +175,11 @@ st.markdown("""
             right: 0;
             bottom: 0;
             background: rgba(255,215,0,0.18);
-            border: 1px solid #d4a017;
+            border: 1px solid #d4a01780;
             border-radius: 34px;
             transition: .4s;
         }
-        
+
         .slider:before {
             position: absolute;
             content: "";
@@ -172,64 +192,63 @@ st.markdown("""
             box-shadow: 0 2px 6px rgba(0,0,0,0.3);
             transition: .4s;
         }
-        
+
         input:checked + .slider {
             background: linear-gradient(135deg, #ffd700 0%, #b8860b 100%);
             border-color: #ffd700;
         }
-        
+
         input:checked + .slider:before {
             transform: translateX(26px);
             background: #000000;
         }
-        
-        /* Text indicators (EN/TL) on the sides */
-        .lang-toggle-label-left,
-        .lang-toggle-label-right {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 0.8rem;
+
+        /* Small EN/TL indicators that highlight when active */
+        .lang-indicator {
+            font-size: 0.78rem;
             font-weight: 600;
             color: #ffd700;
-            opacity: 0.7;
-            pointer-events: none;
+            opacity: 0.6;
+            margin: 0 6px;
+            transition: opacity 0.3s;
         }
-        
-        .lang-toggle-label-left { left: -36px; }
-        .lang-toggle-label-right { right: -36px; }
-        
-        input:checked ~ .lang-toggle-label-left { opacity: 1; }
-        input:not(:checked) ~ .lang-toggle-label-right { opacity: 1; }
+
+        input:checked ~ .lang-indicator-en { opacity: 0.6; }
+        input:checked ~ .lang-indicator-tl { opacity: 1.0; font-weight: 700; }
+        input:not(:checked) ~ .lang-indicator-en { opacity: 1.0; font-weight: 700; }
+        input:not(:checked) ~ .lang-indicator-tl { opacity: 0.6; }
     </style>
 """, unsafe_allow_html=True)
 
 # Toggle container
 st.markdown('<div class="lang-toggle-wrapper">', unsafe_allow_html=True)
 
-# Hidden checkbox for state
-checked = st.checkbox(
-    label="Switch to TL",
-    value=(st.session_state.language == "tl"),
-    key="lang_toggle_hidden",
-    label_visibility="hidden"
-)
+# Current state
+is_tl = st.session_state.language == "tl"
 
-# Custom toggle UI
+# Custom toggle + indicators
 st.markdown(f"""
     <label class="lang-toggle">
-        <input type="checkbox" {'checked' if checked else ''} onchange="this.form.submit();">
+        <input type="checkbox" {'checked' if is_tl else ''} 
+               onchange="parent.document.querySelector('form').submit();">
         <span class="slider"></span>
-        <span class="lang-toggle-label-left">EN</span>
-        <span class="lang-toggle-label-right">TL</span>
     </label>
+    <span class="lang-indicator lang-indicator-en">EN</span>
+    <span class="lang-indicator lang-indicator-tl">TL</span>
 """, unsafe_allow_html=True)
 
 st.markdown('</div>', unsafe_allow_html=True)
 
-# Sync session state
-if checked != (st.session_state.language == "tl"):
-    st.session_state.language = "tl" if checked else "en"
+# Force sync on rerun (Streamlit limitation workaround)
+# Since the onchange submits the page, Streamlit will rerun automatically.
+# But to be safe, we can add a dummy widget that triggers sync if needed
+if "lang_toggled" not in st.session_state:
+    st.session_state.lang_toggled = False
+
+# This is just a safety net — the real change happens on page submit/rerun
+if st.session_state.get("lang_toggled", False):
+    st.session_state.language = "tl" if st.session_state.language == "en" else "en"
+    st.session_state.lang_toggled = False
     st.rerun()
 
 # ────────────────────────────────────────────────
