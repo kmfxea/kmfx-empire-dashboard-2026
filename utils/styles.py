@@ -1,8 +1,8 @@
 # utils/styles.py
 # =====================================================================
-# KMFX EA - FULL CONSOLIDATED STYLES (v3.2 – Feb 2026)
-# Centralized, theme-aware CSS – call once per page
-# Merged from original main.py + fixes for consistency + golden login fields
+# KMFX EA - FULL CONSOLIDATED STYLES (v3.3 – Feb 2026)
+# Centralized, theme-aware CSS – with golden login/registration fields
+# Labels now use gold gradient for better visibility on golden inputs
 # =====================================================================
 import streamlit as st
 
@@ -16,15 +16,15 @@ def apply_global_styles(public: bool = True):
     theme = "dark" if public else st.session_state.get("theme", "dark")
 
     # Color palette
-    accent_primary = "#00ffaa"
-    accent_gold    = "#ffd700"
-    accent_glow    = "#00ffaa40"
-    accent_hover   = "#00ffcc"
-    gold_border    = "#d4a017"
-    gold_focus     = "#ffd700"
-    gold_placeholder = "#c9a227"
-    gold_bg_normal = "rgba(255, 215, 0, 0.10)"
-    gold_bg_focus  = "rgba(255, 215, 0, 0.22)"
+    accent_primary    = "#00ffaa"
+    accent_gold       = "#ffd700"
+    accent_glow       = "#00ffaa40"
+    accent_hover      = "#00ffcc"
+    gold_border       = "#d4a017"
+    gold_focus        = "#ffd700"
+    gold_placeholder  = "#c9a227"
+    gold_bg_normal    = "rgba(255, 215, 0, 0.10)"
+    gold_bg_focus     = "rgba(255, 215, 0, 0.22)"
 
     bg_color       = "#0a0d14" if theme == "dark" else "#f8fbff"
     card_bg        = "rgba(15,20,30,0.78)" if theme == "dark" else "rgba(255,255,255,0.82)"
@@ -141,8 +141,8 @@ def apply_global_styles(public: bool = True):
         }}
 
         /* ── FORM INPUTS (base style for non-golden fields) ── */
-        .stTextInput input,
-        .stTextArea textarea {{
+        .stTextInput input:not([aria-label*="username" i]):not([aria-label*="Username" i]):not([aria-label*="name" i]):not([aria-label*="Name" i]):not([aria-label*="email" i]):not([aria-label*="Email" i]),
+        .stTextArea textarea:not([data-testid="stTextArea"]) {{
             background: rgba(255,255,255,0.09) !important;
             color: white !important;
             border: 1px solid rgba(255,215,0,0.18) !important;
@@ -195,14 +195,18 @@ def apply_global_styles(public: bool = True):
             font-weight: 400;
         }}
 
-        /* Force BLACK labels */
+        /* ── GOLD GRADIENT LABELS for better visibility ── */
         .stTextInput > label,
         .stTextInput > div > label,
         .stTextArea > label,
         .stTextArea > div > label {{
-            color: #000000 !important;
-            font-weight: 600 !important;
-            letter-spacing: 0.3px;
+            background: var(--gold-gradient) !important;
+            -webkit-background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.4px !important;
+            filter: drop-shadow(0 1px 4px rgba(0,0,0,0.6)) !important;
+            padding-bottom: 4px !important;
         }}
 
         /* Helper text / caption / error messages */
@@ -210,10 +214,10 @@ def apply_global_styles(public: bool = True):
         small,
         .stTextInput div[role="alert"],
         .stTextArea div[role="alert"] {{
-            color: #1a1a1a !important;
+            color: #111111 !important;
         }}
 
-        /* Optional: make textarea a bit taller by default */
+        /* Make textarea a bit taller by default */
         textarea[data-testid="stTextArea"] {{
             min-height: 110px !important;
             resize: vertical !important;
