@@ -1,190 +1,195 @@
 # utils/styles.py
 # =====================================================================
-# KMFX EA - FULL CONSOLIDATED STYLES (v3.15 – Final Professional & Golden Feb 28, 2026)
-# Titles: pure golden gradient text (like $5,247.9), no box • Top black font • White labels + golden values • Responsive
+# KMFX EA - FULL CONSOLIDATED STYLES (v3.16 – Refined Feb 28, 2026)
+# - Hero title & subtitle: pure BLACK
+# - Metric labels: WHITE
+# - Metric values & main titles: golden gradient (like $5,247.9)
+# - Login cards / sections: full-width friendly
+# - Professional dark theme + responsive
 # =====================================================================
 import streamlit as st
 
 def apply_global_styles(public: bool = True):
     """
     Apply global styles across the app.
-    - public=True → dark theme for landing/login
-    - public=False → respect session theme for dashboard/admin
+    - public=True  → dark theme (landing/login pages)
+    - public=False → respect session_state['theme'] (dashboard)
     """
     theme = "dark" if public else st.session_state.get("theme", "dark")
 
-    accent_primary = "#00ffaa"
-    accent_gold    = "#ffd700"
-    accent_glow    = "#00ffaa30"
-    accent_hover   = "#00ffcc"
+    # ────────────────────────────────────────────────
+    # Color & Gradient Definitions
+    # ────────────────────────────────────────────────
+    accent_gold_start   = "#FFD700"
+    accent_gold_mid     = "#FFEA00"
+    accent_gold_end     = "#FFCC00"
+    gold_gradient       = f"linear-gradient(135deg, {accent_gold_start} 0%, {accent_gold_mid} 50%, {accent_gold_end} 100%)"
 
-    bg_color       = "#0a0d14" if theme == "dark" else "#f8fbff"
-    card_bg        = "rgba(15,20,30,0.78)" if theme == "dark" else "rgba(255,255,255,0.82)"
-    border_color   = "rgba(100,100,100,0.18)" if theme == "dark" else "rgba(0,0,0,0.09)"
-    text_primary   = "#ffffff" if theme == "dark" else "#0f172a"
-    text_muted     = "#bbbbbb" if theme == "dark" else "#64748b"
-    card_shadow    = "0 10px 35px rgba(0,0,0,0.58)" if theme == "dark" else "0 8px 25px rgba(0,0,0,0.13)"
-    sidebar_bg     = "rgba(10,13,20,0.97)" if theme == "dark" else "rgba(248,251,255,0.97)"
+    bg_color            = "#0a0d14" if theme == "dark" else "#f8fbff"
+    card_bg             = "rgba(18, 23, 35, 0.82)" if theme == "dark" else "rgba(255,255,255,0.88)"
+    border_color        = "rgba(120,120,140,0.22)" if theme == "dark" else "rgba(0,0,0,0.11)"
+    text_primary        = "#ffffff" if theme == "dark" else "#0f172a"
+    text_muted          = "#c0c8d4" if theme == "dark" else "#64748b"
+
+    card_shadow         = "0 12px 38px rgba(0,0,0,0.62)" if theme == "dark" else "0 10px 30px rgba(0,0,0,0.16)"
+    glow_shadow         = "0 0 28px rgba(255,215,0,0.28)"
 
     st.markdown(f"""
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
         :root {{
-            --accent-primary: {accent_primary};
-            --accent-gold:    {accent_gold};
-            --accent-glow:    {accent_glow};
-            --gold-gradient:  linear-gradient(135deg, #FFD700 0%, #FFEA00 50%, #FFCC00 100%);  /* Bright gold like $5,247.9 */
-            --metric-white:   #FFFFFF;
-            --max-app-width:  1320px;
-            --base-font-size: 16px;
+            --gold-gradient: {gold_gradient};
+            --text-gold: #FFD700;
+            --text-white: #ffffff;
+            --bg-dark: {bg_color};
+            --card-bg: {card_bg};
+            --border: {border_color};
+            --shadow-card: {card_shadow};
+            --glow-gold: {glow_shadow};
+            --max-width: 1380px;
         }}
 
         html, body, .stApp {{
-            font-family: 'Inter', 'Poppins', system-ui, -apple-system, sans-serif !important;
-            font-size: var(--base-font-size) !important;
-            background: {bg_color} !important;
+            font-family: 'Inter', 'Poppins', system-ui, sans-serif !important;
+            background: var(--bg-dark) !important;
             color: {text_primary} !important;
-            scroll-behavior: smooth;
-            line-height: 1.65 !important;
+            font-size: 16px;
+            line-height: 1.6;
         }}
 
         .main .block-container {{
-            max-width: var(--max-app-width) !important;
+            max-width: var(--max-width) !important;
             margin: 0 auto !important;
-            padding: clamp(0.8rem, 3vw, 1.6rem) 1.2rem !important;
+            padding: clamp(1rem, 3.5vw, 2rem) 1.4rem !important;
         }}
 
-        /* ALL TITLES - PURE GOLDEN GRADIENT TEXT (no box, like $5,247.9) */
-        h1, h2, h3, h4, .gold-text, .title-gold {{
+        /* ── ALL MAIN TITLES ── golden gradient (no box) ── */
+        h1, h2, h3, h4, .gold-title, [data-testid="stMarkdownContainer"] h1,
+        [data-testid="stMarkdownContainer"] h2, [data-testid="stMarkdownContainer"] h3 {{
             background: var(--gold-gradient) !important;
             -webkit-background-clip: text !important;
             -webkit-text-fill-color: transparent !important;
             font-weight: 700 !important;
-            letter-spacing: 0.8px !important;
-            text-shadow: 0 1px 4px rgba(0,0,0,0.35) !important;
-            filter: drop-shadow(0 1px 3px rgba(255,215,0,0.25)) !important;
+            letter-spacing: -0.2px;
+            text-shadow: 0 1.5px 6px rgba(0,0,0,0.4);
         }}
 
-        h1 {{ font-size: clamp(2.4rem, 6.5vw, 4.2rem) !important; margin: 0.5rem 0 0.7rem !important; }}
-        h2 {{ font-size: clamp(1.8rem, 5vw, 3rem) !important; margin: 1.4rem 0 0.8rem !important; }}
-        h3 {{ font-size: clamp(1.4rem, 4vw, 2.2rem) !important; margin: 1.6rem 0 1rem !important; }}
+        h1 {{ font-size: clamp(2.6rem, 7vw, 4.4rem) !important; margin: 0.4rem 0 0.8rem !important; }}
+        h2 {{ font-size: clamp(2rem, 5.5vw, 3.2rem) !important; margin: 1.6rem 0 1rem !important; }}
+        h3 {{ font-size: clamp(1.5rem, 4.2vw, 2.4rem) !important; margin: 1.8rem 0 1.1rem !important; }}
 
-        /* TOP HERO - BLACK FONT + IMPROVED EMOJI */
+        /* ── HERO TITLE & SUBTITLE ── pure BLACK ── */
         .hero-title {{
             color: #000000 !important;
             font-weight: 900 !important;
-            letter-spacing: 2px !important;
-            text-shadow: 0 2px 8px rgba(0,0,0,0.7) !important;
-            display: inline-block !important;
-            margin: 0.5rem auto !important;
-            font-size: clamp(2.6rem, 7vw, 4.2rem) !important;
+            letter-spacing: 1.8px;
+            text-shadow: 0 3px 12px rgba(0,0,0,0.75);
+            font-size: clamp(2.8rem, 8vw, 4.8rem) !important;
+            line-height: 1.05;
+            margin: 0.6rem auto !important;
         }}
 
         .hero-subtitle {{
             color: #000000 !important;
             font-weight: 700 !important;
-            letter-spacing: 2.5px !important;
-            font-size: clamp(1.1rem, 3.5vw, 1.4rem) !important;
-            margin-top: 0.5rem !important;
-            display: inline-block !important;
+            letter-spacing: 2px;
+            font-size: clamp(1.15rem, 3.8vw, 1.55rem) !important;
+            margin-top: 0.4rem;
+            opacity: 0.95;
         }}
 
-        /* METRICS BOX - WHITE LABELS + GOLD VALUES */
-        .metrics-box {{
-            background: rgba(255,255,255,0.05) !important;
-            backdrop-filter: blur(14px) !important;
-            border: 1px solid rgba(255,255,255,0.18) !important;
-            border-radius: 18px !important;
-            padding: clamp(1.5rem, 3vw, 2.5rem) 1.5rem !important;
-            margin: 1.8rem auto !important;
-            max-width: 1100px !important;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.4) !important;
-            text-align: center !important;
+        /* ── METRICS / STATS ── white labels + gold values ── */
+        .metrics-container {{
+            background: rgba(255,255,255,0.06) !important;
+            backdrop-filter: blur(16px) !important;
+            border: 1px solid rgba(255,255,255,0.16) !important;
+            border-radius: 20px !important;
+            padding: clamp(1.8rem, 4vw, 2.8rem) 1.6rem !important;
+            margin: 2rem auto !important;
+            max-width: 1140px !important;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.55) !important;
         }}
 
-        .metrics-box [data-testid="stMetricLabel"] {{
-            color: #ffffff !important;
-            font-size: clamp(1rem, 2.5vw, 1.15rem) !important;
+        .metrics-container [data-testid="stMetricLabel"] {{
+            color: var(--text-white) !important;
+            font-size: clamp(1.05rem, 2.4vw, 1.25rem) !important;
             font-weight: 600 !important;
-            margin-bottom: 0.8rem !important;
+            margin-bottom: 0.7rem !important;
+            letter-spacing: 0.4px;
         }}
 
-        .metrics-box [data-testid="stMetricValue"] {{
-            color: #FFD700 !important;  /* Exact bright gold like $5,247.9 */
-            font-size: clamp(2rem, 5vw, 2.8rem) !important;
+        .metrics-container [data-testid="stMetricValue"] {{
+            background: var(--gold-gradient) !important;
+            -webkit-background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
+            font-size: clamp(2.4rem, 6vw, 3.4rem) !important;
             font-weight: 900 !important;
-            line-height: 1.1 !important;
+            line-height: 1.05 !important;
+            text-shadow: 0 2px 8px rgba(255,215,0,0.35) !important;
         }}
 
-        .metrics-box .stColumn {{
+        /* Make columns in metrics stretch nicely */
+        .metrics-container .stColumn {{
             display: flex !important;
-            justify-content: center !important;
+            flex-direction: column !important;
             align-items: center !important;
+            justify-content: center !important;
         }}
 
-        /* GOLDEN BUTTONS */
-        button[kind="primary"],
-        div.stFormSubmitButton > button {{
+        /* ── FULL-WIDTH LOGIN CARDS (Owner/Admin/Client) ── */
+        .login-card {{
+            background: var(--card-bg) !important;
+            backdrop-filter: blur(22px) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: 20px !important;
+            padding: 2.2rem 2rem !important;
+            margin: 1.4rem 0 !important;
+            box-shadow: var(--shadow-card) !important;
+            width: 100% !important;
+            transition: all 0.35s ease;
+        }}
+
+        .login-card:hover {{
+            transform: translateY(-8px);
+            box-shadow: var(--glow-gold) !important;
+        }}
+
+        /* Buttons, inputs, etc. */
+        button[kind="primary"], .stFormSubmitButton > button {{
             background: var(--gold-gradient) !important;
             color: #000000 !important;
-            border: none !important;
-            border-radius: 12px !important;
             font-weight: 700 !important;
-            box-shadow: 0 4px 12px rgba(255,215,0,0.4) !important;
-            transition: all 0.3s ease !important;
+            border: none !important;
+            border-radius: 14px !important;
+            box-shadow: 0 5px 15px rgba(255,215,0,0.45) !important;
+            transition: all 0.3s ease;
+            min-height: 52px !important;
         }}
 
         button[kind="primary"]:hover {{
-            transform: translateY(-2px) !important;
-            box-shadow: 0 8px 20px rgba(255,215,0,0.6) !important;
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(255,215,0,0.65) !important;
         }}
 
-        /* INPUT LABELS - GOLDEN */
-        .stTextInput label,
-        .stTextArea label {{
+        .stTextInput label, .stTextArea label {{
             color: #FFD700 !important;
             font-weight: 600 !important;
         }}
 
-        /* GLASS CARDS */
-        .glass-card {{
-            background: {card_bg} !important;
-            backdrop-filter: blur(25px);
-            border: 1px solid {border_color} !important;
-            border-radius: 20px !important;
-            padding: clamp(1.2rem, 4vw, 2.2rem) !important;
-            box-shadow: {card_shadow} !important;
-            transition: all 0.4s ease;
-        }}
+        /* Scrollbar polish */
+        ::-webkit-scrollbar {{ width: 9px; }}
+        ::-webkit-scrollbar-track {{ background: var(--bg-dark); }}
+        ::-webkit-scrollbar-thumb {{ background: rgba(120,120,140,0.5); border-radius: 10px; }}
+        ::-webkit-scrollbar-thumb:hover {{ background: #FFD700; }}
 
-        .glass-card:hover {{
-            transform: translateY(-6px);
-            box-shadow: 0 15px 40px var(--accent-glow) !important;
-        }}
-
-        /* RESPONSIVE - Especially mobile */
-        @media (max-width: 1024px) {{
-            .main .block-container {{ padding: 1rem 1.2rem !important; }}
-            h1 {{ font-size: clamp(2rem, 7vw, 3.5rem) !important; }}
-            h2 {{ font-size: clamp(1.5rem, 5vw, 2.5rem) !important; }}
-        }}
-
+        /* Mobile adjustments */
         @media (max-width: 768px) {{
-            :root {{ --base-font-size: 15px; }}
-            .main .block-container {{ padding: 0.8rem 1rem !important; }}
-            h1 {{ font-size: clamp(1.8rem, 8vw, 3rem) !important; margin: 0.5rem 0 !important; }}
-            h2 {{ font-size: clamp(1.4rem, 6vw, 2.2rem) !important; }}
-            h3 {{ font-size: clamp(1.2rem, 5vw, 1.8rem) !important; }}
-            .metrics-box {{ padding: 1.5rem 1rem !important; margin: 1.5rem 0.5rem !important; }}
-            button[kind="primary"] {{ padding: 0.9rem !important; font-size: 1rem !important; min-height: 48px !important; }}
-            .glass-card {{ padding: 1.2rem !important; border-radius: 16px !important; }}
+            .main .block-container {{ padding: 1rem 1.1rem !important; }}
+            h1 {{ font-size: clamp(2.2rem, 9vw, 3.6rem) !important; }}
+            .hero-title {{ font-size: clamp(2.4rem, 10vw, 4rem) !important; }}
+            .metrics-container {{ padding: 1.6rem 1.2rem !important; margin: 1.6rem 0.6rem !important; }}
+            .login-card {{ padding: 1.8rem 1.4rem !important; }}
         }}
-
-        /* SCROLLBAR */
-        ::-webkit-scrollbar {{ width: 8px; }}
-        ::-webkit-scrollbar-track {{ background: {bg_color}; }}
-        ::-webkit-scrollbar-thumb {{ background: {border_color}; border-radius: 10px; }}
-        ::-webkit-scrollbar-thumb:hover {{ background: {accent_gold}; }}
     </style>
     """, unsafe_allow_html=True)
