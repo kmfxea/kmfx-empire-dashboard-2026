@@ -1,16 +1,21 @@
 # utils/styles.py
 # =====================================================================
-# KMFX EA - FULL CONSOLIDATED STYLES (v3.9 – First Good Fix Feb 28, 2026)
-# Golden titles, black top font + emoji, white metrics, golden buttons, responsive
+# KMFX EA - FULL CONSOLIDATED STYLES (v3.14 – Professional Responsive Final Feb 28, 2026)
+# Titles: golden bg + black text • Metrics: white labels + golden values • Fully responsive
 # =====================================================================
 import streamlit as st
 
 def apply_global_styles(public: bool = True):
+    """
+    Apply global styles across the app.
+    - public=True → dark theme for landing/login
+    - public=False → respect session theme for dashboard/admin
+    """
     theme = "dark" if public else st.session_state.get("theme", "dark")
 
     accent_primary = "#00ffaa"
     accent_gold    = "#ffd700"
-    accent_glow    = "#00ffaa40"
+    accent_glow    = "#00ffaa30"
     accent_hover   = "#00ffcc"
 
     bg_color       = "#0a0d14" if theme == "dark" else "#f8fbff"
@@ -22,45 +27,52 @@ def apply_global_styles(public: bool = True):
     sidebar_bg     = "rgba(10,13,20,0.97)" if theme == "dark" else "rgba(248,251,255,0.97)"
 
     st.markdown(f"""
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
         :root {{
             --accent-primary: {accent_primary};
             --accent-gold:    {accent_gold};
             --accent-glow:    {accent_glow};
-            --gold-gradient:  linear-gradient(135deg, #FFD700 0%, #DAA520 50%, #B8860B 100%);
+            --gold-gradient:  linear-gradient(135deg, #FFD700 0%, #FFEA00 50%, #FFCC00 100%);
             --metric-white:   #FFFFFF;
             --max-app-width:  1320px;
+            --base-font-size: 16px;
         }}
 
         html, body, .stApp {{
-            font-family: 'Poppins', sans-serif !important;
+            font-family: 'Inter', 'Poppins', system-ui, -apple-system, sans-serif !important;
+            font-size: var(--base-font-size) !important;
             background: {bg_color} !important;
             color: {text_primary} !important;
             scroll-behavior: smooth;
+            line-height: 1.6 !important;
         }}
 
         .main .block-container {{
             max-width: var(--max-app-width) !important;
             margin: 0 auto !important;
-            padding: 0.8rem 1.5rem 2rem !important;
+            padding: clamp(0.8rem, 3vw, 1.8rem) 1.2rem !important;
         }}
 
-        /* GOLDEN TITLES - CLEAN & STRONG */
-        h1, h2, h3, .gold-text {{
+        /* ALL TITLES - GOLDEN BG + BLACK TEXT (like ENTER buttons) */
+        h1, h2, h3, h4, .gold-title, .gold-text {{
             background: var(--gold-gradient) !important;
-            -webkit-background-clip: text !important;
-            -webkit-text-fill-color: transparent !important;
+            color: #000000 !important;
             font-weight: 800 !important;
-            letter-spacing: 1px !important;
-            text-shadow: 0 2px 6px rgba(0,0,0,0.5) !important;
-            filter: drop-shadow(0 2px 5px rgba(255,215,0,0.4)) !important;
+            padding: 0.6rem 1.2rem !important;
+            border-radius: 12px !important;
+            display: inline-block !important;
+            box-shadow: 0 4px 12px rgba(255,215,0,0.4) !important;
+            letter-spacing: 0.8px !important;
+            text-transform: uppercase !important;
+            text-align: center !important;
+            margin: 0.8rem auto !important;
         }}
 
-        h1 {{ font-size: clamp(3rem, 8vw, 5.5rem) !important; margin: 0.4rem 0 0.6rem !important; }}
-        h2 {{ font-size: clamp(2rem, 5.5vw, 3.5rem) !important; margin: 1.5rem 0 0.8rem !important; }}
-        h3 {{ font-size: clamp(1.6rem, 4.5vw, 2.4rem) !important; margin: 1.8rem 0 1rem !important; }}
+        h1 {{ font-size: clamp(2.2rem, 6vw, 4rem) !important; }}
+        h2 {{ font-size: clamp(1.6rem, 4.5vw, 2.8rem) !important; }}
+        h3 {{ font-size: clamp(1.3rem, 4vw, 2rem) !important; }}
 
         /* TOP HERO - BLACK FONT + IMPROVED EMOJI */
         .hero-title {{
@@ -73,7 +85,7 @@ def apply_global_styles(public: bool = True):
             text-shadow: 0 2px 8px rgba(0,0,0,0.8) !important;
             display: inline-block !important;
             margin: 0.5rem auto !important;
-            font-size: clamp(2.8rem, 7vw, 4.5rem) !important;
+            font-size: clamp(2.6rem, 7vw, 4.2rem) !important;
         }}
 
         .hero-subtitle {{
@@ -83,36 +95,37 @@ def apply_global_styles(public: bool = True):
             border-radius: 12px !important;
             font-weight: 700 !important;
             letter-spacing: 3px !important;
-            font-size: clamp(1.1rem, 4vw, 1.4rem) !important;
+            font-size: clamp(1.1rem, 3.5vw, 1.3rem) !important;
             margin-top: 0.6rem !important;
             display: inline-block !important;
         }}
 
-        /* METRICS BOX - WHITE + CENTERED */
+        /* METRICS BOX - WHITE LABELS + GOLD VALUES */
         .metrics-box {{
             background: rgba(255,255,255,0.05) !important;
             backdrop-filter: blur(14px) !important;
             border: 1px solid rgba(255,255,255,0.18) !important;
-            border-radius: 20px !important;
-            padding: 2.5rem 2rem !important;
-            margin: 2.2rem auto !important;
+            border-radius: 18px !important;
+            padding: clamp(1.5rem, 3vw, 2.5rem) 1.5rem !important;
+            margin: 1.8rem auto !important;
             max-width: 1100px !important;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.45) !important;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4) !important;
             text-align: center !important;
         }}
 
         .metrics-box [data-testid="stMetricLabel"] {{
             color: #ffffff !important;
-            font-size: 1.2rem !important;
+            font-size: clamp(1rem, 2.5vw, 1.15rem) !important;
             font-weight: 600 !important;
-            margin-bottom: 0.9rem !important;
+            margin-bottom: 0.8rem !important;
         }}
 
         .metrics-box [data-testid="stMetricValue"] {{
-            color: #ffffff !important;
-            font-size: 2.8rem !important;
+            color: #FFD700 !important;  /* Bright gold like $5,247.9 */
+            font-size: clamp(2rem, 5vw, 2.8rem) !important;
             font-weight: 900 !important;
             line-height: 1.1 !important;
+            text-shadow: 0 0 10px rgba(255,215,0,0.3) !important;
         }}
 
         .metrics-box .stColumn {{
@@ -127,30 +140,22 @@ def apply_global_styles(public: bool = True):
             background: var(--gold-gradient) !important;
             color: #000000 !important;
             border: none !important;
-            border-radius: 14px !important;
-            font-weight: 800 !important;
-            box-shadow: 0 6px 18px rgba(255,215,0,0.5) !important;
+            border-radius: 12px !important;
+            font-weight: 700 !important;
+            box-shadow: 0 4px 12px rgba(255,215,0,0.4) !important;
+            transition: all 0.3s ease !important;
         }}
 
         button[kind="primary"]:hover {{
-            transform: translateY(-3px) !important;
-            box-shadow: 0 12px 30px rgba(255,215,0,0.7) !important;
-        }}
-
-        /* EN/TL BUTTON - GOLDEN */
-        button[key="lang_toggle_public"] {{
-            background: var(--gold-gradient) !important;
-            color: #000000 !important;
-            border: none !important;
-            border-radius: 12px !important;
-            font-weight: 700 !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 8px 20px rgba(255,215,0,0.6) !important;
         }}
 
         /* INPUT LABELS - GOLDEN */
         .stTextInput label,
         .stTextArea label {{
             color: #FFD700 !important;
-            font-weight: 700 !important;
+            font-weight: 600 !important;
         }}
 
         /* GLASS CARDS */
@@ -158,67 +163,39 @@ def apply_global_styles(public: bool = True):
             background: {card_bg} !important;
             backdrop-filter: blur(25px);
             border: 1px solid {border_color} !important;
-            border-radius: 24px !important;
-            padding: 2.2rem !important;
-            box-shadow: {card_shadow} !important;
-            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-        }}
-        .glass-card:hover {{
-            transform: translateY(-8px);
-            box-shadow: 0 20px 50px var(--accent-glow) !important;
-        }}
-
-        /* LOGIN CARD & TABS */
-        .login-box {{
-            background: rgba(20,20,35,0.68) !important;
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(255,215,0,0.22) !important;
             border-radius: 20px !important;
-            padding: 40px !important;
-            box-shadow: 0 25px 55px rgba(0,0,0,0.55) !important;
-            max-width: 540px !important;
-            margin: 2rem auto;
-        }}
-        [data-baseweb="tab-list"] {{
-            background: rgba(0,0,0,0.35) !important;
-            border-radius: 14px !important;
-            padding: 6px !important;
-            display: flex !important;
-            justify-content: stretch !important;
-        }}
-        [data-baseweb="tab"] {{
-            flex: 1 !important;
-            color: #FFD700 !important;
-            font-weight: 700 !important;
-            border-radius: 10px !important;
-        }}
-        [aria-selected="true"] {{
-            background: var(--gold-gradient) !important;
-            color: #000000 !important;
+            padding: clamp(1.2rem, 4vw, 2.2rem) !important;
+            box-shadow: {card_shadow} !important;
+            transition: all 0.4s ease;
         }}
 
-        header[data-testid="stHeader"] {{ background: transparent !important; }}
-        section[data-testid="stSidebar"] {{ background: {sidebar_bg} !important; }}
+        .glass-card:hover {{
+            transform: translateY(-6px);
+            box-shadow: 0 15px 40px var(--accent-glow) !important;
+        }}
+
+        /* RESPONSIVE FIXES - Especially for mobile */
+        @media (max-width: 1024px) {{
+            .main .block-container {{ padding: 1rem 1.2rem !important; }}
+            h1 {{ font-size: clamp(2rem, 7vw, 3.5rem) !important; }}
+            h2 {{ font-size: clamp(1.5rem, 5vw, 2.5rem) !important; }}
+        }}
 
         @media (max-width: 768px) {{
-            .main .block-container {{ padding: 1rem !important; }}
-            .glass-card {{ padding: 1.3rem !important; }}
-            button[kind="primary"] {{ width: 100% !important; padding: 1rem !important; }}
-            h1 {{ font-size: clamp(2.2rem, 8vw, 3.8rem) !important; }}
-            h2 {{ font-size: clamp(1.6rem, 6vw, 2.8rem) !important; }}
+            :root {{ --base-font-size: 15px; }}
+            .main .block-container {{ padding: 0.8rem 1rem !important; }}
+            h1 {{ font-size: clamp(1.8rem, 8vw, 3rem) !important; margin: 0.5rem 0 !important; }}
+            h2 {{ font-size: clamp(1.4rem, 6vw, 2.2rem) !important; }}
+            h3 {{ font-size: clamp(1.2rem, 5vw, 1.8rem) !important; }}
+            .metrics-box {{ padding: 1.5rem 1rem !important; margin: 1.5rem 0.5rem !important; }}
+            button[kind="primary"] {{ padding: 0.9rem !important; font-size: 1rem !important; min-height: 48px !important; }}
+            .glass-card {{ padding: 1.2rem !important; border-radius: 16px !important; }}
         }}
 
+        /* SCROLLBAR */
         ::-webkit-scrollbar {{ width: 8px; }}
         ::-webkit-scrollbar-track {{ background: {bg_color}; }}
         ::-webkit-scrollbar-thumb {{ background: {border_color}; border-radius: 10px; }}
         ::-webkit-scrollbar-thumb:hover {{ background: {accent_gold}; }}
-
-        hr {{
-            border: 0;
-            height: 1px;
-            background: rgba(255,255,255,0.06);
-            border-bottom: 1px solid rgba(0,0,0,0.45);
-            margin: 2.2rem 0 !important;
-        }}
     </style>
     """, unsafe_allow_html=True)
