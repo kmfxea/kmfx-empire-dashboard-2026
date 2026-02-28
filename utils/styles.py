@@ -1,13 +1,13 @@
 # utils/styles.py
 # =====================================================================
-# KMFX EA - FULL CONSOLIDATED STYLES (v3.8 – Complete & Final Feb 2026)
-# Golden titles restored, metrics box fixed (centered + white numbers), tight spacing
+# KMFX EA - FULL CONSOLIDATED STYLES (v3.10 – Final Golden + Metrics Fix Feb 2026)
+# Strong golden titles restored (like old version), fixed metrics box (white + centered), golden login buttons
 # =====================================================================
 import streamlit as st
 
 def apply_global_styles(public: bool = True):
     """
-    Apply global styles.
+    Apply global styles across the app.
     - public=True → dark theme for landing/login
     - public=False → respect session theme for dashboard/admin
     """
@@ -49,50 +49,51 @@ def apply_global_styles(public: bool = True):
         .main .block-container {{
             max-width: var(--max-app-width) !important;
             margin: 0 auto !important;
-            padding: 0.6rem 1.5rem 2rem !important;  /* Tight top for logo */
+            padding: 0.5rem 1.5rem 2rem !important;  /* Very tight top for logo fit */
         }}
 
-        /* FORCE GOLDEN TITLES EVERYWHERE (restored like old version) */
+        /* STRONG GOLDEN TITLES - RESTORED EXACT LOOK FROM OLD MAIN.PY */
         h1, h2, h3, .gold-text {{
             background: var(--gold-gradient) !important;
             -webkit-background-clip: text !important;
             -webkit-text-fill-color: transparent !important;
-            font-weight: 700 !important;
-            filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4)) !important;
-            letter-spacing: 0.6px !important;
+            font-weight: 800 !important;
+            filter: drop-shadow(0 4px 10px rgba(0,0,0,0.7)) !important;
+            letter-spacing: 1.2px !important;
+            text-shadow: 0 0 15px rgba(255,215,0,0.6) !important;  /* Intense shine */
         }}
 
-        h1 {{ font-size: clamp(2.8rem, 7vw, 5.5rem) !important; margin: 0.4rem 0 0.6rem !important; }}
-        h2 {{ font-size: clamp(1.8rem, 5vw, 3rem) !important; margin: 1.6rem 0 0.8rem !important; }}
-        h3 {{ font-size: clamp(1.4rem, 4vw, 2.2rem) !important; margin: 1.8rem 0 1rem !important; }}
+        h1 {{ font-size: clamp(3rem, 8vw, 6rem) !important; margin: 0.3rem 0 0.5rem !important; }}
+        h2 {{ font-size: clamp(2rem, 5.5vw, 3.5rem) !important; margin: 1.4rem 0 0.7rem !important; }}
+        h3 {{ font-size: clamp(1.6rem, 4.5vw, 2.4rem) !important; margin: 1.6rem 0 0.9rem !important; }}
 
-        /* METRICS BOX - FIXED: centered, white text/numbers, good spacing */
+        /* METRICS BOX - FIXED: centered, full white text/numbers, perfect spacing */
         .metrics-box {{
             background: rgba(255,255,255,0.05) !important;
-            backdrop-filter: blur(12px) !important;
-            border: 1px solid rgba(255,255,255,0.15) !important;
+            backdrop-filter: blur(14px) !important;
+            border: 1px solid rgba(255,255,255,0.18) !important;
             border-radius: 20px !important;
-            padding: 2.4rem 2rem !important;
-            margin: 2rem auto !important;
+            padding: 2.6rem 2.2rem !important;
+            margin: 2.5rem auto !important;
             max-width: 1100px !important;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.45) !important;
+            box-shadow: 0 12px 35px rgba(0,0,0,0.45) !important;
             text-align: center !important;
         }}
 
         .metrics-box [data-testid="stMetricLabel"] {{
             color: #ffffff !important;
-            font-size: 1.15rem !important;
+            font-size: 1.25rem !important;
             font-weight: 600 !important;
-            margin-bottom: 0.8rem !important;
-            letter-spacing: 0.5px;
+            margin-bottom: 1rem !important;
+            letter-spacing: 0.6px;
         }}
 
         .metrics-box [data-testid="stMetricValue"] {{
             color: #ffffff !important;
-            font-size: 2.6rem !important;
-            font-weight: 800 !important;
+            font-size: 2.9rem !important;
+            font-weight: 900 !important;
             line-height: 1.1 !important;
-            text-shadow: 0 0 12px rgba(255,255,255,0.25) !important;
+            text-shadow: 0 0 16px rgba(255,255,255,0.35) !important;
         }}
 
         /* Center columns content */
@@ -118,14 +119,25 @@ def apply_global_styles(public: bool = True):
             border-color: {accent_primary}88 !important;
         }}
 
-        /* PRIMARY BUTTONS */
-        button[kind="primary"] {{
-            background: {accent_primary} !important;
+        /* PRIMARY BUTTONS + LOGIN SUBMIT BUTTONS - GOLDEN GRADIENT */
+        button[kind="primary"],
+        div.stFormSubmitButton > button {{
+            background: var(--gold-gradient) !important;
             color: #000000 !important;
+            border: none !important;
             border-radius: 14px !important;
-            font-weight: 700 !important;
-            box-shadow: 0 4px 15px {accent_glow} !important;
-            transition: all 0.3s !important;
+            font-weight: 800 !important;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            box-shadow: 0 6px 18px rgba(255,215,0,0.5) !important;
+            transition: all 0.3s ease !important;
+            padding: 1rem 2rem !important;
+        }}
+
+        button[kind="primary"]:hover,
+        div.stFormSubmitButton > button:hover {{
+            transform: translateY(-3px) scale(1.03) !important;
+            box-shadow: 0 12px 30px rgba(255,215,0,0.7) !important;
         }}
 
         /* EN/TL BUTTON - GOLDEN */
@@ -147,7 +159,7 @@ def apply_global_styles(public: bool = True):
             letter-spacing: 0.8px !important;
         }}
 
-        /* JOURNEY IMAGES - UNIFORM (except vision) */
+        /* JOURNEY IMAGES - UNIFORM SIZE (except vision) */
         .journey-image img {{
             max-height: 420px !important;
             object-fit: cover !important;
@@ -190,24 +202,20 @@ def apply_global_styles(public: bool = True):
             color: #000000 !important;
         }}
 
-        /* HEADER & SIDEBAR */
         header[data-testid="stHeader"] {{ background: transparent !important; }}
         section[data-testid="stSidebar"] {{ background: {sidebar_bg} !important; }}
 
-        /* MOBILE */
         @media (max-width: 768px) {{
             .main .block-container {{ padding: 1rem !important; }}
             .glass-card {{ padding: 1.3rem !important; }}
             button[kind="primary"] {{ width: 100% !important; }}
         }}
 
-        /* SCROLLBAR */
         ::-webkit-scrollbar {{ width: 8px; }}
         ::-webkit-scrollbar-track {{ background: {bg_color}; }}
         ::-webkit-scrollbar-thumb {{ background: {border_color}; border-radius: 10px; }}
         ::-webkit-scrollbar-thumb:hover {{ background: {accent_gold}; }}
 
-        /* HR */
         hr {{
             border: 0;
             height: 1px;
