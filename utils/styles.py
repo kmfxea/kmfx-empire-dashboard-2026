@@ -1,8 +1,9 @@
 # utils/styles.py
 # =====================================================================
-# KMFX EA - FULL CONSOLIDATED STYLES (v3.4 – Mobile Optimized – Feb 2026)
+# KMFX EA - FULL CONSOLIDATED STYLES (v3.5 – Bigger Titles – Feb 2026)
 # Centralized, theme-aware CSS – golden login/registration fields
-# Enhanced mobile friendliness: clamp() fonts, compact padding, cute scaling
+# Enhanced: Significantly larger & more prominent headings/titles
+# Still fully mobile-friendly with clamp()
 # =====================================================================
 import streamlit as st
 
@@ -51,7 +52,7 @@ def apply_global_styles(public: bool = True):
             background: {bg_color} !important;
             color: {text_primary} !important;
             scroll-behavior: smooth;
-            font-size: clamp(14px, 3.4vw, 16px) !important;   /* ← mobile friendly base */
+            font-size: clamp(14px, 3.4vw, 16px) !important;
         }}
 
         p, div, span, li {{
@@ -59,15 +60,28 @@ def apply_global_styles(public: bool = True):
             line-height: 1.58 !important;
         }}
 
+        /* ── BIGGER & MORE IMPACTFUL HEADINGS ── */
         h1 {{
-            font-size: clamp(1.9rem, 6.2vw, 2.8rem) !important;
-            margin: 0.8rem 0 !important;
+            font-family: 'Playfair Display', serif !important;
+            font-size: clamp(2.4rem, 7.8vw, 3.6rem) !important;   /* mas malaki na! */
+            font-weight: 700 !important;
+            margin: 1rem 0 1.2rem !important;
+            letter-spacing: -0.5px;
+            line-height: 1.1;
+            color: var(--accent-gold) !important;   /* optional gold para mas pop */
         }}
         h2 {{
-            font-size: clamp(1.55rem, 5.2vw, 2.2rem) !important;
+            font-size: clamp(1.9rem, 6.5vw, 2.8rem) !important;   /* pinaka-improve dito */
+            font-weight: 600 !important;
+            margin: 1.5rem 0 1rem !important;
+            letter-spacing: -0.3px;
+            color: var(--accent-gold) !important;
         }}
         h3, .stSubheader {{
-            font-size: clamp(1.28rem, 4.4vw, 1.65rem) !important;
+            font-size: clamp(1.45rem, 5vw, 2rem) !important;      /* dinagdagan din */
+            font-weight: 600 !important;
+            margin: 1.2rem 0 0.8rem !important;
+            color: #ffffff !important;
         }}
 
         .main .block-container {{
@@ -76,7 +90,7 @@ def apply_global_styles(public: bool = True):
             padding: 2rem 1.5rem !important;
         }}
 
-        /* ── METRIC CARDS ── */
+        /* ── METRIC CARDS ── (unchanged, goods na) */
         [data-testid="stMetricLabel"] {{
             color: var(--metric-white) !important;
             font-size: clamp(0.85rem, 2.8vw, 1rem) !important;
@@ -155,7 +169,7 @@ def apply_global_styles(public: bool = True):
             color: #000000 !important;
         }}
 
-        /* ── FORM INPUTS (base style for non-golden fields) ── */
+        /* ── FORM INPUTS ── (unchanged, goods na) */
         .stTextInput input:not([aria-label*="username" i]):not([aria-label*="Username" i]):not([aria-label*="name" i]):not([aria-label*="Name" i]):not([aria-label*="email" i]):not([aria-label*="Email" i]),
         .stTextArea textarea:not([data-testid="stTextArea"]) {{
             background: rgba(255,255,255,0.09) !important;
@@ -167,7 +181,7 @@ def apply_global_styles(public: bool = True):
             transition: all 0.25s ease;
         }}
 
-        /* ── GOLDEN THEME FOR LOGIN / REGISTRATION FIELDS ── */
+        /* ── GOLDEN LOGIN/REG FIELDS ── (unchanged) */
         input[aria-label*="username" i],
         input[aria-label*="Username" i],
         input[type="password"],
@@ -185,7 +199,6 @@ def apply_global_styles(public: bool = True):
             font-size: clamp(0.95rem, 3.2vw, 1.05rem) !important;
         }}
 
-        /* Focused state - golden glow */
         input[aria-label*="username" i]:focus,
         input[aria-label*="Username" i]:focus,
         input[type="password"]:focus,
@@ -199,7 +212,6 @@ def apply_global_styles(public: bool = True):
             color: #000000 !important;
         }}
 
-        /* Dark gray placeholders */
         input[aria-label*="username" i]::placeholder,
         input[aria-label*="Username" i]::placeholder,
         input[type="password"]::placeholder,
@@ -212,7 +224,6 @@ def apply_global_styles(public: bool = True):
             font-weight: 400;
         }}
 
-        /* ── GOLD GRADIENT LABELS ── */
         .stTextInput > label,
         .stTextInput > div > label,
         .stTextArea > label,
@@ -227,7 +238,6 @@ def apply_global_styles(public: bool = True):
             font-size: clamp(0.9rem, 3vw, 1.05rem) !important;
         }}
 
-        /* Helper text / caption / error messages */
         p[data-testid="stCaption"],
         small,
         .stTextInput div[role="alert"],
@@ -241,7 +251,7 @@ def apply_global_styles(public: bool = True):
             resize: vertical !important;
         }}
 
-        /* ── SUCCESS BOX ── */
+        /* ── SUCCESS BOX, LOGIN CARD, TABS, HEADER, SIDEBAR ── (unchanged) */
         .success-box {{
             background: linear-gradient(135deg, rgba(0,255,162,0.16) 0%, rgba(0,255,162,0.09) 100%) !important;
             border: 1px solid #00ffa2 !important;
@@ -251,7 +261,6 @@ def apply_global_styles(public: bool = True):
             color: white !important;
         }}
 
-        /* ── LOGIN CARD & TABS ── */
         .login-box {{
             background: rgba(20,20,35,0.68) !important;
             backdrop-filter: blur(16px);
@@ -262,6 +271,7 @@ def apply_global_styles(public: bool = True):
             max-width: 540px !important;
             margin: 2rem auto;
         }}
+
         [data-baseweb="tab-list"] {{
             background: rgba(0,0,0,0.35) !important;
             border-radius: 14px !important;
@@ -284,7 +294,6 @@ def apply_global_styles(public: bool = True):
             box-shadow: 0 4px 16px rgba(255,215,0,0.4) !important;
         }}
 
-        /* ── HEADER & SIDEBAR ── */
         header[data-testid="stHeader"] {{
             background-color: transparent !important;
             backdrop-filter: blur(12px) !important;
@@ -294,7 +303,7 @@ def apply_global_styles(public: bool = True):
             border-right: 1px solid {border_color} !important;
         }}
 
-        /* ── MOBILE OPTIMIZATIONS (enhanced) ── */
+        /* ── MOBILE OPTIMIZATIONS ── */
         @media (max-width: 768px) {{
             .main .block-container {{
                 max-width: 100% !important;
@@ -322,6 +331,10 @@ def apply_global_styles(public: bool = True):
                 transform: scale(1.015);
                 box-shadow: 0 14px 35px var(--accent-glow) !important;
             }}
+            /* Titles sa mobile medyo binawasan para hindi mag-overflow */
+            h1 {{ font-size: clamp(2rem, 8vw, 2.8rem) !important; }}
+            h2 {{ font-size: clamp(1.7rem, 6.5vw, 2.4rem) !important; }}
+            h3, .stSubheader {{ font-size: clamp(1.3rem, 5vw, 1.8rem) !important; }}
         }}
 
         /* ── SCROLLBAR ── */
