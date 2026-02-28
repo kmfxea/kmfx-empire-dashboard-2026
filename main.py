@@ -998,10 +998,11 @@ st.markdown("""
         box-shadow: 0px 4px 15px rgba(255, 215, 0, 0.4) !important;
     }
 
-    /* 5. Input Fields Styling */
+    /* 5. Input Fields Styling - FIXED FOR BLACK TEXT */
     .stTextInput input {
-        background-color: rgba(255, 255, 255, 0.05) !important;
-        color: white !important;
+        /* Default state: Medyo dark/transparent background */
+        background-color: rgba(255, 255, 255, 0.1) !important;
+        color: #FFFFFF !important; /* White text muna habang hindi pa naka-click */
         border: 1px solid rgba(255, 215, 0, 0.3) !important;
         border-radius: 12px !important;
         padding: 12px !important;
@@ -1009,8 +1010,22 @@ st.markdown("""
     }
 
     .stTextInput input:focus {
+        /* Pag ni-click: Magiging Puti ang background para kita ang BLACK text */
+        background-color: #FFFFFF !important; 
+        color: #000000 !important; /* ITO YUNG FIX: Magiging BLACK ang text dito */
         border-color: #FFD700 !important;
-        box-shadow: 0 0 15px rgba(255,215,0,0.2) !important;
+        box-shadow: 0 0 15px rgba(255, 215, 0, 0.4) !important;
+        outline: none !important;
+    }
+
+    /* FIX para sa Placeholder (yung bulag na text sa loob) */
+    .stTextInput input::placeholder {
+        color: rgba(255, 215, 0, 0.5) !important;
+    }
+    
+    /* Pag naka-focus, gawing medyo grey ang placeholder para hindi conflict sa black text */
+    .stTextInput input:focus::placeholder {
+        color: rgba(0, 0, 0, 0.3) !important;
     }
 
     /* 6. Luxury Button Styling */
