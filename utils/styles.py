@@ -1,227 +1,191 @@
 # utils/styles.py
 # =====================================================================
-# KMFX EA - FULL CONSOLIDATED STYLES (v3.10 – Final Golden + Metrics Fix Feb 2026)
-# Strong golden titles restored (like old version), fixed metrics box (white + centered), golden login buttons
+# KMFX EA - OPTIMIZED RESPONSIVE STYLES (v3.11 – Mobile First)
 # =====================================================================
 import streamlit as st
 
 def apply_global_styles(public: bool = True):
     """
-    Apply global styles across the app.
-    - public=True → dark theme for landing/login
-    - public=False → respect session theme for dashboard/admin
+    Apply global styles with heavy mobile-first optimization.
     """
     theme = "dark" if public else st.session_state.get("theme", "dark")
 
+    # --- COLOR PALETTE ---
     accent_primary = "#00ffaa"
     accent_gold    = "#ffd700"
-    accent_glow    = "#00ffaa30"  # softer glow
-    accent_hover   = "#00ffcc"
-
+    gold_gradient  = "linear-gradient(135deg, #FFD700 0%, #B8860B 100%)"
+    
     bg_color       = "#0a0d14" if theme == "dark" else "#f8fbff"
-    card_bg        = "rgba(15,20,30,0.78)" if theme == "dark" else "rgba(255,255,255,0.82)"
-    border_color   = "rgba(100,100,100,0.18)" if theme == "dark" else "rgba(0,0,0,0.09)"
     text_primary   = "#ffffff" if theme == "dark" else "#0f172a"
     text_muted     = "#bbbbbb" if theme == "dark" else "#64748b"
-    card_shadow    = "0 10px 35px rgba(0,0,0,0.58)" if theme == "dark" else "0 8px 25px rgba(0,0,0,0.13)"
-    sidebar_bg     = "rgba(10,13,20,0.97)" if theme == "dark" else "rgba(248,251,255,0.97)"
-
+    card_bg        = "rgba(20,25,35,0.78)" if theme == "dark" else "rgba(255,255,255,0.82)"
+    border_color   = "rgba(255,255,255,0.08)" if theme == "dark" else "rgba(0,0,0,0.06)"
+    
     st.markdown(f"""
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
 
     <style>
         :root {{
             --accent-primary: {accent_primary};
-            --accent-gold:    {accent_gold};
-            --accent-glow:    {accent_glow};
-            --gold-gradient:  linear-gradient(135deg, #FFD700 0%, #B8860B 100%);
-            --metric-white:   #FFFFFF;
-            --max-app-width:  1320px;
+            --accent-gold: {accent_gold};
+            --gold-gradient: {gold_gradient};
+            --max-app-width: 1320px;
         }}
 
+        /* --- GLOBAL --- */
         html, body, .stApp {{
             font-family: 'Poppins', sans-serif !important;
-            background: {bg_color} !important;
+            background-color: {bg_color} !important;
             color: {text_primary} !important;
-            scroll-behavior: smooth;
         }}
 
+        /* --- LAYOUT - Responsiveness Fix --- */
         .main .block-container {{
             max-width: var(--max-app-width) !important;
-            margin: 0 auto !important;
-            padding: 0.5rem 1.5rem 2rem !important;  /* Very tight top for logo fit */
+            padding-top: 1rem !important;
+            padding-bottom: 2rem !important;
+            /* Adaptive Padding */
+            padding-left: clamp(1rem, 5vw, 3rem) !important;
+            padding-right: clamp(1rem, 5vw, 3rem) !important;
         }}
 
-        /* STRONG GOLDEN TITLES - RESTORED EXACT LOOK FROM OLD MAIN.PY */
-        h1, h2, h3, .gold-text {{
+        /* --- TYPOGRAPHY - Fluid Scaling --- */
+        h1, h2, h3 {{
             background: var(--gold-gradient) !important;
             -webkit-background-clip: text !important;
             -webkit-text-fill-color: transparent !important;
             font-weight: 800 !important;
-            filter: drop-shadow(0 4px 10px rgba(0,0,0,0.7)) !important;
-            letter-spacing: 1.2px !important;
-            text-shadow: 0 0 15px rgba(255,215,0,0.6) !important;  /* Intense shine */
+            letter-spacing: -0.5px !important;
         }}
 
-        h1 {{ font-size: clamp(3rem, 8vw, 6rem) !important; margin: 0.3rem 0 0.5rem !important; }}
-        h2 {{ font-size: clamp(2rem, 5.5vw, 3.5rem) !important; margin: 1.4rem 0 0.7rem !important; }}
-        h3 {{ font-size: clamp(1.6rem, 4.5vw, 2.4rem) !important; margin: 1.6rem 0 0.9rem !important; }}
+        h1 {{ font-size: clamp(2.2rem, 6vw, 4rem) !important; line-height: 1.1 !important; margin-bottom: 1rem !important; }}
+        h2 {{ font-size: clamp(1.7rem, 4vw, 2.5rem) !important; margin-top: 1.5rem !important; }}
+        h3 {{ font-size: clamp(1.3rem, 3vw, 1.8rem) !important; }}
 
-        /* METRICS BOX - FIXED: centered, full white text/numbers, perfect spacing */
+        .gold-text {{
+            background: var(--gold-gradient) !important;
+            -webkit-background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
+            font-weight: 700;
+        }}
+
+        /* --- METRICS BOX - Optimized for All Screens --- */
         .metrics-box {{
-            background: rgba(255,255,255,0.05) !important;
-            backdrop-filter: blur(14px) !important;
-            border: 1px solid rgba(255,255,255,0.18) !important;
+            background: rgba(255,255,255,0.03) !important;
+            backdrop-filter: blur(10px) !important;
+            border: 1px solid {border_color} !important;
             border-radius: 20px !important;
-            padding: 2.6rem 2.2rem !important;
-            margin: 2.5rem auto !important;
-            max-width: 1100px !important;
-            box-shadow: 0 12px 35px rgba(0,0,0,0.45) !important;
-            text-align: center !important;
+            padding: 1.5rem !important; /* Smaller padding for mobile */
+            margin: 1.5rem auto !important;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3) !important;
         }}
 
-        .metrics-box [data-testid="stMetricLabel"] {{
-            color: #ffffff !important;
-            font-size: 1.25rem !important;
-            font-weight: 600 !important;
-            margin-bottom: 1rem !important;
-            letter-spacing: 0.6px;
+        @media (min-width: 768px) {{
+            .metrics-box {{ padding: 2.5rem !important; }} /* Desktop padding */
         }}
 
-        .metrics-box [data-testid="stMetricValue"] {{
-            color: #ffffff !important;
-            font-size: 2.9rem !important;
-            font-weight: 900 !important;
-            line-height: 1.1 !important;
-            text-shadow: 0 0 16px rgba(255,255,255,0.35) !important;
+        [data-testid="stMetricLabel"] {{
+            font-size: 0.9rem !important;
+            color: {text_muted} !important;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }}
 
-        /* Center columns content */
-        .metrics-box .stColumn {{
-            display: flex !important;
-            justify-content: center !important;
-            align-items: center !important;
+        [data-testid="stMetricValue"] {{
+            font-size: clamp(1.8rem, 4vw, 2.8rem) !important;
+            font-weight: 800 !important;
+            color: {text_primary} !important;
         }}
 
-        /* GLASS CARDS */
+        /* --- GLASS CARDS --- */
         .glass-card {{
             background: {card_bg} !important;
-            backdrop-filter: blur(25px);
+            backdrop-filter: blur(20px) !important;
             border: 1px solid {border_color} !important;
-            border-radius: 24px !important;
-            padding: 2.2rem !important;
-            box-shadow: {card_shadow} !important;
-            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            border-radius: 20px !important;
+            padding: clamp(1rem, 3vw, 2rem) !important;
+            transition: transform 0.3s ease, box-shadow 0.3s ease !important;
         }}
+        
         .glass-card:hover {{
-            transform: translateY(-8px);
-            box-shadow: 0 20px 50px var(--accent-glow) !important;
-            border-color: {accent_primary}88 !important;
+            transform: translateY(-5px);
+            border-color: rgba(0, 255, 170, 0.3) !important;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3) !important;
         }}
 
-        /* PRIMARY BUTTONS + LOGIN SUBMIT BUTTONS - GOLDEN GRADIENT */
+        /* --- BUTTONS - Touch Friendly --- */
         button[kind="primary"],
         div.stFormSubmitButton > button {{
             background: var(--gold-gradient) !important;
             color: #000000 !important;
             border: none !important;
-            border-radius: 14px !important;
-            font-weight: 800 !important;
+            border-radius: 12px !important;
+            font-weight: 700 !important;
             text-transform: uppercase;
-            letter-spacing: 1.2px;
-            box-shadow: 0 6px 18px rgba(255,215,0,0.5) !important;
-            transition: all 0.3s ease !important;
-            padding: 1rem 2rem !important;
+            letter-spacing: 1px;
+            padding: 0.75rem 1.5rem !important;
+            width: 100% !important; /* Full width on mobile by default */
+            transition: all 0.2s ease !important;
         }}
 
-        button[kind="primary"]:hover,
-        div.stFormSubmitButton > button:hover {{
-            transform: translateY(-3px) scale(1.03) !important;
-            box-shadow: 0 12px 30px rgba(255,215,0,0.7) !important;
+        @media (min-width: 768px) {{
+            button[kind="primary"],
+            div.stFormSubmitButton > button {{
+                width: auto !important; /* Auto width on desktop */
+            }}
         }}
 
-        /* EN/TL BUTTON - GOLDEN */
-        button[key="lang_toggle_public"] {{
-            background: var(--gold-gradient) !important;
-            color: #000000 !important;
-            border: none !important;
-            border-radius: 12px !important;
-            font-weight: 700 !important;
-            box-shadow: 0 4px 12px rgba(255,215,0,0.4) !important;
+        button[kind="primary"]:hover {{
+            filter: brightness(1.1);
+            transform: translateY(-2px);
         }}
 
-        /* INPUT LABELS - GOLDEN */
-        .stTextInput label,
-        .stTextArea label,
-        .stForm label {{
-            color: #FFD700 !important;
-            font-weight: 700 !important;
-            letter-spacing: 0.8px !important;
+        /* --- INPUTS --- */
+        .stTextInput label, .stTextArea label {{
+            color: {accent_gold} !important;
+            font-weight: 600 !important;
+            margin-bottom: 0.2rem !important;
         }}
-
-        /* JOURNEY IMAGES - UNIFORM SIZE (except vision) */
-        .journey-image img {{
-            max-height: 420px !important;
-            object-fit: cover !important;
-            border-radius: 12px !important;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
-            width: 100% !important;
-        }}
-        .vision-image img {{
-            max-height: none !important;
-            object-fit: contain !important;
-            width: 100% !important;
-        }}
-
-        /* LOGIN CARD & TABS */
-        .login-box {{
-            background: rgba(20,20,35,0.68) !important;
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(255,215,0,0.22) !important;
-            border-radius: 20px !important;
-            padding: 40px !important;
-            box-shadow: 0 25px 55px rgba(0,0,0,0.55) !important;
-            max-width: 540px !important;
-            margin: 2rem auto;
-        }}
-        [data-baseweb="tab-list"] {{
-            background: rgba(0,0,0,0.35) !important;
-            border-radius: 14px !important;
-            padding: 6px !important;
-            display: flex !important;
-            justify-content: stretch !important;
-        }}
-        [data-baseweb="tab"] {{
-            flex: 1 !important;
-            color: #FFD700 !important;
-            font-weight: 700 !important;
+        
+        /* Remove default streamlit border-radius for inputs */
+        div[data-baseweb="input"] > div {{
             border-radius: 10px !important;
         }}
+
+        /* --- LOGIN CARD --- */
+        .login-box {{
+            background: rgba(10,13,20,0.8) !important;
+            backdrop-filter: blur(20px) !important;
+            border: 1px solid rgba(255,215,0,0.15) !important;
+            border-radius: 24px !important;
+            padding: clamp(1.5rem, 5vw, 3rem) !important;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5) !important;
+            max-width: 500px !important;
+            margin: 1rem auto;
+        }}
+
+        /* --- TABS --- */
+        [data-baseweb="tab-list"] {{
+            background-color: rgba(255,255,255,0.05) !important;
+            border-radius: 12px !important;
+            padding: 4px !important;
+        }}
+
+        [data-baseweb="tab"] {{
+            border-radius: 10px !important;
+            color: {text_muted} !important;
+        }}
+        
         [aria-selected="true"] {{
-            background: var(--gold-gradient) !important;
-            color: #000000 !important;
+            background: rgba(255,255,255,0.1) !important;
+            color: white !important;
         }}
 
-        header[data-testid="stHeader"] {{ background: transparent !important; }}
-        section[data-testid="stSidebar"] {{ background: {sidebar_bg} !important; }}
+        /* --- SCROLLBAR --- */
+        ::-webkit-scrollbar {{ width: 6px; height: 6px; }}
+        ::-webkit-scrollbar-track {{ background: transparent; }}
+        ::-webkit-scrollbar-thumb {{ background: rgba(255,255,255,0.1); border-radius: 3px; }}
+        ::-webkit-scrollbar-thumb:hover {{ background: var(--accent-primary); }}
 
-        @media (max-width: 768px) {{
-            .main .block-container {{ padding: 1rem !important; }}
-            .glass-card {{ padding: 1.3rem !important; }}
-            button[kind="primary"] {{ width: 100% !important; }}
-        }}
-
-        ::-webkit-scrollbar {{ width: 8px; }}
-        ::-webkit-scrollbar-track {{ background: {bg_color}; }}
-        ::-webkit-scrollbar-thumb {{ background: {border_color}; border-radius: 10px; }}
-        ::-webkit-scrollbar-thumb:hover {{ background: {accent_gold}; }}
-
-        hr {{
-            border: 0;
-            height: 1px;
-            background: rgba(255,255,255,0.06);
-            border-bottom: 1px solid rgba(0,0,0,0.45);
-            margin: 2.2rem 0 !important;
-        }}
     </style>
     """, unsafe_allow_html=True)
