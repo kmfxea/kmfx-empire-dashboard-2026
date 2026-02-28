@@ -1,7 +1,7 @@
 # utils/styles.py
 # =====================================================================
-# KMFX EA - FULL CONSOLIDATED STYLES (v3.14 – Professional Responsive Final Feb 28, 2026)
-# Titles: golden bg + black text • Metrics: white labels + golden values • Fully responsive
+# KMFX EA - FULL CONSOLIDATED STYLES (v3.15 – Final Professional & Golden Feb 28, 2026)
+# Titles: pure golden gradient text (like $5,247.9), no box • Top black font • White labels + golden values • Responsive
 # =====================================================================
 import streamlit as st
 
@@ -34,7 +34,7 @@ def apply_global_styles(public: bool = True):
             --accent-primary: {accent_primary};
             --accent-gold:    {accent_gold};
             --accent-glow:    {accent_glow};
-            --gold-gradient:  linear-gradient(135deg, #FFD700 0%, #FFEA00 50%, #FFCC00 100%);
+            --gold-gradient:  linear-gradient(135deg, #FFD700 0%, #FFEA00 50%, #FFCC00 100%);  /* Bright gold like $5,247.9 */
             --metric-white:   #FFFFFF;
             --max-app-width:  1320px;
             --base-font-size: 16px;
@@ -46,43 +46,36 @@ def apply_global_styles(public: bool = True):
             background: {bg_color} !important;
             color: {text_primary} !important;
             scroll-behavior: smooth;
-            line-height: 1.6 !important;
+            line-height: 1.65 !important;
         }}
 
         .main .block-container {{
             max-width: var(--max-app-width) !important;
             margin: 0 auto !important;
-            padding: clamp(0.8rem, 3vw, 1.8rem) 1.2rem !important;
+            padding: clamp(0.8rem, 3vw, 1.6rem) 1.2rem !important;
         }}
 
-        /* ALL TITLES - GOLDEN BG + BLACK TEXT (like ENTER buttons) */
-        h1, h2, h3, h4, .gold-title, .gold-text {{
+        /* ALL TITLES - PURE GOLDEN GRADIENT TEXT (no box, like $5,247.9) */
+        h1, h2, h3, h4, .gold-text, .title-gold {{
             background: var(--gold-gradient) !important;
-            color: #000000 !important;
-            font-weight: 800 !important;
-            padding: 0.6rem 1.2rem !important;
-            border-radius: 12px !important;
-            display: inline-block !important;
-            box-shadow: 0 4px 12px rgba(255,215,0,0.4) !important;
+            -webkit-background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
+            font-weight: 700 !important;
             letter-spacing: 0.8px !important;
-            text-transform: uppercase !important;
-            text-align: center !important;
-            margin: 0.8rem auto !important;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.35) !important;
+            filter: drop-shadow(0 1px 3px rgba(255,215,0,0.25)) !important;
         }}
 
-        h1 {{ font-size: clamp(2.2rem, 6vw, 4rem) !important; }}
-        h2 {{ font-size: clamp(1.6rem, 4.5vw, 2.8rem) !important; }}
-        h3 {{ font-size: clamp(1.3rem, 4vw, 2rem) !important; }}
+        h1 {{ font-size: clamp(2.4rem, 6.5vw, 4.2rem) !important; margin: 0.5rem 0 0.7rem !important; }}
+        h2 {{ font-size: clamp(1.8rem, 5vw, 3rem) !important; margin: 1.4rem 0 0.8rem !important; }}
+        h3 {{ font-size: clamp(1.4rem, 4vw, 2.2rem) !important; margin: 1.6rem 0 1rem !important; }}
 
         /* TOP HERO - BLACK FONT + IMPROVED EMOJI */
         .hero-title {{
             color: #000000 !important;
-            background: rgba(0,0,0,0.75) !important;
-            padding: 0.8rem 1.5rem !important;
-            border-radius: 16px !important;
             font-weight: 900 !important;
             letter-spacing: 2px !important;
-            text-shadow: 0 2px 8px rgba(0,0,0,0.8) !important;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.7) !important;
             display: inline-block !important;
             margin: 0.5rem auto !important;
             font-size: clamp(2.6rem, 7vw, 4.2rem) !important;
@@ -90,13 +83,10 @@ def apply_global_styles(public: bool = True):
 
         .hero-subtitle {{
             color: #000000 !important;
-            background: rgba(0,0,0,0.65) !important;
-            padding: 0.6rem 1.2rem !important;
-            border-radius: 12px !important;
             font-weight: 700 !important;
-            letter-spacing: 3px !important;
-            font-size: clamp(1.1rem, 3.5vw, 1.3rem) !important;
-            margin-top: 0.6rem !important;
+            letter-spacing: 2.5px !important;
+            font-size: clamp(1.1rem, 3.5vw, 1.4rem) !important;
+            margin-top: 0.5rem !important;
             display: inline-block !important;
         }}
 
@@ -121,11 +111,10 @@ def apply_global_styles(public: bool = True):
         }}
 
         .metrics-box [data-testid="stMetricValue"] {{
-            color: #FFD700 !important;  /* Bright gold like $5,247.9 */
+            color: #FFD700 !important;  /* Exact bright gold like $5,247.9 */
             font-size: clamp(2rem, 5vw, 2.8rem) !important;
             font-weight: 900 !important;
             line-height: 1.1 !important;
-            text-shadow: 0 0 10px rgba(255,215,0,0.3) !important;
         }}
 
         .metrics-box .stColumn {{
@@ -174,7 +163,7 @@ def apply_global_styles(public: bool = True):
             box-shadow: 0 15px 40px var(--accent-glow) !important;
         }}
 
-        /* RESPONSIVE FIXES - Especially for mobile */
+        /* RESPONSIVE - Especially mobile */
         @media (max-width: 1024px) {{
             .main .block-container {{ padding: 1rem 1.2rem !important; }}
             h1 {{ font-size: clamp(2rem, 7vw, 3.5rem) !important; }}
