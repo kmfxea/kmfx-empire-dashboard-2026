@@ -3,6 +3,7 @@
 # KMFX EA - FULL CONSOLIDATED STYLES (v3.3 – Feb 2026)
 # Centralized, theme-aware CSS – with golden login/registration fields
 # Labels now use gold gradient for better visibility on golden inputs
+# Placeholders changed to dark gray for better readability
 # =====================================================================
 import streamlit as st
 
@@ -22,7 +23,7 @@ def apply_global_styles(public: bool = True):
     accent_hover      = "#00ffcc"
     gold_border       = "#d4a017"
     gold_focus        = "#ffd700"
-    gold_placeholder  = "#c9a227"
+    gold_placeholder  = "#c9a227"           # still defined but no longer used for placeholders
     gold_bg_normal    = "rgba(255, 215, 0, 0.10)"
     gold_bg_focus     = "rgba(255, 215, 0, 0.22)"
 
@@ -189,11 +190,11 @@ def apply_global_styles(public: bool = True):
         input[aria-label*="name" i]::placeholder,
         input[aria-label*="Name" i]::placeholder,
         input[type="email"]::placeholder,
-        textarea[data-testid="stTextArea"]::placeholder {
-            color: #333333 !important;
+        textarea[data-testid="stTextArea"]::placeholder {{
+            color: #333333 !important;          /* dark gray */
             opacity: 0.70 !important;
             font-weight: 400;
-        }
+        }}
 
         /* ── GOLD GRADIENT LABELS for better visibility ── */
         .stTextInput > label,
