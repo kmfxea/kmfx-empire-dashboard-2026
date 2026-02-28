@@ -17,28 +17,31 @@ def apply_global_styles(public: bool = True):
 
     # Color palette
     accent_primary = "#00ffaa"
-    accent_gold    = "#ffd700"
-    accent_glow    = "#00ffaa40"
-    accent_hover   = "#00ffcc"
+    accent_gold   = "#ffd700"
+    accent_glow   = "#00ffaa40"
+    accent_hover  = "#00ffcc"
+    gold_soft     = "#f0d060"           # softer gold for backgrounds / placeholders
+    gold_border   = "#e8c547"
 
-    bg_color       = "#0a0d14" if theme == "dark" else "#f8fbff"
-    card_bg        = "rgba(15,20,30,0.78)" if theme == "dark" else "rgba(255,255,255,0.82)"
-    border_color   = "rgba(100,100,100,0.18)" if theme == "dark" else "rgba(0,0,0,0.09)"
-    text_primary   = "#ffffff" if theme == "dark" else "#0f172a"
-    text_muted     = "#bbbbbb" if theme == "dark" else "#64748b"
-    card_shadow    = "0 10px 35px rgba(0,0,0,0.58)" if theme == "dark" else "0 8px 25px rgba(0,0,0,0.13)"
-    sidebar_bg     = "rgba(10,13,20,0.97)" if theme == "dark" else "rgba(248,251,255,0.97)"
+    bg_color      = "#0a0d14" if theme == "dark" else "#f8fbff"
+    card_bg       = "rgba(15,20,30,0.78)" if theme == "dark" else "rgba(255,255,255,0.82)"
+    border_color  = "rgba(100,100,100,0.18)" if theme == "dark" else "rgba(0,0,0,0.09)"
+    text_primary  = "#ffffff" if theme == "dark" else "#0f172a"
+    text_muted    = "#bbbbbb" if theme == "dark" else "#64748b"
+    card_shadow   = "0 10px 35px rgba(0,0,0,0.58)" if theme == "dark" else "0 8px 25px rgba(0,0,0,0.13)"
+    sidebar_bg    = "rgba(10,13,20,0.97)" if theme == "dark" else "rgba(248,251,255,0.97)"
 
     # ── Inject fonts + main CSS ────────────────────────────────────────
     st.markdown(f"""
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
-
     <style>
         :root {{
             --accent-primary: {accent_primary};
             --accent-gold:    {accent_gold};
             --accent-glow:    {accent_glow};
             --gold-gradient:  linear-gradient(135deg, #FFD700 0%, #B8860B 100%);
+            --gold-soft:      {gold_soft};
+            --gold-border:    {gold_border};
             --metric-white:   #FFFFFF;
             --max-app-width:  1320px;
         }}
@@ -57,7 +60,7 @@ def apply_global_styles(public: bool = True):
             padding: 2rem 1.5rem !important;
         }}
 
-        /* ── METRIC CARDS (consistent white text in both themes) ── */
+        /* ── METRIC CARDS ── */
         [data-testid="stMetricLabel"] {{
             color: var(--metric-white) !important;
             font-size: clamp(0.9rem, 2vw, 1.1rem) !important;
@@ -80,7 +83,7 @@ def apply_global_styles(public: bool = True):
         }}
         [data-testid="stMetric"]:hover {{
             transform: translateY(-6px);
-            border-color: {accent_gold} !important;
+            border-color: var(--accent-gold) !important;
             background: rgba(255,255,255,0.08) !important;
         }}
 
@@ -99,7 +102,7 @@ def apply_global_styles(public: bool = True):
         .glass-card:hover {{
             transform: translateY(-8px);
             box-shadow: 0 22px 55px var(--accent-glow) !important;
-            border-color: {accent_primary}90 !important;
+            border-color: var(--accent-primary)90 !important;
         }}
 
         /* ── GOLD TEXT ── */
@@ -130,14 +133,14 @@ def apply_global_styles(public: bool = True):
             box-shadow: 0 10px 25px {accent_glow}cc !important;
         }}
 
-        /* Form submit & lang toggle specificity */
+        /* Form submit & lang toggle */
         button[key="lang_toggle_public"],
         div[data-testid="stFormSubmitButton"] button {{
             background: #00ffa2 !important;
             color: #000000 !important;
         }}
 
-        /* ── FORM INPUTS ── */
+        /* ── FORM INPUTS (normal) ── */
         .stTextInput input,
         .stTextArea textarea {{
             background: rgba(255,255,255,0.14) !important;
@@ -146,16 +149,34 @@ def apply_global_styles(public: bool = True):
             border-radius: 12px !important;
             padding: 12px 16px !important;
         }}
-        .stTextInput input:focus,
-        .stTextArea textarea:focus {{
-            background: rgba(255,255,255,0.28) !important;
-            color: #000000 !important;
-            border-color: {accent_gold} !important;
-            box-shadow: 0 0 12px rgba(255,215,0,0.35) !important;
+
+        /* ── GOLDEN USERNAME + PASSWORD FIELDS ── */
+        input[type="text"][aria-label*="username" i],
+        input[type="text"][aria-label*="Username" i],
+        input[type="text"][placeholder*="username" i],
+        input[type="text"][placeholder*="Username" i],
+        input[type="password"],
+        input[type="password"][aria-label*="password" i],
+        input[type="password"][aria-label*="Password" i] {{
+            background: rgba(255, 215, 0, 0.08) !important;           /* subtle gold tint */
+            border: 1px solid var(--gold-border) !important;
+            color: var(--gold-soft) !important;
         }}
-        .stTextInput input::placeholder,
-        .stTextArea textarea::placeholder {{
-            color: rgba(255,255,255,0.48) !important;
+
+        input[type="text"][aria-label*="username" i]:focus,
+        input[type="text"][aria-label*="Username" i]:focus,
+        input[type="password"]:focus {{
+            background: rgba(255, 215, 0, 0.22) !important;
+            border-color: var(--accent-gold) !important;
+            box-shadow: 0 0 16px rgba(255,215,0,0.45) !important;
+            color: white !important;
+        }}
+
+        input[type="text"][aria-label*="username" i]::placeholder,
+        input[type="text"][aria-label*="Username" i]::placeholder,
+        input[type="password"]::placeholder {{
+            color: rgba(255,215,0,0.55) !important;     /* golden placeholder */
+            opacity: 0.9 !important;
         }}
 
         /* ── SUCCESS BOX ── */
@@ -179,6 +200,7 @@ def apply_global_styles(public: bool = True):
             max-width: 540px !important;
             margin: 2rem auto;
         }}
+
         [data-baseweb="tab-list"] {{
             background: rgba(0,0,0,0.35) !important;
             border-radius: 14px !important;
@@ -187,6 +209,7 @@ def apply_global_styles(public: bool = True):
             display: flex !important;
             justify-content: stretch !important;
         }}
+
         [data-baseweb="tab"] {{
             flex: 1 !important;
             color: #FFD700 !important;
@@ -194,6 +217,7 @@ def apply_global_styles(public: bool = True):
             border-radius: 10px !important;
             transition: all 0.3s ease;
         }}
+
         [aria-selected="true"] {{
             background: var(--gold-gradient) !important;
             color: #000000 !important;
@@ -221,7 +245,7 @@ def apply_global_styles(public: bool = True):
         ::-webkit-scrollbar {{ width: 8px; }}
         ::-webkit-scrollbar-track {{ background: {bg_color}; }}
         ::-webkit-scrollbar-thumb {{ background: {border_color}; border-radius: 10px; }}
-        ::-webkit-scrollbar-thumb:hover {{ background: {accent_gold}; }}
+        ::-webkit-scrollbar-thumb:hover {{ background: var(--accent-gold); }}
 
         /* ── HR SEPARATOR ── */
         hr {{
