@@ -1,11 +1,16 @@
 # utils/styles.py
 # =====================================================================
-# KMFX EA - FULL CONSOLIDATED STYLES (v3.5 – Spacing + Golden Fixes Feb 2026)
-# Adjusted: tighter hero/logo spacing, golden EN/TL, golden labels, image uniformity
+# KMFX EA - FULL CONSOLIDATED STYLES (v3.8 – Complete & Final Feb 2026)
+# Golden titles restored, metrics box fixed (centered + white numbers), tight spacing
 # =====================================================================
 import streamlit as st
 
 def apply_global_styles(public: bool = True):
+    """
+    Apply global styles.
+    - public=True → dark theme for landing/login
+    - public=False → respect session theme for dashboard/admin
+    """
     theme = "dark" if public else st.session_state.get("theme", "dark")
 
     accent_primary = "#00ffaa"
@@ -44,74 +49,60 @@ def apply_global_styles(public: bool = True):
         .main .block-container {{
             max-width: var(--max-app-width) !important;
             margin: 0 auto !important;
-            padding: 0.8rem 1.5rem 2rem !important;  /* Reduced top padding para mas mataas logo */
+            padding: 0.6rem 1.5rem 2rem !important;  /* Tight top for logo */
         }}
 
-        /* TIGHTER HERO SPACING */
-        .hero-container {{
-            margin-top: 0.5rem !important;
-            padding-top: 0.5rem !important;
-            text-align: center;
-        }}
-
-        /* METRICS - Centered with breathing room */
-        .metrics-box {{
-            background: rgba(255,255,255,0.04) !important;
-            border-radius: 20px !important;
-            border: 1px solid rgba(255,255,255,0.12) !important;
-            padding: 2rem 1.5rem !important;
-            margin: 1.5rem auto !important;
-            max-width: 1100px !important;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3) !important;
-        }}
-        .metrics-box [data-testid="stMetric"] {{
-            background: transparent !important;
-            border: none !important;
-        }}
-        .metrics-box h3 {{
-            color: {accent_gold} !important;
-            text-align: center;
-            margin-bottom: 1.5rem !important;
-        }}
-
-        /* GOLDEN LABELS FOR INPUTS */
-        .stTextInput label,
-        .stTextArea label,
-        .stForm label {{
-            color: #FFD700 !important;
-            font-weight: 700 !important;
-            letter-spacing: 0.8px;
-            text-shadow: 0 0 6px rgba(255,215,0,0.4) !important;
-        }}
-
-        /* EN/TL BUTTON - GOLDEN BACKGROUND */
-        button[key="lang_toggle_public"] {{
+        /* FORCE GOLDEN TITLES EVERYWHERE (restored like old version) */
+        h1, h2, h3, .gold-text {{
             background: var(--gold-gradient) !important;
-            color: #000000 !important;
-            border: none !important;
-            border-radius: 12px !important;
+            -webkit-background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
             font-weight: 700 !important;
-            box-shadow: 0 4px 12px rgba(255,215,0,0.4) !important;
-            transition: all 0.3s ease;
-        }}
-        button[key="lang_toggle_public"]:hover {{
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(255,215,0,0.6) !important;
+            filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4)) !important;
+            letter-spacing: 0.6px !important;
         }}
 
-        /* JOURNEY IMAGES - UNIFORM SIZE (except vision) */
-        .journey-image img {{
-            max-height: 420px !important;
-            object-fit: cover !important;
-            border-radius: 12px !important;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
-        }}
-        .vision-image img {{
-            max-height: none !important;  /* Full size for vision only */
-            object-fit: contain !important;
+        h1 {{ font-size: clamp(2.8rem, 7vw, 5.5rem) !important; margin: 0.4rem 0 0.6rem !important; }}
+        h2 {{ font-size: clamp(1.8rem, 5vw, 3rem) !important; margin: 1.6rem 0 0.8rem !important; }}
+        h3 {{ font-size: clamp(1.4rem, 4vw, 2.2rem) !important; margin: 1.8rem 0 1rem !important; }}
+
+        /* METRICS BOX - FIXED: centered, white text/numbers, good spacing */
+        .metrics-box {{
+            background: rgba(255,255,255,0.05) !important;
+            backdrop-filter: blur(12px) !important;
+            border: 1px solid rgba(255,255,255,0.15) !important;
+            border-radius: 20px !important;
+            padding: 2.4rem 2rem !important;
+            margin: 2rem auto !important;
+            max-width: 1100px !important;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.45) !important;
+            text-align: center !important;
         }}
 
-        /* GLASS CARDS, BUTTONS, SCROLLBAR, etc. remain the same as before */
+        .metrics-box [data-testid="stMetricLabel"] {{
+            color: #ffffff !important;
+            font-size: 1.15rem !important;
+            font-weight: 600 !important;
+            margin-bottom: 0.8rem !important;
+            letter-spacing: 0.5px;
+        }}
+
+        .metrics-box [data-testid="stMetricValue"] {{
+            color: #ffffff !important;
+            font-size: 2.6rem !important;
+            font-weight: 800 !important;
+            line-height: 1.1 !important;
+            text-shadow: 0 0 12px rgba(255,255,255,0.25) !important;
+        }}
+
+        /* Center columns content */
+        .metrics-box .stColumn {{
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+        }}
+
+        /* GLASS CARDS */
         .glass-card {{
             background: {card_bg} !important;
             backdrop-filter: blur(25px);
@@ -124,16 +115,105 @@ def apply_global_styles(public: bool = True):
         .glass-card:hover {{
             transform: translateY(-8px);
             box-shadow: 0 20px 50px var(--accent-glow) !important;
+            border-color: {accent_primary}88 !important;
         }}
 
+        /* PRIMARY BUTTONS */
         button[kind="primary"] {{
             background: {accent_primary} !important;
             color: #000000 !important;
             border-radius: 14px !important;
             font-weight: 700 !important;
             box-shadow: 0 4px 15px {accent_glow} !important;
+            transition: all 0.3s !important;
         }}
 
-        /* ... (keep all other rules like metrics, tabs, scrollbar, HR, etc.) ... */
+        /* EN/TL BUTTON - GOLDEN */
+        button[key="lang_toggle_public"] {{
+            background: var(--gold-gradient) !important;
+            color: #000000 !important;
+            border: none !important;
+            border-radius: 12px !important;
+            font-weight: 700 !important;
+            box-shadow: 0 4px 12px rgba(255,215,0,0.4) !important;
+        }}
+
+        /* INPUT LABELS - GOLDEN */
+        .stTextInput label,
+        .stTextArea label,
+        .stForm label {{
+            color: #FFD700 !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.8px !important;
+        }}
+
+        /* JOURNEY IMAGES - UNIFORM (except vision) */
+        .journey-image img {{
+            max-height: 420px !important;
+            object-fit: cover !important;
+            border-radius: 12px !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
+            width: 100% !important;
+        }}
+        .vision-image img {{
+            max-height: none !important;
+            object-fit: contain !important;
+            width: 100% !important;
+        }}
+
+        /* LOGIN CARD & TABS */
+        .login-box {{
+            background: rgba(20,20,35,0.68) !important;
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,215,0,0.22) !important;
+            border-radius: 20px !important;
+            padding: 40px !important;
+            box-shadow: 0 25px 55px rgba(0,0,0,0.55) !important;
+            max-width: 540px !important;
+            margin: 2rem auto;
+        }}
+        [data-baseweb="tab-list"] {{
+            background: rgba(0,0,0,0.35) !important;
+            border-radius: 14px !important;
+            padding: 6px !important;
+            display: flex !important;
+            justify-content: stretch !important;
+        }}
+        [data-baseweb="tab"] {{
+            flex: 1 !important;
+            color: #FFD700 !important;
+            font-weight: 700 !important;
+            border-radius: 10px !important;
+        }}
+        [aria-selected="true"] {{
+            background: var(--gold-gradient) !important;
+            color: #000000 !important;
+        }}
+
+        /* HEADER & SIDEBAR */
+        header[data-testid="stHeader"] {{ background: transparent !important; }}
+        section[data-testid="stSidebar"] {{ background: {sidebar_bg} !important; }}
+
+        /* MOBILE */
+        @media (max-width: 768px) {{
+            .main .block-container {{ padding: 1rem !important; }}
+            .glass-card {{ padding: 1.3rem !important; }}
+            button[kind="primary"] {{ width: 100% !important; }}
+        }}
+
+        /* SCROLLBAR */
+        ::-webkit-scrollbar {{ width: 8px; }}
+        ::-webkit-scrollbar-track {{ background: {bg_color}; }}
+        ::-webkit-scrollbar-thumb {{ background: {border_color}; border-radius: 10px; }}
+        ::-webkit-scrollbar-thumb:hover {{ background: {accent_gold}; }}
+
+        /* HR */
+        hr {{
+            border: 0;
+            height: 1px;
+            background: rgba(255,255,255,0.06);
+            border-bottom: 1px solid rgba(0,0,0,0.45);
+            margin: 2.2rem 0 !important;
+        }}
     </style>
     """, unsafe_allow_html=True)
