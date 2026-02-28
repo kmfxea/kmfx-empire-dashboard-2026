@@ -1,7 +1,7 @@
 # utils/styles.py
 # =====================================================================
-# KMFX EA - FULL CONSOLIDATED STYLES (v3.9 – Restored Clean Golden Feb 2026)
-# Strong but clean golden titles (like old main.py), fixed metrics box (white + centered), golden buttons
+# KMFX EA - FULL CONSOLIDATED STYLES (v3.12 – Final Golden + All Fixes Feb 28, 2026)
+# Strong clean golden gradient titles restored, metrics box perfect (white + centered), golden login buttons
 # =====================================================================
 import streamlit as st
 
@@ -52,7 +52,7 @@ def apply_global_styles(public: bool = True):
             padding: 0.8rem 1.5rem 2rem !important;
         }}
 
-        /* GOLDEN TITLES - RESTORED CLEAN & STRONG LOOK FROM OLD MAIN.PY */
+        /* GOLDEN TITLES - RESTORED STRONG & CLEAN LOOK FROM ORIGINAL */
         h1, h2, h3, .gold-text {{
             background: var(--gold-gradient) !important;
             -webkit-background-clip: text !important;
@@ -67,7 +67,7 @@ def apply_global_styles(public: bool = True):
         h2 {{ font-size: clamp(2rem, 5.5vw, 3.5rem) !important; margin: 1.5rem 0 0.8rem !important; }}
         h3 {{ font-size: clamp(1.6rem, 4.5vw, 2.4rem) !important; margin: 1.8rem 0 1rem !important; }}
 
-        /* METRICS BOX - FIXED: centered, full white text/numbers, good spacing */
+        /* METRICS BOX - FIXED: centered, full white text/numbers, perfect spacing */
         .metrics-box {{
             background: rgba(255,255,255,0.05) !important;
             backdrop-filter: blur(14px) !important;
