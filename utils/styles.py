@@ -15,7 +15,7 @@ def apply_global_styles(public: bool = True):
 
     accent_primary = "#00ffaa"
     accent_gold    = "#ffd700"
-    accent_glow    = "#00ffaa40"
+    accent_glow    = "#00ffaa30"  # softer glow
     accent_hover   = "#00ffcc"
 
     bg_color       = "#0a0d14" if theme == "dark" else "#f8fbff"
