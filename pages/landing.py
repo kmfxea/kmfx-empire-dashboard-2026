@@ -102,7 +102,7 @@ texts = {
         "success": "Success! You're on the list. Check your email soon 🚀",
     },
     "tl": {
-        "join_waitlist": "Sumali sa Waitlist – Maagang Access",
+        "join_waitlist": "Sumali sa Waitlist – Maagap na Access",
         "name": "Buong Pangalan",
         "email": "Email",
         "why_join": "Bakit gusto mong sumali sa KMFX? (opsyonal)",
@@ -114,12 +114,123 @@ texts = {
 def txt(key):
     return texts.get(st.session_state.language, texts["en"]).get(key, key)
 
-# Language toggle
-st.markdown('<div style="text-align: right; margin: 1rem 0;">', unsafe_allow_html=True)
-if st.button("EN / TL", key="lang_toggle_public"):
-    st.session_state.language = "tl" if st.session_state.language == "en" else "en"
-    st.rerun()
+# ── Small Golden Sliding Toggle ──
+st.markdown("""
+    <style>
+        .lang-toggle-wrapper {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin: 1rem 0;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        .lang-toggle-label {
+            color: #ffd700;
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-right: 10px;
+            letter-spacing: 0.5px;
+        }
+        
+        /* Custom small toggle switch */
+        .lang-toggle {
+            position: relative;
+            display: inline-block;
+            width: 54px;
+            height: 28px;
+        }
+        
+        .lang-toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,215,0,0.18);
+            border: 1px solid #d4a017;
+            border-radius: 34px;
+            transition: .4s;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background: #ffd700;
+            border-radius: 50%;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            transition: .4s;
+        }
+        
+        input:checked + .slider {
+            background: linear-gradient(135deg, #ffd700 0%, #b8860b 100%);
+            border-color: #ffd700;
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(26px);
+            background: #000000;
+        }
+        
+        /* Text indicators (EN/TL) on the sides */
+        .lang-toggle-label-left,
+        .lang-toggle-label-right {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #ffd700;
+            opacity: 0.7;
+            pointer-events: none;
+        }
+        
+        .lang-toggle-label-left { left: -36px; }
+        .lang-toggle-label-right { right: -36px; }
+        
+        input:checked ~ .lang-toggle-label-left { opacity: 1; }
+        input:not(:checked) ~ .lang-toggle-label-right { opacity: 1; }
+    </style>
+""", unsafe_allow_html=True)
+
+# Toggle container
+st.markdown('<div class="lang-toggle-wrapper">', unsafe_allow_html=True)
+
+# Hidden checkbox for state
+checked = st.checkbox(
+    label="Switch to TL",
+    value=(st.session_state.language == "tl"),
+    key="lang_toggle_hidden",
+    label_visibility="hidden"
+)
+
+# Custom toggle UI
+st.markdown(f"""
+    <label class="lang-toggle">
+        <input type="checkbox" {'checked' if checked else ''} onchange="this.form.submit();">
+        <span class="slider"></span>
+        <span class="lang-toggle-label-left">EN</span>
+        <span class="lang-toggle-label-right">TL</span>
+    </label>
+""", unsafe_allow_html=True)
+
 st.markdown('</div>', unsafe_allow_html=True)
+
+# Sync session state
+if checked != (st.session_state.language == "tl"):
+    st.session_state.language = "tl" if checked else "en"
+    st.rerun()
 
 # ────────────────────────────────────────────────
 # LOGO + HERO
