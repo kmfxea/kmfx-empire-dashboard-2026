@@ -926,204 +926,133 @@ for q, a in faqs:
 st.markdown("</div>", unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# CUSTOM CSS FOR ELITE UI/UX LOGIN
+# 🎨 ULTIMATE CONSOLIDATED PREMIUM UI/UX CSS
 # ────────────────────────────────────────────────
 st.markdown("""
 <style>
-    /* Tabs Styling */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
-        background-color: rgba(0,0,0,0.2);
-        padding: 10px;
-        border-radius: 15px;
+    /* 1. Main App Background & Global Text Force */
+    .stApp {
+        background-color: #0A0A12 !important;
+        color: #FFFFFF !important;
     }
-    .stTabs [data-baseweb="tab"] {
-        height: 45px;
-        background-color: transparent;
-        border-radius: 10px;
-        color: white;
-        font-weight: 600;
-        transition: all 0.3s ease;
+
+    /* FIX: Username/Password Labels - Always Gold even in Dark/Light Mode */
+    .stApp label {
+        color: #FFD700 !important;
+        font-weight: 600 !important;
+        letter-spacing: 1px;
+        text-shadow: 0px 0px 5px rgba(255, 215, 0, 0.2);
     }
-    .stTabs [aria-selected="true"] {
+
+    /* 2. Login Card - Frosted Glass Effect */
+    .login-box {
+        background: rgba(20, 20, 35, 0.6);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 215, 0, 0.2);
+        padding: 40px;
+        border-radius: 20px;
+        box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    /* 3. Global Typography */
+    h1 {
+        color: #FFD700 !important;
+        text-shadow: 0 0 15px rgba(255,215,0,0.6);
+        font-family: 'Helvetica Neue', sans-serif;
+    }
+
+    /* 4. Tabs Styling - STRETCHED & PREMIUM */
+    [data-testid="stTabs"] {
+        background: transparent !important;
+    }
+
+    [data-baseweb="tab-list"] {
+        gap: 12px !important;
+        background: rgba(0,0,0,0.3) !important;
+        padding: 10px !important;
+        border-radius: 15px !important;
+        display: flex !important;
+        justify-content: space-between !important;
+    }
+
+    [data-baseweb="tab"] {
+        flex-grow: 1 !important; /* This makes the tabs stretch wide */
+        height: 50px !important;
+        background-color: transparent !important;
+        border-radius: 10px !important;
+        color: #FFD700 !important;
+        font-weight: 700 !important;
+        border: none !important;
+        transition: all 0.3s ease !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+    }
+
+    [aria-selected="true"] {
         background: linear-gradient(135deg, #FFD700 0%, #B8860B 100%) !important;
         color: black !important;
-        box-shadow: 0px 4px 15px rgba(255, 215, 0, 0.3);
+        box-shadow: 0px 4px 15px rgba(255, 215, 0, 0.4) !important;
     }
 
-    /* Login Card Container */
-    .login-box {
-        background: rgba(255, 255, 255, 0.03);
-        backdrop-filter: blur(15px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        padding: 40px;
-        border-radius: 25px;
-        box-shadow: 0 25px 50px rgba(0,0,0,0.5);
-        margin-top: 20px;
-    }
-
-    /* Input Fields Enhancement */
+    /* 5. Input Fields Styling */
     .stTextInput input {
-        background-color: rgba(0,0,0,0.3) !important;
+        background-color: rgba(255, 255, 255, 0.05) !important;
         color: white !important;
-        border: 1px solid rgba(255,215,0,0.2) !important;
+        border: 1px solid rgba(255, 215, 0, 0.3) !important;
         border-radius: 12px !important;
         padding: 12px !important;
         transition: all 0.3s ease;
     }
+
     .stTextInput input:focus {
         border-color: #FFD700 !important;
-        box-shadow: 0 0 10px rgba(255,215,0,0.2) !important;
+        box-shadow: 0 0 15px rgba(255,215,0,0.2) !important;
     }
 
-    /* Luxury Button */
-    .stButton button {
-        background: linear-gradient(135deg, #FFD700 0%, #B8860B 100%) !important;
-        color: black !important;
-        font-weight: 700 !important;
+    /* 6. Luxury Button Styling */
+    div.stButton > button {
+        background: linear-gradient(135deg, #B8860B 0%, #FFD700 100%) !important;
+        color: #000000 !important;
+        font-weight: 800 !important;
         text-transform: uppercase;
-        letter-spacing: 1px;
+        letter-spacing: 1.5px;
         border: none !important;
         border-radius: 12px !important;
-        padding: 15px !important;
-        transition: transform 0.2s ease, box-shadow 0.2s ease !important;
-    }
-    .stButton button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 20px rgba(255,215,0,0.4) !important;
-    }
-</style>
-""", unsafe_allow_html=True)
-
-import streamlit as st
-
-# ────────────────────────────────────────────────
-# 🎨 CUSTOM CSS FOR PREMIUM UI (FIXED)
-# ────────────────────────────────────────────────
-st.markdown("""
-<style>
-    /* 1. Main Background - Deep Dark Blue/Black */
-    .stApp {
-        background-color: #0A0A12;
-        color: #FFFFFF;
-    }
-
-    /* 2. Login Container - Frosted Glass Effect */
-    .login-box {
-        background: rgba(20, 20, 35, 0.5);
-        border: 1px solid rgba(255, 215, 0, 0.2);
-        border-radius: 15px;
-        padding: 2rem;
-        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
-    }
-
-    /* 3. Titles - Golden Glow */
-    h1 {
-        color: #FFD700 !important;
-        text-shadow: 0 0 15px rgba(255,215,0,0.5);
-        font-family: 'Helvetica Neue', sans-serif;
-    }
-
-    /* 4. Subtitles - Gold with opacity, no grey */
-    .golden-subtitle {
-        color: #FFD700;
-        opacity: 0.8;
-        letter-spacing: 3px;
-        font-weight: 300;
-        font-size: 0.85rem;
-    }
-
-    /* 5. Input Fields Styling */
-    .stTextInput>div>div>input {
-        background-color: rgba(255, 255, 255, 0.03) !important;
-        color: white !important;
-        border: 1px solid rgba(255, 215, 0, 0.3) !important;
-        border-radius: 8px;
-    }
-
-    /* 6. Submit Button - Solid Gold */
-    div.stButton > button {
-        background: linear-gradient(45deg, #B8860B, #FFD700) !important;
-        color: #000000 !important;
-        border: none !important;
-        border-radius: 8px !important;
-        font-weight: bold !important;
-        transition: all 0.3s ease;
+        padding: 18px 30px !important;
+        width: 100%;
+        transition: all 0.3s ease-in-out !important;
     }
 
     div.stButton > button:hover {
-        transform: scale(1.02);
-        box-shadow: 0 0 15px rgba(255,215,0,0.4);
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 0 15px 30px rgba(255,215,0,0.4) !important;
     }
-    
-    /* 7. Tabs Styling */
-    [data-testid="stTabs"] button {
-        color: #FFD700 !important;
-        opacity: 0.7;
-        font-weight: bold;
-    }
-    
-    [data-testid="stTabs"] button[aria-selected="true"] {
-        opacity: 1 !important;
-        border-bottom: 2px solid #FFD700 !important;
-    }
-
 </style>
 """, unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# LOGIN SECTION – FIXED & COMPLETE (February 2026 version)
+# LOGIN SECTION – FIXED & COMPLETE
 # ────────────────────────────────────────────────
 
-# Early redirect if already logged in (MUST be before any UI)
+# Early redirect if na-login na (Check function must be defined in your app)
 if is_authenticated():
-    # Optional: role-based redirect if you want different landing pages
     role = st.session_state.get("role", "client").lower()
     if role in ["owner", "admin"]:
         st.switch_page("pages/👤_Admin_Management.py")
     else:
         st.switch_page("pages/🏠_Dashboard.py")
 
-# ── Custom CSS (keep your existing one, but make sure these are present) ──
-st.markdown("""
-<style>
-    .login-box {
-        background: rgba(20, 20, 35, 0.5);
-        border: 1px solid rgba(255, 215, 0, 0.2);
-        border-radius: 15px;
-        padding: 2.2rem;
-        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
-        backdrop-filter: blur(10px);
-        max-width: 480px;
-        margin: 2rem auto;
-    }
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
-        background: rgba(0,0,0,0.25);
-        padding: 8px;
-        border-radius: 12px;
-        justify-content: center;
-    }
-    .stTabs [data-baseweb="tab"] {
-        background: transparent;
-        color: #FFD700;
-        font-weight: 600;
-    }
-    .stTabs [aria-selected="true"] {
-        background: linear-gradient(135deg, #FFD700 0%, #B8860B 100%) !important;
-        color: black !important;
-    }
-</style>
-""", unsafe_allow_html=True)
-
 st.markdown("<div style='height: 3rem;'></div>", unsafe_allow_html=True)
 
+# Header Title
 st.markdown("""
     <div style='text-align:center;'>
-        <h1 style='color:#FFD700; text-shadow: 0 0 15px rgba(255,215,0,0.6);'>MEMBER ACCESS</h1>
-        <p style='color:#FFD700; opacity:0.75; letter-spacing:2px; font-size:1.1rem;'>
+        <h1 style='margin-bottom:0;'>MEMBER ACCESS</h1>
+        <p style='color:#FFD700; opacity:0.75; letter-spacing:3px; font-size:1.1rem; margin-top:5px;'>
             SECURE GATEWAY TO THE EMPIRE
         </p>
     </div>
@@ -1131,7 +1060,8 @@ st.markdown("""
 
 st.markdown("<br><br>", unsafe_allow_html=True)
 
-col_l, col_mid, col_r = st.columns([1, 3, 1])
+col_l, col_mid, col_r = st.columns([0.2, 1, 0.2]) # Adjusted columns for better stretch
+
 with col_mid:
     st.markdown("<div class='login-box'>", unsafe_allow_html=True)
 
@@ -1140,7 +1070,7 @@ with col_mid:
     def render_secure_login(role_label: str, redirect_page: str):
         expected_role = role_label.lower()
         
-        # Very unique keys to prevent ANY widget/form conflict across tabs
+        # Unique keys for form safety
         form_key   = f"login_form_{expected_role}_v2026"
         user_key   = f"username_{expected_role}_{form_key}"
         pwd_key    = f"password_{expected_role}_{form_key}"
@@ -1155,7 +1085,7 @@ with col_mid:
         with st.form(key=form_key, clear_on_submit=False):
             username = st.text_input(
                 "Username",
-                placeholder="yourusername",
+                placeholder="Enter your username",
                 key=user_key,
                 autocomplete="username"
             )
@@ -1167,11 +1097,10 @@ with col_mid:
                 autocomplete="current-password"
             )
 
-            st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)
+            st.markdown("<div style='height:15px;'></div>", unsafe_allow_html=True)
 
             submitted = st.form_submit_button(
                 f"ENTER {role_label.upper()} DASHBOARD",
-                type="primary",
                 use_container_width=True,
                 key=submit_key
             )
@@ -1182,6 +1111,7 @@ with col_mid:
                     return
 
                 with st.spinner("Verifying access..."):
+                    # Assuming login_user is defined in your utils
                     success, user_data = login_user(
                         username.strip().lower(),
                         password,
@@ -1189,25 +1119,22 @@ with col_mid:
                     )
 
                     if success and user_data:
-                        # Set session state BEFORE navigation
                         st.session_state.authenticated   = True
                         st.session_state.username        = user_data.get("username", username.lower())
                         st.session_state.full_name       = user_data.get("full_name", username)
                         st.session_state.role            = expected_role
                         st.session_state.just_logged_in  = True
 
-                        log_action("Login Success", f"{role_label} → {username} (IP: Tokyo)")
+                        # log_action function must be defined in your utils
+                        log_action("Login Success", f"{role_label} → {username}")
 
                         st.toast(f"Welcome back, {role_label}!", icon="👑")
                         st.success(f"Access granted → Redirecting...")
-
-                        # This should now reliably switch pages
                         st.switch_page(redirect_page)
-
                     else:
                         st.error("Invalid credentials or role mismatch")
 
-    # ── Render each tab ──
+    # Render each tab
     with tab_owner:
         render_secure_login("Owner", "pages/👤_Admin_Management.py")
 
@@ -1217,25 +1144,15 @@ with col_mid:
     with tab_client:
         render_secure_login("Client", "pages/🏠_Dashboard.py")
 
-    st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True) # Close login-box
 
     st.markdown("""
-        <p style='text-align:center; margin-top:1.8rem; font-size:0.85rem; color:#FFD700; opacity:0.6;'>
+        <p style='text-align:center; margin-top:2rem; font-size:0.85rem; color:#FFD700; opacity:0.6;'>
             Forgotten access? Contact KMFX Support.
         </p>
     """, unsafe_allow_html=True)
 
-# ── Keep your existing footer ──
-st.markdown("---")
-st.markdown("""
-    <div style="text-align:center; padding:2rem; opacity:0.5; font-size:0.85rem;">
-        KMFX EA v2.1 • © 2026 • Built by Faith, Shared for Generations 👑
-    </div>
-""", unsafe_allow_html=True)
 
-# Safety stop – only show public content if not authenticated
-if not is_authenticated():
-    st.stop()
 
 # ────────────────────────────────────────────────
 # FOOTER
