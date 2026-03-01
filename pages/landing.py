@@ -300,6 +300,31 @@ st.components.v1.html("""
   <tv-mini-chart symbol="OANDA:XAUUSD" color-theme="dark" locale="en" height="100%" width="100%"></tv-mini-chart>
 </div>
 """, height=420)
+# ────────────────────────────────────────────────
+# BACKTEST VIDEO – PROOF SECTION (FINAL OPTIMIZED VERSION)
+# ────────────────────────────────────────────────
+st.markdown("<h2 class='gold-text' style='text-align:center; margin:3rem 0 1.5rem;'>See the 2025 Backtest Results</h2>", unsafe_allow_html=True)
+st.markdown("<p style='text-align:center; color:#cccccc; font-size:1.1rem; margin-bottom:1rem;'>1-Year Gold (XAUUSD) Performance: $500 → $3,906 (781% return)</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align:center; color:#aaaaaa; font-size:1rem; margin-bottom:2rem;'>Watch how KMFX EA performed in real historical test – win rate, drawdown, at full breakdown</p>", unsafe_allow_html=True)
+
+# Responsive YouTube Embed – using the .video-container class from styles.py
+st.markdown("""
+<div class="video-container">
+  <iframe 
+    src="https://www.youtube.com/embed/K7Ao_U0fuhk?rel=0&modestbranding=1&showinfo=0&controls=1" 
+    title="KMFX EA Backtest 2025 – Gold Strategy Test" 
+    frameborder="0" 
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+    allowfullscreen 
+    loading="lazy">
+  </iframe>
+</div>
+""", unsafe_allow_html=True)
+
+st.markdown("<p style='text-align:center; color:#aaaaaa; font-size:0.95rem; margin-top:1rem;'>Backtest only – trading involves high risk. Past performance is not indicative of future results. Always do your own research.</p>", unsafe_allow_html=True)
+
+# Spacer para clean separation sa waitlist form
+st.markdown("<div style='height:3rem;'></div>", unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
 # WAITLIST FORM
