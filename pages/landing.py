@@ -1,12 +1,9 @@
 # pages/landing.py
 # =====================================================================
 # KMFX EA - FULL PUBLIC LANDING PAGE (COMPLETE v3.3 – fully synced Feb 2026)
-# 100% identical visual/behavior match to original main.py – no placeholders
 # =====================================================================
-
 import streamlit as st
 import yfinance as yf
-
 from utils.supabase_client import supabase
 from utils.auth import login_user, is_authenticated
 from utils.helpers import log_action
@@ -22,7 +19,6 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed"
 )
-
 apply_global_styles(public=True)
 
 st.markdown("""
@@ -114,35 +110,7 @@ texts = {
 def txt(key):
     return texts.get(st.session_state.language, texts["en"]).get(key, key)
 
-# ────────────────────────────────────────────────
-# LANGUAGE SUPPORT
-# ────────────────────────────────────────────────
-if "language" not in st.session_state:
-    st.session_state.language = "en"
-
-texts = {
-    "en": {
-        "join_waitlist": "Join Waitlist – Early Access",
-        "name": "Full Name",
-        "email": "Email",
-        "why_join": "Why do you want to join KMFX? (optional)",
-        "submit": "Join Waitlist 👑",
-        "success": "Success! You're on the list. Check your email soon 🚀",
-    },
-    "tl": {
-        "join_waitlist": "Sumali sa Waitlist – Maagap na Access",
-        "name": "Buong Pangalan",
-        "email": "Email",
-        "why_join": "Bakit gusto mong sumali sa KMFX? (opsyonal)",
-        "submit": "Sumali sa Waitlist 👑",
-        "success": "Tagumpay! Nasa listahan ka na. Check mo ang email mo soon 🚀",
-    }
-}
-
-def txt(key):
-    return texts.get(st.session_state.language, texts["en"]).get(key, key)
-
-# ── Small Golden Sliding Toggle (NO visible checkbox) ──
+# ── Small Golden Sliding Toggle ──
 st.markdown("""
     <style>
         .lang-toggle-wrapper {
@@ -152,21 +120,17 @@ st.markdown("""
             margin: 1rem 0 1.5rem auto;
             font-family: 'Poppins', sans-serif;
         }
-
-        /* Custom small toggle switch */
         .lang-toggle {
             position: relative;
             display: inline-block;
             width: 54px;
             height: 28px;
         }
-
         .lang-toggle input {
             opacity: 0;
             width: 0;
             height: 0;
         }
-
         .slider {
             position: absolute;
             cursor: pointer;
@@ -179,7 +143,6 @@ st.markdown("""
             border-radius: 34px;
             transition: .4s;
         }
-
         .slider:before {
             position: absolute;
             content: "";
@@ -192,18 +155,14 @@ st.markdown("""
             box-shadow: 0 2px 6px rgba(0,0,0,0.3);
             transition: .4s;
         }
-
         input:checked + .slider {
             background: linear-gradient(135deg, #ffd700 0%, #b8860b 100%);
             border-color: #ffd700;
         }
-
         input:checked + .slider:before {
             transform: translateX(26px);
             background: #000000;
         }
-
-        /* Small EN/TL indicators that highlight when active */
         .lang-indicator {
             font-size: 0.78rem;
             font-weight: 600;
@@ -212,7 +171,6 @@ st.markdown("""
             margin: 0 6px;
             transition: opacity 0.3s;
         }
-
         input:checked ~ .lang-indicator-en { opacity: 0.6; }
         input:checked ~ .lang-indicator-tl { opacity: 1.0; font-weight: 700; }
         input:not(:checked) ~ .lang-indicator-en { opacity: 1.0; font-weight: 700; }
@@ -220,32 +178,21 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Toggle container
 st.markdown('<div class="lang-toggle-wrapper">', unsafe_allow_html=True)
-
-# Current state
 is_tl = st.session_state.language == "tl"
-
-# Custom toggle + indicators
 st.markdown(f"""
     <label class="lang-toggle">
-        <input type="checkbox" {'checked' if is_tl else ''} 
+        <input type="checkbox" {'checked' if is_tl else ''}
                onchange="parent.document.querySelector('form').submit();">
         <span class="slider"></span>
     </label>
     <span class="lang-indicator lang-indicator-en">EN</span>
     <span class="lang-indicator lang-indicator-tl">TL</span>
 """, unsafe_allow_html=True)
-
 st.markdown('</div>', unsafe_allow_html=True)
 
-# Force sync on rerun (Streamlit limitation workaround)
-# Since the onchange submits the page, Streamlit will rerun automatically.
-# But to be safe, we can add a dummy widget that triggers sync if needed
 if "lang_toggled" not in st.session_state:
     st.session_state.lang_toggled = False
-
-# This is just a safety net — the real change happens on page submit/rerun
 if st.session_state.get("lang_toggled", False):
     st.session_state.language = "tl" if st.session_state.language == "en" else "en"
     st.session_state.lang_toggled = False
@@ -259,8 +206,8 @@ with logo_col:
     st.image("assets/logo.png", use_column_width=True)
 
 st.markdown("<h1 class='gold-text' style='text-align:center; font-size: clamp(3rem,8vw,5.5rem); margin:1rem 0;'>KMFX EA</h1>", unsafe_allow_html=True)
-st.markdown(f"<h2 style='text-align:center; color:#ffffff;'>Automated Gold Trading for Financial Freedom</h2>", unsafe_allow_html=True)
-st.markdown(f"<p style='text-align:center; font-size:1.4rem; color:#aaaaaa;'>Passed FTMO Phase 1 • +3,071% 5-Year Backtest • Building Legacies of Generosity</p>", unsafe_allow_html=True)
+st.markdown("<h2 style='text-align:center; color:#ffffff;'>Automated Gold Trading for Financial Freedom</h2>", unsafe_allow_html=True)
+st.markdown("<p style='text-align:center; font-size:1.4rem; color:#aaaaaa;'>Passed FTMO Phase 1 • +3,071% 5-Year Backtest • Building Legacies of Generosity</p>", unsafe_allow_html=True)
 st.markdown("<p style='text-align:center; font-size:1.2rem;'>Mark Jeff Blando – Founder & Developer • since 2014</p>", unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
@@ -288,7 +235,7 @@ if price:
     </p>
     """, unsafe_allow_html=True)
 else:
-    st.markdown(f"<p style='text-align:center; color:#aaaaaa; font-size:1.8rem;'>Gold Price (Loading or Market Closed...)</p>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center; color:#aaaaaa; font-size:1.8rem;'>Gold Price (Loading or Market Closed...)</p>", unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
 # TRADINGVIEW MINI CHART
@@ -300,22 +247,22 @@ st.components.v1.html("""
   <tv-mini-chart symbol="OANDA:XAUUSD" color-theme="dark" locale="en" height="100%" width="100%"></tv-mini-chart>
 </div>
 """, height=420)
+
 # ────────────────────────────────────────────────
-# BACKTEST VIDEO – PROOF SECTION (FINAL OPTIMIZED VERSION)
+# BACKTEST VIDEO
 # ────────────────────────────────────────────────
 st.markdown("<h2 class='gold-text' style='text-align:center; margin:3rem 0 1.5rem;'>See the 2025 Backtest Results</h2>", unsafe_allow_html=True)
 st.markdown("<p style='text-align:center; color:#cccccc; font-size:1.1rem; margin-bottom:1rem;'>1-Year Gold (XAUUSD) Performance: $500 → $3,906 (781% return)</p>", unsafe_allow_html=True)
 st.markdown("<p style='text-align:center; color:#aaaaaa; font-size:1rem; margin-bottom:2rem;'>Watch how KMFX EA performed in real historical test – win rate, drawdown, at full breakdown</p>", unsafe_allow_html=True)
 
-# Responsive YouTube Embed – using the .video-container class from styles.py
 st.markdown("""
 <div class="video-container">
-  <iframe 
-    src="https://www.youtube.com/embed/K7Ao_U0fuhk?rel=0&modestbranding=1&showinfo=0&controls=1" 
-    title="KMFX EA Backtest 2025 – Gold Strategy Test" 
-    frameborder="0" 
-    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-    allowfullscreen 
+  <iframe
+    src="https://www.youtube.com/embed/K7Ao_U0fuhk?rel=0&modestbranding=1&showinfo=0&controls=1"
+    title="KMFX EA Backtest 2025 – Gold Strategy Test"
+    frameborder="0"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+    allowfullscreen
     loading="lazy">
   </iframe>
 </div>
@@ -323,17 +270,16 @@ st.markdown("""
 
 st.markdown("<p style='text-align:center; color:#aaaaaa; font-size:0.95rem; margin-top:1rem;'>Backtest only – trading involves high risk. Past performance is not indicative of future results. Always do your own research.</p>", unsafe_allow_html=True)
 
-# Spacer para clean separation sa waitlist form
 st.markdown("<div style='height:3rem;'></div>", unsafe_allow_html=True)
+
 # ────────────────────────────────────────────────
-# EMPIRE HEROES – FEATURED PUBLIC BADGES (NEW!)
+# EMPIRE HEROES – FEATURED PUBLIC BADGES
 # ────────────────────────────────────────────────
 st.markdown("<h2 class='gold-text' style='text-align:center; margin:4rem 0 2rem;'>Empire Heroes – Featured Badges</h2>", unsafe_allow_html=True)
 st.markdown("<p style='text-align:center; color:#cccccc; font-size:1.15rem; margin-bottom:2.5rem; max-width:900px; margin-left:auto; margin-right:auto;'>"
             "Our early legends are already earning their place in the empire. "
             "Join the waitlist to unlock your badge and become part of history. 👑</p>", unsafe_allow_html=True)
 
-# Fetch only public + active badges (with user anonymized info)
 @st.cache_data(ttl=120)
 def get_featured_badges(limit=8):
     try:
@@ -353,11 +299,10 @@ def get_featured_badges(limit=8):
         badges = []
         for row in response.data or []:
             user_id = row.get("users", {}).get("id")
-            # Simple anonymizer: last 2-3 chars ng UUID or just random-ish number
-            anon_id = f"#{abs(hash(str(user_id))) % 1000 + 1:03d}"  # e.g. #042
+            anon_id = f"#{abs(hash(str(user_id))) % 1000 + 1:03d}"
             badges.append({
                 "badge_name": row["badge_name"],
-                "awarded_at": row["awarded_at"][:10],  # YYYY-MM-DD
+                "awarded_at": row["awarded_at"][:10],
                 "anon": anon_id
             })
         return badges
@@ -367,7 +312,6 @@ def get_featured_badges(limit=8):
 featured = get_featured_badges(limit=8)
 
 if featured:
-    # Responsive layout: mobile → horizontal scroll / swipe, desktop → grid
     st.markdown("""
     <style>
         .badge-grid {
@@ -442,8 +386,6 @@ if featured:
         "Pioneer": "🛡️",
         "VIP Elite": "💎",
         "Consistency Star": "⭐",
-        # dagdagan mo pa base sa badge_definitions mo
-        # default fallback
     }
     
     for b in featured:
@@ -469,7 +411,6 @@ if featured:
         </a>
     </div>
     """, unsafe_allow_html=True)
-
 else:
     st.info("No public badges yet — be the first Pioneer! Join the waitlist below 🚀")
 
@@ -480,7 +421,6 @@ st.markdown("<div class='glass-card' style='padding: clamp(1.5rem, 5vw, 3rem); b
 st.markdown("""
     <div style='position:absolute; top:-50px; right:-50px; width:150px; height:150px; background:rgba(255,215,0,0.1); filter:blur(50px); border-radius:50%; z-index:0;'></div>
 """, unsafe_allow_html=True)
-
 st.markdown(f"""
     <div style='text-align:center; position:relative; z-index:1;'>
         <h2 class='gold-text' style='margin-bottom:0.5rem;'>👑 {txt('join_waitlist')}</h2>
@@ -532,7 +472,7 @@ if submitted:
                         <div class='success-box'>
                             <h3 style='color:#00ffa2; margin-bottom:10px;'>MISSION SUCCESS! 👑</h3>
                             <p style='margin:0;'>Welcome to the pioneer circle, <b>{full_name_clean or 'Trader'}</b>.</p>
-                            <p style='font-size:0.8rem; opacity:0.7;'>Check your inbox (and spam) for your confirmation.</p>
+                            <p style='font-size:0.8rem; opacity:0.7;'>Check your inbox (and spam) for confirmation.</p>
                         </div>
                     """, unsafe_allow_html=True)
                     st.balloons()
