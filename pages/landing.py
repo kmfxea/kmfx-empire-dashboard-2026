@@ -274,7 +274,7 @@ st.markdown("<p style='text-align:center; color:#aaaaaa; font-size:0.95rem; marg
 st.markdown("<div style='height:3rem;'></div>", unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# EMPIRE HEROES – PREMIUM LEADERBOARD STYLE (ULTRA COMPACT + REAL EARNINGS + EXACT JOINED DATE)
+# EMPIRE HEROES – PREMIUM LEADERBOARD STYLE (ULTRA COMPACT + REAL EARNINGS/PROFIT + EXACT JOINED DATE)
 # ────────────────────────────────────────────────
 
 st.markdown(
@@ -301,7 +301,7 @@ def get_featured_heroes(limit=10):
                     full_name, 
                     title, 
                     created_at,
-                    total_profit          # Change to your actual earnings column if different
+                    total_profit          -- <-- your earnings column (change name here if different)
                 )
             """) \
             .eq("is_public", True) \
@@ -319,7 +319,7 @@ def get_featured_heroes(limit=10):
                 user_badges[uid].append(row["badge_name"])
                 if uid not in user_info:
                     earnings_raw = user.get("total_profit", 0.0) or 0.0
-                    joined_date = user.get("created_at", "")[:10]  # Exact YYYY-MM-DD from account creation
+                    joined_date = user.get("created_at", "")[:10] if user.get("created_at") else ""
                     user_info[uid] = {
                         "full_name": user.get("full_name", "Unknown"),
                         "title": user.get("title", None),
@@ -344,7 +344,7 @@ def get_featured_heroes(limit=10):
                 "earnings_display": info["earnings_display"],
             })
 
-        # Sort: highest earnings → most badges → newest join (using exact joined date)
+        # Sort: highest earnings → most badges → newest join date
         heroes.sort(key=lambda x: (-x["earnings_raw"], -x["badge_count"], x["joined"]))
         return heroes[:limit]
 
