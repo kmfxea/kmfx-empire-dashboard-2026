@@ -325,6 +325,153 @@ st.markdown("<p style='text-align:center; color:#aaaaaa; font-size:0.95rem; marg
 
 # Spacer para clean separation sa waitlist form
 st.markdown("<div style='height:3rem;'></div>", unsafe_allow_html=True)
+# ────────────────────────────────────────────────
+# EMPIRE HEROES – FEATURED PUBLIC BADGES (NEW!)
+# ────────────────────────────────────────────────
+st.markdown("<h2 class='gold-text' style='text-align:center; margin:4rem 0 2rem;'>Empire Heroes – Featured Badges</h2>", unsafe_allow_html=True)
+st.markdown("<p style='text-align:center; color:#cccccc; font-size:1.15rem; margin-bottom:2.5rem; max-width:900px; margin-left:auto; margin-right:auto;'>"
+            "Our early legends are already earning their place in the empire. "
+            "Join the waitlist to unlock your badge and become part of history. 👑</p>", unsafe_allow_html=True)
+
+# Fetch only public + active badges (with user anonymized info)
+@st.cache_data(ttl=120)
+def get_featured_badges(limit=8):
+    try:
+        response = supabase.table("client_badges") \
+            .select("""
+                badge_name, 
+                awarded_at, 
+                is_public, 
+                users!inner (id)
+            """) \
+            .eq("is_public", True) \
+            .eq("is_active", True) \
+            .order("awarded_at", desc=True) \
+            .limit(limit) \
+            .execute()
+        
+        badges = []
+        for row in response.data or []:
+            user_id = row.get("users", {}).get("id")
+            # Simple anonymizer: last 2-3 chars ng UUID or just random-ish number
+            anon_id = f"#{abs(hash(str(user_id))) % 1000 + 1:03d}"  # e.g. #042
+            badges.append({
+                "badge_name": row["badge_name"],
+                "awarded_at": row["awarded_at"][:10],  # YYYY-MM-DD
+                "anon": anon_id
+            })
+        return badges
+    except Exception:
+        return []
+
+featured = get_featured_badges(limit=8)
+
+if featured:
+    # Responsive layout: mobile → horizontal scroll / swipe, desktop → grid
+    st.markdown("""
+    <style>
+        .badge-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        .badge-card {
+            background: rgba(20,25,35,0.6);
+            border: 1px solid rgba(255,215,0,0.25);
+            border-radius: 16px;
+            padding: 1.5rem 1rem;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .badge-card:hover {
+            transform: translateY(-8px) scale(1.04);
+            box-shadow: 0 20px 40px rgba(255,215,0,0.18);
+            border-color: #ffd700;
+        }
+        .badge-icon {
+            font-size: 4.2rem;
+            margin-bottom: 0.8rem;
+            filter: drop-shadow(0 0 12px rgba(255,215,0,0.6));
+        }
+        .vip-glow {
+            animation: pulse-glow 2.5s infinite alternate;
+        }
+        @keyframes pulse-glow {
+            from { text-shadow: 0 0 10px #ffd700, 0 0 20px #ffd700; }
+            to   { text-shadow: 0 0 20px #ffd700, 0 0 40px #ffaa00; }
+        }
+        .badge-name {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #ffd700;
+            margin: 0.4rem 0;
+        }
+        .badge-desc {
+            font-size: 0.95rem;
+            color: #cccccc;
+            opacity: 0.9;
+        }
+        .anon-tag {
+            font-size: 0.85rem;
+            color: #aaaaaa;
+            margin-top: 0.6rem;
+        }
+        @media (max-width: 768px) {
+            .badge-grid {
+                display: flex;
+                overflow-x: auto;
+                gap: 1.2rem;
+                padding-bottom: 1rem;
+                scroll-snap-type: x mandatory;
+            }
+            .badge-card {
+                flex: 0 0 260px;
+                scroll-snap-align: center;
+            }
+        }
+    </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown("<div class='badge-grid'>", unsafe_allow_html=True)
+    
+    badge_emojis = {
+        "Pioneer": "🛡️",
+        "VIP Elite": "💎",
+        "Consistency Star": "⭐",
+        # dagdagan mo pa base sa badge_definitions mo
+        # default fallback
+    }
+    
+    for b in featured:
+        name = b["badge_name"]
+        emoji = badge_emojis.get(name, "🏆")
+        extra_class = "vip-glow" if "VIP" in name.upper() else ""
+        
+        st.markdown(f"""
+        <div class='badge-card'>
+            <div class='badge-icon {extra_class}'>{emoji}</div>
+            <div class='badge-name'>{name}</div>
+            <div class='badge-desc'>Earned on {b['awarded_at']}</div>
+            <div class='anon-tag'>Trader {b['anon']}</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    st.markdown("""
+    <div style='text-align:center; margin:2.5rem 0 4rem;'>
+        <a href="#waitlist_form" style='color:#ffd700; font-weight:600; font-size:1.2rem; text-decoration:none;'>
+            → Join Waitlist to Earn Your Badge & Join the Heroes 👑
+        </a>
+    </div>
+    """, unsafe_allow_html=True)
+
+else:
+    st.info("No public badges yet — be the first Pioneer! Join the waitlist below 🚀")
 
 # ────────────────────────────────────────────────
 # WAITLIST FORM
