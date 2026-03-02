@@ -273,140 +273,181 @@ st.markdown("<p style='text-align:center; color:#aaaaaa; font-size:0.95rem; marg
 st.markdown("<div style='height:3rem;'></div>", unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# EMPIRE HEROES – ENHANCED PUBLIC LEADERBOARD STYLE
+# EMPIRE HEROES – PREMIUM LEADERBOARD STYLE (FINAL RESPONSIVE)
 # ────────────────────────────────────────────────
-st.markdown("<h2 class='gold-text' style='text-align:center; margin:4rem 0 2rem;'>Empire Heroes – Top Pioneers</h2>", unsafe_allow_html=True)
-st.markdown("<p style='text-align:center; color:#cccccc; font-size:1.15rem; margin-bottom:2.5rem; max-width:900px; margin-left:auto; margin-right:auto;'>"
-            "Our earliest legends are already building their legacy. "
-            "Join the waitlist to earn your badge and rise in the ranks. 👑</p>", unsafe_allow_html=True)
+st.markdown("<h2 class='gold-text' style='text-align:center; margin:4rem 0 2rem;'>Empire Heroes Leaderboard</h2>", unsafe_allow_html=True)
+st.markdown("<p style='text-align:center; color:#cccccc; font-size:1.1rem; margin-bottom:2.5rem; max-width:900px; margin-left:auto; margin-right:auto;'>"
+            "Our top legends are rising fast. Earn badges, climb ranks, and build your legacy. 👑</p>", unsafe_allow_html=True)
 
 @st.cache_data(ttl=120)
-def get_featured_badges(limit=8):
+def get_featured_heroes(limit=10):
     try:
         response = supabase.table("client_badges") \
             .select("""
+                user_id,
                 badge_name,
                 awarded_at,
                 is_public,
-                users!inner (id)
+                users!inner (id, full_name, title, created_at)
             """) \
             .eq("is_public", True) \
             .eq("is_active", True) \
             .order("awarded_at", desc=True) \
-            .limit(limit) \
             .execute()
-        
-        badges = []
+
+        from collections import defaultdict
+        user_badges = defaultdict(list)
+        user_info = {}
         for row in response.data or []:
-            user_id = row.get("users", {}).get("id")
-            anon_id = f"#{abs(hash(str(user_id))) % 1000 + 1:03d}"
-            badges.append({
-                "badge_name": row["badge_name"],
-                "awarded_at": row["awarded_at"][:10],
-                "anon": anon_id
+            user = row.get("users", {})
+            uid = user.get("id")
+            if uid:
+                user_badges[uid].append(row["badge_name"])
+                if uid not in user_info:
+                    user_info[uid] = {
+                        "full_name": user.get("full_name", "Unknown"),
+                        "title": user.get("title", None),
+                        "joined": user.get("created_at", "")[:10],
+                    }
+
+        heroes = []
+        for uid, badges in user_badges.items():
+            info = user_info.get(uid, {})
+            first_name = info["full_name"].split()[0] if info["full_name"] != "Unknown" else "Trader"
+            anon_id = f"#{abs(hash(str(uid))) % 1000 + 1:03d}"
+            heroes.append({
+                "first_name": first_name,
+                "anon": anon_id,
+                "badges": badges,
+                "title": info["title"] or "Pioneer",
+                "joined": info["joined"],
+                "badge_count": len(badges),
+                "earnings": "N/A"  # ← palitan mo 'to kapag may real earnings data
             })
-        return badges
-    except Exception:
+
+        heroes.sort(key=lambda x: (-x["badge_count"], x["joined"]), reverse=True)
+        return heroes[:limit]
+    except Exception as e:
+        st.warning(f"Hero fetch error: {str(e)}")
         return []
 
-featured = get_featured_badges(limit=8)
+heroes = get_featured_heroes(limit=10)
 
-if featured:
+if heroes:
     st.markdown("""
     <style>
         .empire-leaderboard {
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            background: linear-gradient(135deg, #0f172a, #1e293b);
             border-radius: 16px;
-            padding: 2rem;
+            padding: 1.5rem;
             box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-            margin: 2rem 0;
             border: 1px solid rgba(255,215,0,0.15);
+            margin: 2rem 0;
         }
         .rank-header {
-            display: flex;
-            background: rgba(255,215,0,0.1);
-            padding: 1rem;
-            border-radius: 12px 12px 0 0;
+            display: grid;
+            grid-template-columns: 60px 1fr 1fr 1fr;
+            background: rgba(255,215,0,0.08);
+            padding: 0.8rem 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
             font-weight: 700;
             color: #ffd700;
-            margin-bottom: 1rem;
-        }
-        .rank-header > div {
-            flex: 1;
+            font-size: 0.9rem;
             text-align: center;
         }
         .rank-row {
-            display: flex;
+            display: grid;
+            grid-template-columns: 60px 1fr 1fr 1fr;
             align-items: center;
-            padding: 1.2rem 1rem;
+            padding: 1rem 0.8rem;
             border-bottom: 1px solid rgba(255,215,0,0.08);
-            transition: all 0.3s ease;
+            transition: all 0.3s;
         }
         .rank-row:hover {
-            background: rgba(255,215,0,0.08);
-            transform: translateY(-4px);
-            box-shadow: 0 8px 20px rgba(255,215,0,0.15);
+            background: rgba(255,215,0,0.06);
+            border-radius: 10px;
         }
         .rank-position {
-            width: 70px;
-            font-size: 1.8rem;
+            font-size: 1.5rem;
             font-weight: bold;
             text-align: center;
             color: #e2e8f0;
         }
-        .rank-1 { color: #ffd700; } /* Gold */
-        .rank-2 { color: #cbd5e1; } /* Silver */
-        .rank-3 { color: #cd7f32; } /* Bronze */
+        .rank-1 { color: #ffd700; }
+        .rank-2 { color: #cbd5e1; }
+        .rank-3 { color: #cd7f32; }
         .rank-avatar {
-            width: 60px;
-            height: 60px;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
             background: rgba(255,215,0,0.1);
+            border: 2px solid rgba(255,215,0,0.4);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2.2rem;
-            margin: 0 1.2rem;
-            border: 2px solid rgba(255,215,0,0.3);
-        }
-        .rank-info {
-            flex: 1;
+            font-size: 1.6rem;
+            margin: 0 auto;
         }
         .rank-name {
-            font-size: 1.25rem;
+            font-size: 1.05rem;
             font-weight: 600;
             color: #e2e8f0;
         }
-        .rank-badge {
-            color: #ffd700;
-            font-weight: 700;
-            margin-left: 0.5rem;
-        }
-        .rank-date {
+        .rank-earnings {
             color: #94a3b8;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
+            text-align: center;
+        }
+        .rank-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            justify-content: center;
+        }
+        .badge-tag {
+            background: rgba(255,215,0,0.15);
+            color: #ffd700;
+            font-size: 0.75rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 10px;
+            border: 1px solid rgba(255,215,0,0.3);
+        }
+        .rank-details {
+            color: #94a3b8;
+            font-size: 0.8rem;
+            text-align: center;
             margin-top: 0.3rem;
+        }
+        @media (max-width: 1024px) {
+            .rank-header, .rank-row {
+                grid-template-columns: 50px 1fr 1fr;
+            }
+            .rank-earnings { grid-column: 1 / -1; }
         }
         @media (max-width: 768px) {
             .rank-header, .rank-row {
-                flex-direction: column;
+                grid-template-columns: 1fr;
                 text-align: center;
             }
             .rank-position, .rank-avatar {
-                margin: 0.5rem 0;
+                margin: 0.5rem auto;
             }
+            .rank-name { font-size: 1.1rem; }
+            .rank-badges { justify-content: center; }
         }
     </style>
     """, unsafe_allow_html=True)
 
     st.markdown("<div class='empire-leaderboard'>", unsafe_allow_html=True)
-    
-    # Header row
+
+    # Header
     st.markdown("""
     <div class='rank-header'>
         <div>Rank</div>
         <div>Hero</div>
-        <div>Badge & Details</div>
+        <div>Earnings</div>
+        <div>Badges & Details</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -416,38 +457,40 @@ if featured:
         "Consistency Star": "⭐",
     }
 
-    for i, b in enumerate(featured, 1):
-        name = b["badge_name"]
-        emoji = badge_emojis.get(name, "🏆")
-        anon = b["anon"]
-        date = b["awarded_at"]
-
+    for i, hero in enumerate(heroes, 1):
         rank_class = "rank-1" if i == 1 else "rank-2" if i == 2 else "rank-3" if i == 3 else ""
+        first_name = hero["first_name"]
+        anon = hero["anon"]
+        badges = hero["badges"]
+        title = hero["title"]
+        joined = hero["joined"]
+        earnings = hero["earnings"]  # palitan mo 'to kapag may real data
+
+        badge_tags = "".join([f"<span class='badge-tag'>{badge_emojis.get(b, '🏆')} {b}</span>" for b in badges])
 
         st.markdown(f"""
         <div class='rank-row'>
             <div class='rank-position {rank_class}'>{i}</div>
-            <div class='rank-avatar'>{emoji}</div>
-            <div class='rank-info'>
-                <div class='rank-name'>Trader {anon}</div>
-                <div class='rank-badge'>{name}</div>
-                <div class='rank-date'>Earned on {date}</div>
-            </div>
+            <div class='rank-avatar'>{badge_emojis.get(badges[0], '🏆')}</div>
+            <div class='rank-name'>{first_name} <small>({anon})</small></div>
+            <div class='rank-earnings'>{earnings}</div>
+            <div class='rank-badges'>{badge_tags}</div>
+            <div class='rank-details'>{title} • Joined {joined}</div>
         </div>
         """, unsafe_allow_html=True)
 
     st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown("""
-    <div style='text-align:center; margin:2.5rem 0 4rem;'>
-        <a href="#waitlist_form" style='color:#ffd700; font-weight:600; font-size:1.2rem; text-decoration:none; background:rgba(255,215,0,0.1); padding:0.8rem 2rem; border-radius:50px; border:1px solid #ffd700; transition:0.3s;'>
-            → Join Waitlist to Enter the Rankings & Earn Your Badge 👑
+    <div style='text-align:center; margin:3rem 0 5rem;'>
+        <a href="#waitlist_form" style='display:inline-block; background:linear-gradient(90deg,#ffd700,#b8860b); color:#0f172a; font-weight:700; padding:0.9rem 2.5rem; border-radius:50px; text-decoration:none; box-shadow:0 8px 25px rgba(255,215,0,0.3); transition:0.3s;'>
+            Join Waitlist – Start Your Rise Now 👑
         </a>
     </div>
     """, unsafe_allow_html=True)
 
 else:
-    st.info("No public badges yet — be the first Pioneer! Join the waitlist below 🚀")
+    st.info("No public heroes yet — be the first to earn a badge! Join the waitlist 🚀")
 
 # ────────────────────────────────────────────────
 # WAITLIST FORM
