@@ -273,21 +273,21 @@ st.markdown("<p style='text-align:center; color:#aaaaaa; font-size:0.95rem; marg
 st.markdown("<div style='height:3rem;'></div>", unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# EMPIRE HEROES – FEATURED PUBLIC BADGES
+# EMPIRE HEROES – ENHANCED PUBLIC LEADERBOARD STYLE
 # ────────────────────────────────────────────────
-st.markdown("<h2 class='gold-text' style='text-align:center; margin:4rem 0 2rem;'>Empire Heroes – Featured Badges</h2>", unsafe_allow_html=True)
+st.markdown("<h2 class='gold-text' style='text-align:center; margin:4rem 0 2rem;'>Empire Heroes – Top Pioneers</h2>", unsafe_allow_html=True)
 st.markdown("<p style='text-align:center; color:#cccccc; font-size:1.15rem; margin-bottom:2.5rem; max-width:900px; margin-left:auto; margin-right:auto;'>"
-            "Our early legends are already earning their place in the empire. "
-            "Join the waitlist to unlock your badge and become part of history. 👑</p>", unsafe_allow_html=True)
+            "Our earliest legends are already building their legacy. "
+            "Join the waitlist to earn your badge and rise in the ranks. 👑</p>", unsafe_allow_html=True)
 
 @st.cache_data(ttl=120)
 def get_featured_badges(limit=8):
     try:
         response = supabase.table("client_badges") \
             .select("""
-                badge_name, 
-                awarded_at, 
-                is_public, 
+                badge_name,
+                awarded_at,
+                is_public,
                 users!inner (id)
             """) \
             .eq("is_public", True) \
@@ -314,103 +314,138 @@ featured = get_featured_badges(limit=8)
 if featured:
     st.markdown("""
     <style>
-        .badge-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 1.5rem;
-            margin: 2rem 0;
-        }
-        .badge-card {
-            background: rgba(20,25,35,0.6);
-            border: 1px solid rgba(255,215,0,0.25);
+        .empire-leaderboard {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
             border-radius: 16px;
-            padding: 1.5rem 1rem;
-            text-align: center;
-            backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            margin: 2rem 0;
+            border: 1px solid rgba(255,215,0,0.15);
         }
-        .badge-card:hover {
-            transform: translateY(-8px) scale(1.04);
-            box-shadow: 0 20px 40px rgba(255,215,0,0.18);
-            border-color: #ffd700;
-        }
-        .badge-icon {
-            font-size: 4.2rem;
-            margin-bottom: 0.8rem;
-            filter: drop-shadow(0 0 12px rgba(255,215,0,0.6));
-        }
-        .vip-glow {
-            animation: pulse-glow 2.5s infinite alternate;
-        }
-        @keyframes pulse-glow {
-            from { text-shadow: 0 0 10px #ffd700, 0 0 20px #ffd700; }
-            to   { text-shadow: 0 0 20px #ffd700, 0 0 40px #ffaa00; }
-        }
-        .badge-name {
-            font-size: 1.35rem;
+        .rank-header {
+            display: flex;
+            background: rgba(255,215,0,0.1);
+            padding: 1rem;
+            border-radius: 12px 12px 0 0;
             font-weight: 700;
             color: #ffd700;
-            margin: 0.4rem 0;
+            margin-bottom: 1rem;
         }
-        .badge-desc {
-            font-size: 0.95rem;
-            color: #cccccc;
-            opacity: 0.9;
+        .rank-header > div {
+            flex: 1;
+            text-align: center;
         }
-        .anon-tag {
-            font-size: 0.85rem;
-            color: #aaaaaa;
-            margin-top: 0.6rem;
+        .rank-row {
+            display: flex;
+            align-items: center;
+            padding: 1.2rem 1rem;
+            border-bottom: 1px solid rgba(255,215,0,0.08);
+            transition: all 0.3s ease;
+        }
+        .rank-row:hover {
+            background: rgba(255,215,0,0.08);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(255,215,0,0.15);
+        }
+        .rank-position {
+            width: 70px;
+            font-size: 1.8rem;
+            font-weight: bold;
+            text-align: center;
+            color: #e2e8f0;
+        }
+        .rank-1 { color: #ffd700; } /* Gold */
+        .rank-2 { color: #cbd5e1; } /* Silver */
+        .rank-3 { color: #cd7f32; } /* Bronze */
+        .rank-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: rgba(255,215,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2rem;
+            margin: 0 1.2rem;
+            border: 2px solid rgba(255,215,0,0.3);
+        }
+        .rank-info {
+            flex: 1;
+        }
+        .rank-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+        .rank-badge {
+            color: #ffd700;
+            font-weight: 700;
+            margin-left: 0.5rem;
+        }
+        .rank-date {
+            color: #94a3b8;
+            font-size: 0.9rem;
+            margin-top: 0.3rem;
         }
         @media (max-width: 768px) {
-            .badge-grid {
-                display: flex;
-                overflow-x: auto;
-                gap: 1.2rem;
-                padding-bottom: 1rem;
-                scroll-snap-type: x mandatory;
+            .rank-header, .rank-row {
+                flex-direction: column;
+                text-align: center;
             }
-            .badge-card {
-                flex: 0 0 260px;
-                scroll-snap-align: center;
+            .rank-position, .rank-avatar {
+                margin: 0.5rem 0;
             }
         }
     </style>
     """, unsafe_allow_html=True)
 
-    st.markdown("<div class='badge-grid'>", unsafe_allow_html=True)
+    st.markdown("<div class='empire-leaderboard'>", unsafe_allow_html=True)
     
+    # Header row
+    st.markdown("""
+    <div class='rank-header'>
+        <div>Rank</div>
+        <div>Hero</div>
+        <div>Badge & Details</div>
+    </div>
+    """, unsafe_allow_html=True)
+
     badge_emojis = {
         "Pioneer": "🛡️",
         "VIP Elite": "💎",
         "Consistency Star": "⭐",
     }
-    
-    for b in featured:
+
+    for i, b in enumerate(featured, 1):
         name = b["badge_name"]
         emoji = badge_emojis.get(name, "🏆")
-        extra_class = "vip-glow" if "VIP" in name.upper() else ""
-        
+        anon = b["anon"]
+        date = b["awarded_at"]
+
+        rank_class = "rank-1" if i == 1 else "rank-2" if i == 2 else "rank-3" if i == 3 else ""
+
         st.markdown(f"""
-        <div class='badge-card'>
-            <div class='badge-icon {extra_class}'>{emoji}</div>
-            <div class='badge-name'>{name}</div>
-            <div class='badge-desc'>Earned on {b['awarded_at']}</div>
-            <div class='anon-tag'>Trader {b['anon']}</div>
+        <div class='rank-row'>
+            <div class='rank-position {rank_class}'>{i}</div>
+            <div class='rank-avatar'>{emoji}</div>
+            <div class='rank-info'>
+                <div class='rank-name'>Trader {anon}</div>
+                <div class='rank-badge'>{name}</div>
+                <div class='rank-date'>Earned on {date}</div>
+            </div>
         </div>
         """, unsafe_allow_html=True)
-    
+
     st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown("""
     <div style='text-align:center; margin:2.5rem 0 4rem;'>
-        <a href="#waitlist_form" style='color:#ffd700; font-weight:600; font-size:1.2rem; text-decoration:none;'>
-            → Join Waitlist to Earn Your Badge & Join the Heroes 👑
+        <a href="#waitlist_form" style='color:#ffd700; font-weight:600; font-size:1.2rem; text-decoration:none; background:rgba(255,215,0,0.1); padding:0.8rem 2rem; border-radius:50px; border:1px solid #ffd700; transition:0.3s;'>
+            → Join Waitlist to Enter the Rankings & Earn Your Badge 👑
         </a>
     </div>
     """, unsafe_allow_html=True)
+
 else:
     st.info("No public badges yet — be the first Pioneer! Join the waitlist below 🚀")
 
