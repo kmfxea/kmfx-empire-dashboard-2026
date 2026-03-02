@@ -274,7 +274,7 @@ st.markdown("<p style='text-align:center; color:#aaaaaa; font-size:0.95rem; marg
 st.markdown("<div style='height:3rem;'></div>", unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# EMPIRE HEROES – PREMIUM LEADERBOARD STYLE (ULTRA COMPACT + ALL BADGES + EXACT JOINED DATE)
+# EMPIRE HEROES – PREMIUM LEADERBOARD STYLE (ULTRA COMPACT + REAL EARNINGS + EXACT JOINED DATE)
 # ────────────────────────────────────────────────
 
 st.markdown(
@@ -296,7 +296,13 @@ def get_featured_heroes(limit=10):
                 badge_name,
                 awarded_at,
                 is_public,
-                users!inner (id, full_name, title, created_at)
+                users!inner (
+                    id, 
+                    full_name, 
+                    title, 
+                    created_at,
+                    total_profit          # Change to your actual earnings column if different
+                )
             """) \
             .eq("is_public", True) \
             .eq("is_active", True) \
@@ -312,10 +318,14 @@ def get_featured_heroes(limit=10):
             if uid:
                 user_badges[uid].append(row["badge_name"])
                 if uid not in user_info:
+                    earnings_raw = user.get("total_profit", 0.0) or 0.0
+                    joined_date = user.get("created_at", "")[:10]  # Exact YYYY-MM-DD from account creation
                     user_info[uid] = {
                         "full_name": user.get("full_name", "Unknown"),
                         "title": user.get("title", None),
-                        "joined": user.get("created_at", "")[:10],  # e.g. "2025-03-15"
+                        "joined": joined_date,
+                        "earnings_raw": earnings_raw,
+                        "earnings_display": f"+${earnings_raw:,.2f}" if earnings_raw > 0 else f"-${abs(earnings_raw):,.2f}" if earnings_raw < 0 else "$0.00",
                     }
 
         heroes = []
@@ -330,10 +340,12 @@ def get_featured_heroes(limit=10):
                 "title": info["title"] or "Pioneer",
                 "joined": info["joined"],
                 "badge_count": len(badges),
-                "earnings": "N/A",
+                "earnings_raw": info["earnings_raw"],
+                "earnings_display": info["earnings_display"],
             })
 
-        heroes.sort(key=lambda x: (-x["badge_count"], x["joined"]))
+        # Sort: highest earnings → most badges → newest join (using exact joined date)
+        heroes.sort(key=lambda x: (-x["earnings_raw"], -x["badge_count"], x["joined"]))
         return heroes[:limit]
 
     except Exception as e:
@@ -412,10 +424,12 @@ if heroes:
         }
         .rank-earnings {
             font-size: 0.95rem;
-            font-weight: 600;
-            color: #cbd5e1;
+            font-weight: 700;
             margin: 0.4rem 0;
         }
+        .positive { color: #22c55e; }
+        .negative { color: #ef4444; }
+        .zero { color: #94a3b8; }
         .rank-badges-details {
             text-align: center;
             width: 100%;
@@ -445,7 +459,7 @@ if heroes:
         @media (min-width: 768px) {
             .rank-header {
                 display: grid;
-                grid-template-columns: 50px 200px 110px 1fr;
+                grid-template-columns: 50px 200px 130px 1fr;
                 background: rgba(255,215,0,0.04);
                 padding: 0.7rem 0.9rem;
                 border-radius: 9px;
@@ -457,7 +471,7 @@ if heroes:
             }
             .rank-row {
                 display: grid;
-                grid-template-columns: 50px 200px 110px 1fr;
+                grid-template-columns: 50px 200px 130px 1fr;
                 align-items: center;
                 padding: 0.8rem 0.9rem;
                 border-bottom: 1px solid rgba(255,215,0,0.04);
@@ -516,7 +530,6 @@ if heroes:
         "Pioneer": "🛡️",
         "VIP Elite": "💎",
         "Consistency Star": "⭐",
-        # add more if needed
     }
 
     for i, hero in enumerate(heroes, 1):
@@ -528,6 +541,10 @@ if heroes:
             for b in hero["badges"]
         )
 
+        earnings_class = "positive" if hero["earnings_raw"] > 0 else "negative" if hero["earnings_raw"] < 0 else "zero"
+
+        joined_text = f"Joined {hero['joined']}" if hero["joined"] else "Joined —"
+
         st.markdown(f"""
         <div class='rank-row'>
             <div class='rank-position {rank_class}'>{i}</div>
@@ -537,11 +554,11 @@ if heroes:
                     {hero["first_name"]} <small>({hero["anon"]})</small>
                 </div>
             </div>
-            <div class='rank-earnings'>{hero["earnings"]}</div>
+            <div class='rank-earnings {earnings_class}'>{hero["earnings_display"]}</div>
             <div class='rank-badges-details'>
                 <div class='rank-badges'>{badge_tags_html}</div>
                 <div class='rank-details'>
-                    {hero["title"]} • Joined {hero["joined"]}
+                    {hero["title"]} • {joined_text}
                 </div>
             </div>
         </div>
@@ -551,17 +568,7 @@ if heroes:
 
     st.markdown("""
     <div style='text-align:center; margin:2.5rem 0 4rem;'>
-        <a href="#waitlist_form" style='
-            display:inline-block;
-            background: linear-gradient(90deg, #ffd700, #d4a017);
-            color: #0f172a;
-            font-weight: 800;
-            padding: 0.7rem 2.2rem;
-            border-radius: 999px;
-            text-decoration: none;
-            box-shadow: 0 6px 20px rgba(255,215,0,0.25);
-            font-size: 0.98rem;
-        '>
+        <a href="#waitlist_form" style='display:inline-block; background:linear-gradient(90deg,#ffd700,#d4a017); color:#0f172a; font-weight:800; padding:0.7rem 2.2rem; border-radius:999px; text-decoration:none; box-shadow:0 6px 20px rgba(255,215,0,0.25); font-size:0.98rem;'>
             Join Waitlist – Start Your Rise Now 👑
         </a>
     </div>
