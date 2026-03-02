@@ -1,4 +1,3 @@
-# pages/📁_File_Vault.py
 import streamlit as st
 import requests
 from datetime import date
@@ -15,8 +14,8 @@ require_auth(min_role="client")  # clients can view their files, admin/owner ful
 
 # ─── THEME (consistent across app) ───
 accent_primary = "#00ffaa"
-accent_gold    = "#ffd700"
-accent_glow    = "#00ffaa40"
+accent_gold = "#ffd700"
+accent_glow = "#00ffaa40"
 
 # ─── SCROLL-TO-TOP (same as Dashboard) ───
 st.markdown("""
@@ -44,6 +43,43 @@ st.header("📁 Secure File Vault")
 st.markdown("**Permanent encrypted storage** • All file types supported • Proofs & documents secured • Auto-assigned access • Realtime grid with previews • Empire fortress")
 
 current_role = st.session_state.get("role", "guest").lower()
+
+# ─── UPLOAD HELPER FUNCTION (this fixes the 'upload_to_supabase not defined' error) ───
+def upload_to_supabase(file, bucket: str = "client_files", folder: str = "vault", use_signed_url: bool = False):
+    try:
+        # Reset file pointer and read content
+        file.seek(0)
+        file_bytes = file.read()
+
+        # Create safe filename
+        original_name = file.name
+        safe_name = "".join(c if c.isalnum() or c in "._-" else "_" for c in original_name)
+        storage_path = f"{folder}/{safe_name}" if folder else safe_name
+
+        # Upload to Supabase Storage
+        response = supabase.storage.from_(bucket).upload(
+            path=storage_path,
+            file=file_bytes,
+            file_options={"content-type": file.type or "application/octet-stream"}
+        )
+
+        # Basic success check (supabase-py can return different types)
+        if hasattr(response, "status_code") and response.status_code not in (200, 201):
+            raise Exception(f"Upload HTTP error: {response.status_code} - {response.text}")
+
+        # Get public URL
+        public_url = supabase.storage.from_(bucket).get_public_url(storage_path)
+
+        # Optional signed URL (not used by default in your code)
+        if use_signed_url:
+            signed_data = supabase.storage.from_(bucket).create_signed_url(storage_path, expires_in=604800)  # 7 days
+            if "signedURL" in signed_data:
+                public_url = signed_data["signedURL"]
+
+        return public_url, storage_path
+
+    except Exception as e:
+        raise Exception(f"Failed to upload {file.name}: {str(e)}")
 
 # ─── ULTRA-REALTIME FETCH (10s TTL) ───
 @st.cache_data(ttl=10, show_spinner="Syncing secure vault...")
@@ -110,7 +146,6 @@ if current_role in ["owner", "admin"]:
             for idx, file in enumerate(uploaded_files):
                 status_text.text(f"Uploading {file.name} ({idx+1}/{len(uploaded_files)})...")
                 try:
-                    # Assuming you have this helper function defined in utils or elsewhere
                     url, storage_path = upload_to_supabase(
                         file=file,
                         bucket="client_files",
@@ -131,10 +166,8 @@ if current_role in ["owner", "admin"]:
                     }).execute()
 
                     success_count += 1
-                    # Optional: log_action("File Uploaded (Permanent)", f"{file.name} → {category} → {assigned_client}")
                 except Exception as e:
                     failed.append(f"{file.name}: {str(e)}")
-
                 progress_bar.progress((idx + 1) / len(uploaded_files))
 
             status_text.empty()
@@ -167,13 +200,14 @@ with col_f4:
 filtered = files
 if search:
     s = search.lower()
-    filtered = [f for f in filtered if s in f["original_name"].lower() or
-                s in (f.get("tags") or "").lower() or
-                s in (f.get("notes") or "").lower()]
-
+    filtered = [
+        f for f in filtered
+        if s in f["original_name"].lower()
+        or s in (f.get("tags") or "").lower()
+        or s in (f.get("notes") or "").lower()
+    ]
 if cat_filter != "All":
     filtered = [f for f in filtered if f.get("category") == cat_filter]
-
 if client_filter != "All":
     filtered = [f for f in filtered if f.get("assigned_client") == client_filter]
 
@@ -217,12 +251,10 @@ if filtered:
             st.markdown(f"**{f['original_name']}**")
             st.caption(f"{f['upload_date']} • By {f['sent_by']}")
             st.caption(f"Category: **{f.get('category','Other')}**")
-
             if assigned:
                 st.caption(f"Assigned: **{assigned}**")
             if tags:
                 st.caption(f"Tags: {tags}")
-
             if notes:
                 with st.expander("Notes"):
                     st.write(notes)
@@ -252,7 +284,6 @@ if filtered:
                             supabase.storage.from_("client_files").remove([f["storage_path"]])
                         supabase.table("client_files").delete().eq("id", f["id"]).execute()
                         st.success(f"Deleted: {f['original_name']}")
-                        # Optional: log_action("File Deleted (Permanent)", f"{f['original_name']} by {st.session_state.get('full_name')}")
                         st.balloons()
                         st.cache_data.clear()
                         st.rerun()
