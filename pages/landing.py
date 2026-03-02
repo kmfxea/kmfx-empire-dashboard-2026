@@ -301,7 +301,7 @@ def get_featured_heroes(limit=10):
                     full_name, 
                     title, 
                     created_at,
-                    total_profit          -- <-- your earnings column (change name here if different)
+                    balance         -- <-- your earnings column (change name here if different)
                 )
             """) \
             .eq("is_public", True) \
