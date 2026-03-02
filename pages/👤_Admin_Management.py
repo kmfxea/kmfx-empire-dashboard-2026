@@ -412,7 +412,7 @@ else:
                                 "is_active": True,
                                 "is_public": make_public,
                                 "awarded_by": st.session_state.get("user_id"),
-                                "notes": evidence.strip() or None
+                                #"notes": evidence.strip() or None
                             }
                             resp = supabase.table("client_badges").insert(insert_data).execute()
 
