@@ -274,21 +274,21 @@ st.markdown("<p style='text-align:center; color:#aaaaaa; font-size:0.95rem; marg
 st.markdown("<div style='height:3rem;'></div>", unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# EMPIRE HEROES – PREMIUM LEADERBOARD STYLE (FINAL RESPONSIVE – MOBILE OPTIMIZED)
+# EMPIRE HEROES – PREMIUM LEADERBOARD STYLE (COMPACT + ALL BADGES SHOWN)
 # ────────────────────────────────────────────────
 
 st.markdown(
-    "<h2 style='text-align:center; color:#ffd700; margin:4rem 0 1.5rem; font-weight:800;'>Empire Heroes Leaderboard</h2>",
+    "<h2 style='text-align:center; color:#ffd700; margin:3rem 0 1.2rem; font-weight:800; font-size:2.1rem;'>Empire Heroes Leaderboard</h2>",
     unsafe_allow_html=True
 )
 st.markdown(
-    "<p style='text-align:center; color:#cccccc; font-size:1.1rem; margin-bottom:3rem; max-width:920px; margin-left:auto; margin-right:auto;'>"
+    "<p style='text-align:center; color:#cccccc; font-size:1rem; margin-bottom:2.5rem; max-width:900px; margin-left:auto; margin-right:auto;'>"
     "Our top legends are rising fast. Earn badges, climb ranks, and build your legacy. 👑</p>",
     unsafe_allow_html=True
 )
 
 @st.cache_data(ttl=120)
-def get_featured_heroes(limit=10):
+def get_featured_heroes(limit=50):
     try:
         response = supabase.table("client_badges") \
             .select("""
@@ -326,81 +326,80 @@ def get_featured_heroes(limit=10):
             heroes.append({
                 "first_name": first_name,
                 "anon": anon_id,
-                "badges": badges,
+                "badges": badges,           # ALL badges are kept here
                 "title": info["title"] or "Pioneer",
                 "joined": info["joined"],
                 "badge_count": len(badges),
-                "earnings": "N/A",  # ← Replace with real earnings/reward value when available
+                "earnings": "N/A",          # ← palitan kapag may real data
             })
 
-        # Sort: highest badge count first, then most recent join
         heroes.sort(key=lambda x: (-x["badge_count"], x["joined"]))
-        return heroes[:limit]
+        return heroes[:limit]           # Top 10 pa rin, baguhin limit kung gusto mo lahat
 
     except Exception as e:
         st.warning(f"Hero fetch error: {str(e)}")
         return []
 
-heroes = get_featured_heroes(limit=10)
+heroes = get_featured_heroes(limit=50)
 
 if heroes:
     st.markdown("""
     <style>
         .empire-leaderboard {
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            border-radius: 16px;
-            padding: 1.4rem 1rem;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.65);
-            border: 1px solid rgba(255,215,0,0.16);
-            margin: 0 auto 3rem;
-            max-width: 1100px;
+            border-radius: 14px;
+            padding: 1.2rem 0.8rem;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+            border: 1px solid rgba(255,215,0,0.14);
+            margin: 0 auto 2.5rem;
+            max-width: 1050px;
         }
         .rank-header {
-            display: none; /* Hide header on mobile – cleaner look */
+            display: none;
         }
         .rank-row {
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 1.4rem 1rem;
-            border-bottom: 1px solid rgba(255,215,0,0.08);
-            transition: background 0.25s;
+            padding: 1.1rem 0.9rem;
+            border-bottom: 1px solid rgba(255,215,0,0.07);
+            transition: background 0.2s;
         }
         .rank-row:hover {
-            background: rgba(255,215,0,0.04);
-            border-radius: 12px;
+            background: rgba(255,215,0,0.035);
+            border-radius: 10px;
         }
         .rank-position {
-            font-size: 2.4rem;
+            font-size: 2.1rem;
             font-weight: 900;
             color: #e2e8f0;
-            margin-bottom: 0.8rem;
-            letter-spacing: -2px;
+            margin-bottom: 0.6rem;
+            letter-spacing: -1.5px;
         }
-        .rank-1 { color: #ffd700; text-shadow: 0 0 15px rgba(255,215,0,0.6); }
+        .rank-1 { color: #ffd700; text-shadow: 0 0 12px rgba(255,215,0,0.55); }
         .rank-2 { color: #e2e8f0; }
         .rank-3 { color: #fbbf24; }
         .rank-hero {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 0.8rem;
-            margin-bottom: 1rem;
+            gap: 0.6rem;
+            margin-bottom: 0.8rem;
             width: 100%;
         }
         .rank-avatar {
-            width: 64px;
-            height: 64px;
+            width: 56px;
+            height: 56px;
             border-radius: 50%;
-            background: rgba(255,215,0,0.12);
-            border: 3px solid rgba(255,215,0,0.4);
+            background: rgba(255,215,0,0.10);
+            border: 2.5px solid rgba(255,215,0,0.35);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2.2rem;
+            font-size: 1.9rem;
         }
         .rank-name {
-            font-size: 1.3rem;
+            font-size: 1.15rem;
             font-weight: 700;
             color: #f1f5f9;
             text-align: center;
@@ -408,14 +407,14 @@ if heroes:
         .rank-name small {
             display: block;
             color: #94a3b8;
-            font-size: 0.95rem;
+            font-size: 0.85rem;
             font-weight: 400;
         }
         .rank-earnings {
-            font-size: 1.2rem;
+            font-size: 1.05rem;
             font-weight: 600;
             color: #cbd5e1;
-            margin: 0.6rem 0;
+            margin: 0.5rem 0;
         }
         .rank-badges-details {
             text-align: center;
@@ -425,56 +424,81 @@ if heroes:
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
-            gap: 0.6rem;
-            margin-bottom: 0.8rem;
+            gap: 0.45rem 0.5rem;
+            margin-bottom: 0.6rem;
         }
         .badge-tag {
-            background: rgba(255,215,0,0.14);
+            background: rgba(255,215,0,0.13);
             color: #ffea80;
-            font-size: 0.9rem;
-            padding: 0.45rem 0.9rem;
+            font-size: 0.82rem;
+            padding: 0.32rem 0.7rem;
             border-radius: 999px;
-            border: 1px solid rgba(255,215,0,0.3);
+            border: 1px solid rgba(255,215,0,0.26);
             white-space: nowrap;
         }
         .rank-details {
             color: #94a3b8;
-            font-size: 0.95rem;
+            font-size: 0.88rem;
         }
-        /* Tablet & up – restore grid layout */
+
+        /* Tablet & Desktop – compact grid */
         @media (min-width: 768px) {
             .rank-header {
                 display: grid;
-                grid-template-columns: 80px 280px 160px 1fr;
-                background: rgba(255,215,0,0.06);
-                padding: 1.1rem 1.4rem;
-                border-radius: 12px;
-                margin-bottom: 1.4rem;
+                grid-template-columns: 60px 240px 130px 1fr;
+                background: rgba(255,215,0,0.05);
+                padding: 0.9rem 1.1rem;
+                border-radius: 10px;
+                margin-bottom: 1rem;
                 font-weight: 700;
                 color: #ffea80;
-                font-size: 1rem;
+                font-size: 0.9rem;
                 text-align: left;
             }
             .rank-row {
                 display: grid;
-                grid-template-columns: 80px 280px 160px 1fr;
+                grid-template-columns: 60px 240px 130px 1fr;
                 align-items: center;
-                padding: 1.3rem 1.4rem;
-                border-bottom: 1px solid rgba(255,215,0,0.06);
+                padding: 1rem 1.1rem;
+                border-bottom: 1px solid rgba(255,215,0,0.05);
             }
-            .rank-row:hover { border-radius: 12px; }
-            .rank-position { font-size: 2rem; text-align: center; margin: 0; }
-            .rank-hero { flex-direction: row; text-align: left; gap: 1.2rem; }
-            .rank-avatar { width: 56px; height: 56px; font-size: 2rem; }
-            .rank-name { font-size: 1.2rem; }
-            .rank-name small { display: inline; }
-            .rank-earnings { text-align: center; font-size: 1.1rem; }
-            .rank-badges-details { text-align: left; }
-            .rank-badges { justify-content: flex-start; }
+            .rank-position {
+                font-size: 1.8rem;
+                text-align: center;
+                margin: 0;
+            }
+            .rank-hero {
+                flex-direction: row;
+                gap: 0.9rem;
+                text-align: left;
+            }
+            .rank-avatar {
+                width: 48px;
+                height: 48px;
+                font-size: 1.7rem;
+            }
+            .rank-name {
+                font-size: 1.05rem;
+            }
+            .rank-name small {
+                display: inline;
+                font-size: 0.8rem;
+            }
+            .rank-earnings {
+                text-align: center;
+                font-size: 1rem;
+            }
+            .rank-badges-details {
+                text-align: left;
+            }
+            .rank-badges {
+                justify-content: flex-start;
+                gap: 0.4rem;
+            }
         }
         @media (min-width: 1024px) {
-            .empire-leaderboard { padding: 2rem; }
-            .rank-row { padding: 1.5rem 2rem; }
+            .empire-leaderboard { padding: 1.4rem 1.2rem; }
+            .rank-row { padding: 1.1rem 1.3rem; }
         }
     </style>
     """, unsafe_allow_html=True)
@@ -485,12 +509,14 @@ if heroes:
         "Pioneer": "🛡️",
         "VIP Elite": "💎",
         "Consistency Star": "⭐",
-        # Add more badge → emoji mappings here as needed
+        # dagdagan mo rito kung may iba pang badges
     }
 
     for i, hero in enumerate(heroes, 1):
         rank_class = "rank-1" if i == 1 else "rank-2" if i == 2 else "rank-3" if i == 3 else ""
         avatar_emoji = badge_emojis.get(hero["badges"][0] if hero["badges"] else None, "🏆")
+        
+        # Lahat ng badges ipinapakita, hindi lang isa
         badge_tags_html = "".join(
             f"<span class='badge-tag'>{badge_emojis.get(b, '🏆')} {b}</span>"
             for b in hero["badges"]
@@ -518,18 +544,17 @@ if heroes:
     st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown("""
-    <div style='text-align:center; margin:4rem 0 6rem;'>
+    <div style='text-align:center; margin:3rem 0 5rem;'>
         <a href="#waitlist_form" style='
             display:inline-block;
             background: linear-gradient(90deg, #ffd700, #d4a017);
             color: #0f172a;
             font-weight: 800;
-            padding: 1rem 3rem;
+            padding: 0.85rem 2.5rem;
             border-radius: 999px;
             text-decoration: none;
-            box-shadow: 0 10px 30px rgba(255,215,0,0.35);
-            transition: all 0.3s;
-            font-size: 1.15rem;
+            box-shadow: 0 8px 25px rgba(255,215,0,0.3);
+            font-size: 1.05rem;
         '>
             Join Waitlist – Start Your Rise Now 👑
         </a>
