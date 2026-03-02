@@ -1,4 +1,3 @@
-# pages/👤_Admin_Management.py
 import streamlit as st
 import uuid
 import qrcode
@@ -43,7 +42,7 @@ setTimeout(forceScrollToTop, 2000);
 """, unsafe_allow_html=True)
 
 st.header("👤 Empire Team Management")
-st.markdown("**Owner-exclusive control** • Register/edit team members with full details & titles • Realtime balances • Secure QR login • Joined dates • Advanced search/filter")
+st.markdown("**Owner-exclusive control** • Register/edit team members • Realtime balances • Secure QR login • Badges management")
 
 current_role = st.session_state.get("role", "guest").lower()
 if current_role != "owner":
@@ -142,7 +141,13 @@ if team:
     filtered_team = team
     if search_user:
         s = search_user.lower()
-        filtered_team = [u for u in filtered_team if s in str(u.get("full_name", "")).lower() or s in str(u.get("username", "")).lower() or s in str(u.get("email", "")).lower() or s in str(u.get("contact_no", "")).lower() or s in str(u.get("accounts", "")).lower()]
+        filtered_team = [u for u in filtered_team if
+                         s in str(u.get("full_name", "")).lower() or
+                         s in str(u.get("username", "")).lower() or
+                         s in str(u.get("email", "")).lower() or
+                         s in str(u.get("contact_no", "")).lower() or
+                         s in str(u.get("accounts", "")).lower()]
+
     if filter_role != "All":
         filtered_team = [u for u in filtered_team if u.get("role") == filter_role]
 
@@ -152,6 +157,7 @@ if team:
         title_display = f" ({u.get('title', '')})" if u.get('title') else ""
         balance = u.get("balance", 0.0)
         joined = u.get("created_at", "Unknown")[:10] if u.get("created_at") else "Unknown"
+
         with st.expander(
             f"**{u['full_name']}{title_display}** (@{u['username']}) • {u['role'].title()} • Balance **${balance:,.2f}** • Joined {joined}",
             expanded=False
@@ -164,11 +170,12 @@ if team:
                 st.markdown(f"**Contact No.:** {u.get('contact_no') or 'None'}")
                 st.markdown(f"**Address:** {u.get('address') or 'None'}")
 
-            # QR Code Management (unchanged)
+            # ─── QR Code Management ───
             st.markdown("### 🔑 Quick Login QR Code")
             current_qr_token = u.get("qr_token")
             app_url = "https://kmfxea.streamlit.app"
             qr_url = f"{app_url}/?qr={current_qr_token}" if current_qr_token else None
+
             if current_qr_token:
                 buf = BytesIO()
                 qr = qrcode.QRCode(version=1, box_size=12, border=5)
@@ -177,12 +184,20 @@ if team:
                 img = qr.make_image(fill_color="black", back_color="white")
                 img.save(buf, format="PNG")
                 qr_bytes = buf.getvalue()
+
                 col_qr1, col_qr2 = st.columns([1, 3])
                 with col_qr1:
                     st.image(qr_bytes, caption="Scan for Instant Login", use_column_width=True)
                 with col_qr2:
                     st.code(qr_url, language="text")
-                    st.download_button("⬇ Download QR PNG", qr_bytes, f"{u['full_name'].replace(' ', '_')}_QR.png", "image/png", use_container_width=True)
+                    st.download_button(
+                        "⬇ Download QR PNG",
+                        qr_bytes,
+                        f"{u['full_name'].replace(' ', '_')}_QR.png",
+                        "image/png",
+                        use_container_width=True
+                    )
+
                 col_regen, col_revoke = st.columns(2)
                 with col_regen:
                     if st.button("🔄 Regenerate QR Code", key=f"regen_{u['id']}"):
@@ -208,7 +223,7 @@ if team:
                     st.cache_data.clear()
                     st.rerun()
 
-            # Actions (unchanged)
+            # ─── Actions ───
             st.markdown("### Actions")
             col_act1, col_act2 = st.columns(2)
             with col_act1:
@@ -227,7 +242,7 @@ if team:
                     except Exception as e:
                         st.error(f"Delete failed: {str(e)}")
 
-            # Edit Form (unchanged)
+            # ─── Edit Form ───
             if st.session_state.get("edit_user_id") == u["id"]:
                 edit_data = st.session_state.edit_user_data
                 with st.form(key=f"edit_form_{u['id']}", clear_on_submit=True):
@@ -249,6 +264,7 @@ if team:
                     title_options = ["None", "Pioneer", "Distributor", "VIP", "Elite Trader", "Contributor"]
                     current_title_idx = title_options.index(edit_data.get("title")) if edit_data.get("title") in title_options else 0
                     new_title = st.selectbox("Title/Label", title_options, index=current_title_idx)
+
                     col_save, col_cancel = st.columns(2)
                     with col_save:
                         if st.form_submit_button("💾 Save Changes", type="primary"):
@@ -271,26 +287,30 @@ if team:
                                         update_data["password"] = hashed_new
                                     supabase.table("users").update(update_data).eq("id", u["id"]).execute()
                                     st.success("Member updated!")
-                                    del st.session_state.edit_user_id
-                                    del st.session_state.edit_user_data
+                                    if "edit_user_id" in st.session_state:
+                                        del st.session_state.edit_user_id
+                                    if "edit_user_data" in st.session_state:
+                                        del st.session_state.edit_user_data
                                     st.cache_data.clear()
                                     st.rerun()
                                 except Exception as e:
                                     st.error(f"Update failed: {str(e)}")
                     with col_cancel:
                         if st.form_submit_button("Cancel"):
-                            del st.session_state.edit_user_id
-                            del st.session_state.edit_user_data
+                            if "edit_user_id" in st.session_state:
+                                del st.session_state.edit_user_id
+                            if "edit_user_data" in st.session_state:
+                                del st.session_state.edit_user_data
                             st.rerun()
 else:
     st.info("No team members yet • Start building your empire!")
 
 # ────────────────────────────────────────────────
-# MANUAL BADGE AWARDING – FINAL VERSION
+# BADGE MANAGEMENT – AWARD + REMOVE
 # ────────────────────────────────────────────────
 st.markdown("---")
-st.subheader("🏅 Award Badges to Clients")
-st.markdown("Public badges appear in landing page teaser (Empire Heroes section).")
+st.subheader("🏅 Manage Client Badges")
+st.markdown("Award or revoke badges • Public badges appear in **Empire Heroes** teaser")
 
 @st.cache_data(ttl=300)
 def get_badge_definitions():
@@ -298,7 +318,7 @@ def get_badge_definitions():
         resp = supabase.table("badge_definitions").select("badge_name, description, icon_emoji, is_special, max_slots").execute()
         return {row["badge_name"]: row for row in resp.data or []}
     except:
-        st.warning("No badge definitions found. Using fallback.")
+        st.warning("No badge definitions found — using fallback")
         return {
             "Pioneer": {"badge_name": "Pioneer", "description": "Early joiner", "icon_emoji": "🛡️", "is_special": False, "max_slots": None},
             "VIP Elite": {"badge_name": "VIP Elite", "description": "Top contributor", "icon_emoji": "💎", "is_special": True, "max_slots": 20},
@@ -306,112 +326,128 @@ def get_badge_definitions():
         }
 
 badges_dict = get_badge_definitions()
-badge_options = list(badges_dict.keys())
+badge_options = [""] + sorted(badges_dict.keys())
 
 @st.cache_data(ttl=60)
 def get_clients_for_badges():
     try:
-        resp = supabase.table("users").select("id, username, full_name, email, role").eq("role", "client").execute()
-        return resp.data or []
+        return supabase.table("users").select("id, username, full_name, email, role").eq("role", "client").execute().data or []
     except Exception as e:
-        st.error(f"Client fetch error: {str(e)}")
+        st.error(f"Client fetch error: {e}")
         return []
 
 clients_list = get_clients_for_badges()
 
 if not clients_list:
-    st.info("No client accounts yet. Register clients above.")
+    st.info("No clients yet. Register some above first.")
 else:
+    # Award section
+    st.markdown("### Award New Badge")
     with st.form("award_badge_form", clear_on_submit=True):
         col1, col2 = st.columns(2)
         with col1:
-            client_display = [f"{c.get('full_name', 'Unknown')} ({c.get('username', 'no-username')}) – {c.get('email', 'no-email')}" for c in clients_list]
+            client_options = [f"{c['full_name']} (@{c['username']}) – {c.get('email','–')}" for c in clients_list]
             selected_client_str = st.selectbox(
                 "Select Client",
-                options=[""] + client_display,
+                options=[""] + client_options,
                 index=0,
-                placeholder="Choose a client...",
-                key="badge_client_select"
+                placeholder="Choose client...",
+                key="award_client_select"
             )
         with col2:
             selected_badge = st.selectbox(
                 "Select Badge",
-                options=[""] + badge_options,
+                options=badge_options,
                 index=0,
                 placeholder="Choose badge...",
-                key="badge_type_select"
+                key="award_badge_select"
             )
 
         evidence = ""
         make_public = True
-        if selected_badge and selected_badge != "" and badges_dict.get(selected_badge, {}).get("is_special", False):
-            st.info(f"{selected_badge} is special (limited slots). Provide evidence.")
-            evidence = st.text_area("Evidence / Reason (required)", height=100, placeholder="e.g. Top tester, fund contributor...")
-            make_public = st.checkbox("Make public (show in landing teaser)", value=True)
+        if selected_badge and badges_dict.get(selected_badge, {}).get("is_special", False):
+            st.info(f"→ **{selected_badge}** is special (limited slots)")
+            evidence = st.text_area("Evidence / Reason (required for special)", height=100)
+            make_public = st.checkbox("Make public (Empire Heroes teaser)", value=True)
 
-        award_submitted = st.form_submit_button("AWARD BADGE 👑", type="primary", use_container_width=True)
-
-        if award_submitted:
+        if st.form_submit_button("AWARD BADGE 👑", type="primary", use_container_width=True):
             if not selected_client_str or not selected_badge:
                 st.error("Select both client and badge.")
             else:
-                selected_client = next((c for c in clients_list if f"{c.get('full_name', 'Unknown')} ({c.get('username', 'no-username')}) – {c.get('email', 'no-email')}" == selected_client_str), None)
-                if not selected_client:
+                client = next((c for c in clients_list if f"{c['full_name']} (@{c['username']}) – {c.get('email','–')}" == selected_client_str), None)
+                if not client:
                     st.error("Client not found.")
                 else:
-                    badge_info = badges_dict.get(selected_badge, {})
-                    max_slots = badge_info.get("max_slots")
+                    max_slots = badges_dict.get(selected_badge, {}).get("max_slots")
                     if max_slots is not None:
-                        current_count = supabase.table("client_badges").select("count", count="exact").eq("badge_name", selected_badge).execute().count or 0
-                        if current_count >= max_slots:
-                            st.error(f"{selected_badge} slots full ({current_count}/{max_slots}).")
+                        count_resp = supabase.table("client_badges").select("count", count="exact").eq("badge_name", selected_badge).execute()
+                        if count_resp.count >= max_slots:
+                            st.error(f"{selected_badge} is full ({count_resp.count}/{max_slots}).")
                             st.stop()
-                    if badge_info.get("is_special", False) and not evidence.strip():
-                        st.error("Evidence required for special badges.")
-                        st.stop()
 
-                    with st.spinner(f"Awarding {selected_badge}..."):
-                        try:
-                            insert_data = {
-                                "user_id": selected_client["id"],
-                                "badge_name": selected_badge,
-                                "awarded_at": "NOW()",
-                                "is_active": True,
-                                "is_public": make_public,
-                                "awarded_by": st.session_state.get("user_id")  # from auth.py login
-                            }
-                            resp = supabase.table("client_badges").insert(insert_data).execute()
-                            if resp.data:
-                                awarded_name = selected_client.get("full_name", selected_client["username"])
-                                st.success(f"{selected_badge} awarded to {awarded_name}! 🎉")
-                                if make_public:
-                                    st.info("Badge is public — check landing page teaser.")
+                    existing = supabase.table("client_badges").select("id").eq("user_id", client["id"]).eq("badge_name", selected_badge).execute().data
+                    if existing:
+                        st.warning(f"**{client['full_name']}** already has **{selected_badge}**.")
+                    else:
+                        if badges_dict.get(selected_badge, {}).get("is_special", False) and not evidence.strip():
+                            st.error("Evidence required for special badges.")
+                        else:
+                            try:
+                                supabase.table("client_badges").insert({
+                                    "user_id": client["id"],
+                                    "badge_name": selected_badge,
+                                    "awarded_at": "NOW()",
+                                    "is_active": True,
+                                    "is_public": make_public,
+                                    "awarded_by": st.session_state.get("user_id"),
+                                    "evidence": evidence.strip() or None
+                                }).execute()
+                                st.success(f"**{selected_badge}** awarded to **{client['full_name']}**! 🎉")
                                 st.balloons()
-                            else:
-                                st.error("Insert failed — no data returned.")
-                        except Exception as e:
-                            err = str(e).lower()
-                            if "duplicate" in err or "unique" in err:
-                                st.info(f"{awarded_name} already has {selected_badge} badge.")
-                            else:
+                                st.rerun()
+                            except Exception as e:
                                 st.error(f"Award failed: {str(e)}")
 
-# ─── RECENT BADGES PREVIEW ───
-st.markdown("### Recently Awarded Badges (Last 5)")
-try:
-    recent_badges = supabase.table("client_badges") \
-        .select("badge_name, awarded_at, users!inner(full_name), is_public") \
-        .order("awarded_at", desc=True) \
-        .limit(5) \
-        .execute().data or []
-    if recent_badges:
-        for b in recent_badges:
-            name = b.get("users", {}).get("full_name", "Unknown")
-            st.caption(f"{b['badge_name']} → {name} • {b['awarded_at'][:19]} • Public: {b['is_public']}")
-    else:
-        st.caption("No badges awarded yet.")
-except:
-    st.caption("Could not load recent badges.")
+    # Remove / View section
+    st.markdown("### View & Remove Badges")
+    selected_remove_str = st.selectbox(
+        "Select Client to Manage Badges",
+        options=[""] + client_options,
+        key="remove_client_select",
+        index=0,
+        placeholder="Choose client..."
+    )
+
+    if selected_remove_str:
+        client = next((c for c in clients_list if f"{c['full_name']} (@{c['username']}) – {c.get('email','–')}" == selected_remove_str), None)
+        if client:
+            user_badges = supabase.table("client_badges") \
+                .select("id, badge_name, awarded_at, is_public, evidence") \
+                .eq("user_id", client["id"]) \
+                .order("awarded_at", desc=True) \
+                .execute().data or []
+
+            if not user_badges:
+                st.info(f"**{client['full_name']}** has no badges yet.")
+            else:
+                for b in user_badges:
+                    badge_name = b["badge_name"]
+                    pub = "🟢 Public" if b["is_public"] else "⚪ Private"
+                    date = b["awarded_at"][:10] if b["awarded_at"] else "—"
+                    col_a, col_b = st.columns([5, 1])
+                    with col_a:
+                        st.write(f"**{badge_name}**  •  {pub}  •  {date}")
+                        if b.get("evidence"):
+                            st.caption(f"Evidence: {b['evidence']}")
+                    with col_b:
+                        if st.button("🗑 Remove", key=f"delbadge_{b['id']}", type="secondary"):
+                            try:
+                                supabase.table("client_badges").delete().eq("id", b["id"]).execute()
+                                st.success(f"Removed **{badge_name}**")
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"Remove failed: {e}")
+                    st.markdown("---")
 
 # ─── MOTIVATIONAL FOOTER ───
 st.markdown(f"""
