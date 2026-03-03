@@ -9,6 +9,7 @@ from datetime import date
 from utils.auth import require_auth
 from utils.sidebar import render_sidebar
 from utils.supabase_client import supabase
+from utils.helpers import upload_to_supabase
 
 render_sidebar()
 require_auth(min_role="client")  # clients request, admin/owner manage
