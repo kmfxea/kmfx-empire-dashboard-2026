@@ -1192,104 +1192,38 @@ with col_mid:
     """, unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# SIMPLE & CLEAN PREMIUM FOOTER
+# SIMPLE & CLEAN FOOTER (improved version)
 # ────────────────────────────────────────────────
+
+st.markdown("---")
 
 st.markdown("""
 <div style="
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    padding: 2.5rem 1rem 2rem;
     text-align: center;
-    color: #f1f5f9;
-    border-top: 1px solid rgba(255,215,0,0.12);
-    margin-top: 4rem;
+    padding: 2rem 1rem;
+    font-size: 0.85rem;
+    color: #94a3b8;
+    letter-spacing: 0.5px;
+    background: rgba(15,23,42,0.4);
+    border-top: 1px solid rgba(255,215,0,0.08);
 ">
-    <!-- Tagline -->
-    <h3 style="
-        font-size: 1.5rem;
-        font-weight: 700;
+    <p style="
+        margin: 0 0 0.6rem;
+        font-weight: 600;
         background: linear-gradient(90deg, #ffd700, #00ffaa);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        margin-bottom: 0.8rem;
-    ">KMFX Elite Empire</h3>
-    <p style="font-size: 0.95rem; color: #94a3b8; margin-bottom: 1.8rem;">
-        Built by Faith • Shared for Generations • 2026 👑
+    ">
+        KMFX EA Version 2.1
     </p>
-
-    <!-- Main Links -->
-    <div style="
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 1.2rem 1.8rem;
-        margin-bottom: 1.5rem;
-        font-size: 0.9rem;
-    ">
-        <a href="/" style="color:#94a3b8; text-decoration:none;">Home</a>
-        <a href="#about" style="color:#94a3b8; text-decoration:none;">About</a>
-        <a href="#leaderboard" style="color:#94a3b8; text-decoration:none;">Leaderboard</a>
-        <a href="#waitlist_form" style="color:#94a3b8; text-decoration:none;">Join Waitlist</a>
-        <a href="#contact" style="color:#94a3b8; text-decoration:none;">Contact</a>
-    </div>
-
-    <!-- Social Subscribe & Follow -->
-    <p style="font-size: 1rem; color: #ffd700; margin: 1.2rem 0 0.6rem;">
-        Join the Community
+    <p style="margin: 0 0 0.4rem;">
+        © 2026 Built by Faith, Shared for Generations • Mark Jeff Blando • Philippines
     </p>
-    <div style="
-        display: flex;
-        justify-content: center;
-        gap: 2rem;
-        margin-bottom: 1.5rem;
-        flex-wrap: wrap;
-    ">
-        <!-- YouTube -->
-        <a href="https://www.youtube.com/@kingminted-2014?sub_confirmation=1" target="_blank" style="
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: #ff0000;
-            text-decoration: none;
-            font-size: 0.95rem;
-        ">
-            <span style="font-size: 1.6rem;">▶️</span> 
-            <span>Subscribe</span>
-        </a>
-
-        <!-- Telegram -->
-        <a href="https://t.me/YOUR_TELEGRAM_GROUP" target="_blank" style="
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: #0088cc;
-            text-decoration: none;
-            font-size: 0.95rem;
-        ">
-            <span style="font-size: 1.6rem;">✈️</span> 
-            <span>Telegram</span>
-        </a>
-    </div>
-
-    <!-- Legal Links -->
-    <div style="
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 1rem;
-        margin-bottom: 1rem;
-        font-size: 0.85rem;
-        color: #94a3b8;
-    ">
-        <a href="/terms" style="color:inherit; text-decoration:none;">Terms of Service</a>
-        <a href="/privacy" style="color:inherit; text-decoration:none;">Privacy Policy</a>
-        <a href="/disclaimer" style="color:inherit; text-decoration:none;">Risk Disclaimer</a>
-    </div>
-
-    <!-- Copyright -->
-    <p style="font-size: 0.8rem; color: #64748b; margin: 0;">
-        © 2026 KMFX Pro • Mark Jeff Blando • Philippines<br>
-        All Rights Reserved. Trading involves high risk.
+    <p style="margin: 0; opacity: 0.7;">
+        Trading involves high risk. Past performance is not indicative of future results.
     </p>
 </div>
 """, unsafe_allow_html=True)
+
+if not st.session_state.get("authenticated", False):
+    st.stop()
