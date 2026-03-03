@@ -330,21 +330,21 @@ st.markdown("""
 st.markdown("<div style='height:3rem;'></div>", unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# EMPIRE HEROES – PREMIUM LEADERBOARD STYLE (ULTRA COMPACT + REAL BALANCE AS EARNINGS + EXACT JOINED DATE)
+# EMPIRE HEROES – PREMIUM LEADERBOARD STYLE (TIGHT SPACING + LIMIT 999 + BADGE COUNT)
 # ────────────────────────────────────────────────
 
 st.markdown(
-    "<h2 style='text-align:center; color:#ffd700; margin:2.5rem 0 1rem; font-weight:800; font-size:1.8rem;'>Empire Heroes Leaderboard</h2>",
+    "<h2 style='text-align:center; color:#ffd700; margin:1.5rem 0 0.8rem; font-weight:800; font-size:1.8rem;'>Empire Heroes Leaderboard</h2>",
     unsafe_allow_html=True
 )
 st.markdown(
-    "<p style='text-align:center; color:#cccccc; font-size:0.95rem; margin-bottom:2rem; max-width:850px; margin-left:auto; margin-right:auto;'>"
+    "<p style='text-align:center; color:#cccccc; font-size:0.95rem; margin-bottom:1.5rem; max-width:850px; margin-left:auto; margin-right:auto;'>"
     "Top legends rising fast. Earn badges, climb ranks, build your legacy. 👑</p>",
     unsafe_allow_html=True
 )
 
 @st.cache_data(ttl=120)
-def get_featured_heroes(limit=10):
+def get_featured_heroes(limit=999):  # ↑↑↑ changed to 999
     try:
         response = supabase.table("client_badges") \
             .select("""
@@ -353,9 +353,9 @@ def get_featured_heroes(limit=10):
                 awarded_at,
                 is_public,
                 users!inner (
-                    id, 
-                    full_name, 
-                    title, 
+                    id,
+                    full_name,
+                    title,
                     created_at,
                     balance
                 )
@@ -375,7 +375,7 @@ def get_featured_heroes(limit=10):
                 user_badges[uid].append(row["badge_name"])
                 if uid not in user_info:
                     earnings_raw = user.get("balance", 0.0) or 0.0
-                    joined_date = user.get("created_at", "")[:10] if user.get("created_at") else ""
+                    joined_date = user.get("created_at", "")[:10] if user.get("created_at") else "—"
                     user_info[uid] = {
                         "full_name": user.get("full_name", "Unknown"),
                         "title": user.get("title", None),
@@ -400,185 +400,175 @@ def get_featured_heroes(limit=10):
                 "earnings_display": info["earnings_display"],
             })
 
-        # Sort: highest balance/earnings → most badges → newest join
+        # Sort: highest earnings → most badges → newest join
         heroes.sort(key=lambda x: (-x["earnings_raw"], -x["badge_count"], x["joined"]))
-        return heroes[:limit]
+        return heroes[:limit]  # top 999 — lahat ng may badge makikita kung wala pang 999
 
     except Exception as e:
         st.warning(f"Hero fetch error: {str(e)}")
         return []
 
-heroes = get_featured_heroes(limit=10)
+heroes = get_featured_heroes()  # no limit param needed anymore
 
 if heroes:
     st.markdown("""
-    <style>
-        .empire-leaderboard {
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            border-radius: 12px;
-            padding: 0.9rem 0.6rem;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.55);
-            border: 1px solid rgba(255,215,0,0.12);
-            margin: 0 auto 2rem;
-            max-width: 980px;
-        }
+<style>
+    .empire-leaderboard {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        border-radius: 12px;
+        padding: 0.6rem;                  /* mas maliit padding sa container */
+        box-shadow: 0 6px 20px rgba(0,0,0,0.55);
+        border: 1px solid rgba(255,215,0,0.12);
+        margin: 0 auto 1.5rem;
+        max-width: 900px;
+    }
+    .rank-row {
+        display: flex;
+        flex-direction: column;
+        background: rgba(255,215,0,0.03);
+        border-radius: 10px;
+        margin-bottom: 0.8rem;            /* space between cards */
+        padding: 0.8rem;                  /* mas dikit padding sa loob ng card */
+        border: 1px solid rgba(255,215,0,0.08);
+        transition: all 0.2s;
+    }
+    .rank-row:hover {
+        background: rgba(255,215,0,0.06);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(255,215,0,0.15);
+    }
+    .rank-position {
+        font-size: 2.2rem;                /* mas malaki rank sa mobile para eye-catching */
+        font-weight: 900;
+        color: #e2e8f0;
+        text-align: center;
+        margin-bottom: 0.5rem;
+        letter-spacing: -2px;
+    }
+    .rank-1 { color: #ffd700; text-shadow: 0 0 12px #ffd70080; }
+    .rank-2 { color: #e2e8f0; }
+    .rank-3 { color: #fbbf24; }
+    .rank-hero {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 0.8rem;
+        margin-bottom: 0.5rem;
+    }
+    .rank-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: rgba(255,215,0,0.12);
+        border: 2.5px solid rgba(255,215,0,0.35);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        flex-shrink: 0;
+    }
+    .rank-name {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #f1f5f9;
+        flex: 1;
+    }
+    .rank-name small {
+        display: block;
+        color: #94a3b8;
+        font-size: 0.85rem;
+        font-weight: 400;
+    }
+    .rank-earnings {
+        font-size: 1.1rem;
+        font-weight: 700;
+        text-align: center;
+        margin: 0.4rem 0;
+    }
+    .positive { color: #22c55e; }
+    .negative { color: #ef4444; }
+    .zero { color: #94a3b8; }
+    .rank-badges {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.4rem;
+        margin-bottom: 0.4rem;
+    }
+    .badge-tag {
+        background: rgba(255,215,0,0.14);
+        color: #ffea80;
+        font-size: 0.78rem;
+        padding: 0.3rem 0.65rem;
+        border-radius: 999px;
+        border: 1px solid rgba(255,215,0,0.25);
+        white-space: nowrap;
+    }
+    .rank-details {
+        color: #94a3b8;
+        font-size: 0.82rem;
+        text-align: center;
+    }
+
+    /* Tablet & Desktop – keep compact grid */
+    @media (min-width: 768px) {
         .rank-header {
-            display: none;
+            display: grid;
+            grid-template-columns: 50px 180px 110px 1fr;
+            background: rgba(255,215,0,0.04);
+            padding: 0.6rem 0.8rem;
+            border-radius: 9px;
+            margin-bottom: 0.6rem;
+            font-weight: 700;
+            color: #ffea80;
+            font-size: 0.8rem;
+            text-align: left;
         }
         .rank-row {
-            display: flex;
-            flex-direction: column;
+            display: grid;
+            grid-template-columns: 50px 180px 110px 1fr;
             align-items: center;
-            padding: 0.9rem 0.7rem;
-            border-bottom: 1px solid rgba(255,215,0,0.06);
-            transition: background 0.2s;
+            padding: 0.7rem 0.8rem;
+            border-bottom: 1px solid rgba(255,215,0,0.04);
+            gap: 0.3rem;
+            background: transparent;  /* flat sa desktop */
+            border: none;
+            margin-bottom: 0;
         }
         .rank-row:hover {
-            background: rgba(255,215,0,0.03);
-            border-radius: 8px;
+            background: rgba(255,215,0,0.06);
         }
         .rank-position {
-            font-size: 1.8rem;
-            font-weight: 900;
-            color: #e2e8f0;
-            margin-bottom: 0.4rem;
-            letter-spacing: -1px;
+            font-size: 1.6rem;
+            text-align: center;
         }
-        .rank-1 { color: #ffd700; text-shadow: 0 0 10px rgba(255,215,0,0.5); }
-        .rank-2 { color: #e2e8f0; }
-        .rank-3 { color: #fbbf24; }
         .rank-hero {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0.4rem;
-            margin-bottom: 0.6rem;
-            width: 100%;
+            flex-direction: row;
+            gap: 0.6rem;
         }
         .rank-avatar {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            background: rgba(255,215,0,0.09);
-            border: 2px solid rgba(255,215,0,0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.6rem;
+            width: 40px;
+            height: 40px;
+            font-size: 1.4rem;
         }
         .rank-name {
-            font-size: 1.05rem;
-            font-weight: 700;
-            color: #f1f5f9;
-            text-align: center;
-        }
-        .rank-name small {
-            display: block;
-            color: #94a3b8;
-            font-size: 0.78rem;
-            font-weight: 400;
+            font-size: 0.96rem;
         }
         .rank-earnings {
-            font-size: 0.95rem;
-            font-weight: 700;
-            margin: 0.4rem 0;
-        }
-        .positive { color: #22c55e; }
-        .negative { color: #ef4444; }
-        .zero { color: #94a3b8; }
-        .rank-badges-details {
-            text-align: center;
-            width: 100%;
+            font-size: 0.9rem;
         }
         .rank-badges {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 0.35rem 0.4rem;
-            margin-bottom: 0.5rem;
-        }
-        .badge-tag {
-            background: rgba(255,215,0,0.11);
-            color: #ffea80;
-            font-size: 0.75rem;
-            padding: 0.25rem 0.6rem;
-            border-radius: 999px;
-            border: 1px solid rgba(255,215,0,0.22);
-            white-space: nowrap;
+            justify-content: flex-start;
         }
         .rank-details {
-            color: #94a3b8;
-            font-size: 0.8rem;
+            font-size: 0.76rem;
         }
-
-        /* Tablet & Desktop – ultra compact grid */
-        @media (min-width: 768px) {
-            .rank-header {
-                display: grid;
-                grid-template-columns: 50px 200px 130px 1fr;
-                background: rgba(255,215,0,0.04);
-                padding: 0.7rem 0.9rem;
-                border-radius: 9px;
-                margin-bottom: 0.8rem;
-                font-weight: 700;
-                color: #ffea80;
-                font-size: 0.82rem;
-                text-align: left;
-            }
-            .rank-row {
-                display: grid;
-                grid-template-columns: 50px 200px 130px 1fr;
-                align-items: center;
-                padding: 0.8rem 0.9rem;
-                border-bottom: 1px solid rgba(255,215,0,0.04);
-            }
-            .rank-position {
-                font-size: 1.6rem;
-                text-align: center;
-                margin: 0;
-            }
-            .rank-hero {
-                flex-direction: row;
-                gap: 0.7rem;
-                text-align: left;
-            }
-            .rank-avatar {
-                width: 42px;
-                height: 42px;
-                font-size: 1.5rem;
-            }
-            .rank-name {
-                font-size: 0.98rem;
-            }
-            .rank-name small {
-                display: inline;
-                font-size: 0.75rem;
-            }
-            .rank-earnings {
-                text-align: center;
-                font-size: 0.92rem;
-            }
-            .rank-badges-details {
-                text-align: left;
-            }
-            .rank-badges {
-                justify-content: flex-start;
-                gap: 0.3rem;
-            }
-            .badge-tag {
-                font-size: 0.72rem;
-                padding: 0.22rem 0.55rem;
-            }
-            .rank-details {
-                font-size: 0.78rem;
-            }
-        }
-        @media (min-width: 1024px) {
-            .empire-leaderboard { padding: 1rem 1rem; }
-            .rank-row { padding: 0.85rem 1rem; }
-        }
-    </style>
-    """, unsafe_allow_html=True)
+    }
+    @media (min-width: 1024px) {
+        .empire-leaderboard { padding: 0.8rem; max-width: 900px; }
+    }
+</style>
+""", unsafe_allow_html=True)
 
     st.markdown("<div class='empire-leaderboard'>", unsafe_allow_html=True)
 
@@ -601,6 +591,9 @@ if heroes:
 
         joined_text = f"Joined {hero['joined']}" if hero["joined"] else "Joined —"
 
+        # Added badge count for more info
+        details_text = f"{hero['title']} • {joined_text} • {hero['badge_count']} badges"
+
         st.markdown(f"""
         <div class='rank-row'>
             <div class='rank-position {rank_class}'>{i}</div>
@@ -614,7 +607,7 @@ if heroes:
             <div class='rank-badges-details'>
                 <div class='rank-badges'>{badge_tags_html}</div>
                 <div class='rank-details'>
-                    {hero["title"]} • {joined_text}
+                    {details_text}
                 </div>
             </div>
         </div>
@@ -623,7 +616,7 @@ if heroes:
     st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown("""
-    <div style='text-align:center; margin:2.5rem 0 4rem;'>
+    <div style='text-align:center; margin:2rem 0 3.5rem;'>
         <a href="#waitlist_form" style='display:inline-block; background:linear-gradient(90deg,#ffd700,#d4a017); color:#0f172a; font-weight:800; padding:0.7rem 2.2rem; border-radius:999px; text-decoration:none; box-shadow:0 6px 20px rgba(255,215,0,0.25); font-size:0.98rem;'>
             Join Waitlist – Start Your Rise Now 👑
         </a>
