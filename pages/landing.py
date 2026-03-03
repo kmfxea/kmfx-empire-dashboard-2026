@@ -1192,14 +1192,131 @@ with col_mid:
     """, unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# FOOTER
+# IMPROVED PREMIUM FOOTER
 # ────────────────────────────────────────────────
-st.markdown("---")
-st.markdown(f"""
-    <div style="text-align:center; padding:2rem; opacity:0.5; font-size:0.8rem; letter-spacing:1px;">
-        KMFX EA VERSION 2.1 | © 2026 BUILT BY FAITH, SHARED FOR GENERATIONS
-    </div>
-""", unsafe_allow_html=True)
 
-if not st.session_state.get("authenticated", False):
-    st.stop()
+st.markdown("""
+<div class="footer" style="
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    position: relative;
+    overflow: hidden;
+    padding: 3rem 1rem 2rem;
+    text-align: center;
+    color: #f1f5f9;
+    border-top: 1px solid rgba(255,215,0,0.15);
+    margin-top: 4rem;
+">
+    <!-- Subtle glowing lines background with logo colors -->
+    <div style="
+        position: absolute;
+        inset: 0;
+        background: 
+            radial-gradient(circle at 20% 30%, rgba(255,215,0,0.08) 0%, transparent 40%),
+            radial-gradient(circle at 80% 70%, rgba(0,255,170,0.06) 0%, transparent 50%),
+            linear-gradient(45deg, transparent 40%, rgba(255,215,0,0.03) 50%, transparent 60%),
+            linear-gradient(-45deg, transparent 40%, rgba(0,255,170,0.03) 50%, transparent 60%);
+        pointer-events: none;
+        opacity: 0.7;
+    "></div>
+
+    <!-- Tagline -->
+    <h3 style="
+        font-size: 1.8rem;
+        font-weight: 800;
+        background: linear-gradient(90deg, #ffd700, #00ffaa);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0.5rem;
+    ">KMFX Elite Empire</h3>
+    <p style="font-size: 1rem; color: #94a3b8; margin-bottom: 2rem;">
+        Built by Faith • Shared for Generations • 2026 👑
+    </p>
+
+    <!-- Main Navigation Links -->
+    <div style="
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 1.5rem 2rem;
+        margin-bottom: 1.5rem;
+        font-size: 0.95rem;
+    ">
+        <a href="/" style="color:#94a3b8; text-decoration:none; transition:0.3s;">Home</a>
+        <a href="#about" style="color:#94a3b8; text-decoration:none; transition:0.3s;">About</a>
+        <a href="#leaderboard" style="color:#94a3b8; text-decoration:none; transition:0.3s;">Leaderboard</a>
+        <a href="#waitlist_form" style="color:#94a3b8; text-decoration:none; transition:0.3s;">Join Waitlist</a>
+        <a href="#contact" style="color:#94a3b8; text-decoration:none; transition:0.3s;">Contact</a>
+    </div>
+
+    <!-- Social Subscribe & Follow -->
+    <p style="font-size: 1.05rem; color: #ffd700; margin: 1.5rem 0 0.8rem; font-weight: 600;">
+        Join the Community • Subscribe & Follow
+    </p>
+    <div style="
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+    ">
+        <!-- YouTube Subscribe -->
+        <a href="https://www.youtube.com/@kingminted-2014" target="_blank" style="
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            color: #ff0000;
+            text-decoration: none;
+            font-size: 1rem;
+            transition: all 0.3s;
+        ">
+            <span style="font-size: 1.8rem;">▶️</span> 
+            <span>Subscribe on YouTube</span>
+        </a>
+
+        <!-- Telegram -->
+        <a href="https://t.me/YOUR_TELEGRAM_GROUP" target="_blank" style="
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            color: #0088cc;
+            text-decoration: none;
+            font-size: 1rem;
+            transition: all 0.3s;
+        ">
+            <span style="font-size: 1.8rem;">✈️</span> 
+            <span>Telegram</span>
+        </a>
+    </div>
+
+    <!-- Legal Links -->
+    <div style="
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 1.2rem;
+        margin-bottom: 1.5rem;
+        font-size: 0.9rem;
+        color: #94a3b8;
+    ">
+        <a href="/terms" style="color:inherit; text-decoration:none;">Terms of Service</a>
+        <a href="/privacy" style="color:inherit; text-decoration:none;">Privacy Policy</a>
+        <a href="/disclaimer" style="color:inherit; text-decoration:none;">Risk Disclaimer</a>
+    </div>
+
+    <!-- Copyright -->
+    <p style="font-size: 0.85rem; color: #64748b; margin: 0;">
+        © 2026 KMFX Pro • Mark Jeff Blando • Philippines <br>
+        All Rights Reserved. Trading involves high risk. Past performance is not indicative of future results.
+    </p>
+</div>
+
+<!-- Hover glow effect -->
+<style>
+    .footer a:hover {
+        color: #ffd700 !important;
+        text-shadow: 0 0 10px rgba(255,215,0,0.6);
+        transform: scale(1.05);
+        transition: all 0.3s ease;
+    }
+</style>
+""", unsafe_allow_html=True)
