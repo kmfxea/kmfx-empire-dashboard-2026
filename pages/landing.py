@@ -1213,10 +1213,10 @@ st.markdown("""
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
     ">
-        KMFX EA Version 2.1
+        KMFX EA 
     </p>
     <p style="margin: 0 0 0.4rem;">
-        © 2026 Built by Faith, Shared for Generations • Mark Jeff Blando • Philippines
+        © 2026 Built by Faith, Shared for Generations • Philippines
     </p>
     <p style="margin: 0; opacity: 0.7;">
         Trading involves high risk. Past performance is not indicative of future results.
