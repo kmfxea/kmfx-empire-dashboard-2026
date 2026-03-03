@@ -1192,34 +1192,33 @@ with col_mid:
     """, unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# SIMPLE FOOTER (pure black bg + YouTube subscribe)
+# FIXED SIMPLE FOOTER – TRANSPARENT BACKGROUND
 # ────────────────────────────────────────────────
 
 st.markdown("---")
 
 st.markdown("""
 <div style="
-    background: #000000;
     text-align: center;
     padding: 2rem 1rem;
     font-size: 0.85rem;
-    color: #cccccc;
-    letter-spacing: 0.8px;
+    color: #94a3b8;
+    letter-spacing: 0.5px;
+    border-top: 1px solid rgba(255,215,0,0.08);
 ">
-    <p style="margin: 0 0 0.8rem; font-weight: 500;">
-        KMFX EA Version 2.1 | 
-        <a href="https://www.youtube.com/@kingminted-2014" target="_blank" style="
-            color: #ff0000;
-            text-decoration: none;
-            font-weight: 600;
-        ">Subscribe on YouTube ▶️</a>
+    <p style="
+        margin: 0 0 0.6rem;
+        font-weight: 600;
+        background: linear-gradient(90deg, #ffd700, #00ffaa);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    ">
+        KMFX EA Version 2.1
     </p>
-    
-    <p style="margin: 0 0 0.6rem;">
-        © 2026 Built by Faith, Shared for Generations • Philippines 
+    <p style="margin: 0 0 0.4rem;">
+        © 2026 Built by Faith, Shared for Generations • Mark Jeff Blando • Philippines
     </p>
-    
-    <p style="margin: 0; opacity: 0.8;">
+    <p style="margin: 0; opacity: 0.7;">
         Trading involves high risk. Past performance is not indicative of future results.
     </p>
 </div>
