@@ -250,26 +250,82 @@ st.components.v1.html("""
 """, height=420)
 
 # ────────────────────────────────────────────────
-# BACKTEST VIDEO
+# BACKTEST VIDEOS – TABBED MODE (1-Year & 3-Year)
 # ────────────────────────────────────────────────
-st.markdown("<h2 class='gold-text' style='text-align:center; margin:3rem 0 1.5rem;'>See the 2025 Backtest Results</h2>", unsafe_allow_html=True)
-st.markdown("<p style='text-align:center; color:#cccccc; font-size:1.1rem; margin-bottom:1rem;'>1-Year Gold (XAUUSD) Performance: $500 → $3,906 (781% return)</p>", unsafe_allow_html=True)
-st.markdown("<p style='text-align:center; color:#aaaaaa; font-size:1rem; margin-bottom:2rem;'>Watch how KMFX EA performed in real historical test – win rate, drawdown, at full breakdown</p>", unsafe_allow_html=True)
 
+st.markdown("<h2 class='gold-text' style='text-align:center; margin:3rem 0 1.5rem;'>Backtest Results – Proven Performance</h2>", unsafe_allow_html=True)
+st.markdown("<p style='text-align:center; color:#cccccc; font-size:1.1rem; margin-bottom:1rem;'>See how KMFX EA performed across different timeframes on Gold (XAUUSD)</p>", unsafe_allow_html=True)
+
+tab1, tab2 = st.tabs(["1-Year Backtest", "3-Year Backtest"])
+
+with tab1:
+    st.markdown("<p style='text-align:center; color:#aaaaaa; font-size:1rem; margin:1rem 0;'>$500 → $3,906 (781% return) in 1 Year (2025)</p>", unsafe_allow_html=True)
+    st.markdown("""
+    <div class="video-container" style="position:relative; padding-bottom:56.25%; height:0; overflow:hidden; max-width:100%; background:#000; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.5);">
+      <iframe
+        src="https://www.youtube.com/embed/K7Ao_U0fuhk?rel=0&modestbranding=1&showinfo=0&controls=1"
+        title="KMFX EA Backtest: $500 to $3,906 in 1 Year – Gold Strategy Test"
+        frameborder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen
+        style="position:absolute; top:0; left:0; width:100%; height:100%;"
+        loading="lazy">
+      </iframe>
+    </div>
+    """, unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center; color:#aaaaaa; font-size:0.95rem; margin-top:1rem;'>Backtest only – trading involves high risk. Past performance is not indicative of future results.</p>", unsafe_allow_html=True)
+
+with tab2:
+    st.markdown("<p style='text-align:center; color:#aaaaaa; font-size:1rem; margin:1rem 0;'>$500 → $85,125 net profit in 3 Years (2023-2025) – 61.57% win rate</p>", unsafe_allow_html=True)
+    st.markdown("""
+    <div class="video-container" style="position:relative; padding-bottom:56.25%; height:0; overflow:hidden; max-width:100%; background:#000; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.5);">
+      <iframe
+        src="https://www.youtube.com/embed/NUFOMlMgVzY?rel=0&modestbranding=1&showinfo=0&controls=1"
+        title="KMFX EA 3-Year Backtest: $500 to $85,125 on Gold XAUUSD – Real Results 2023-2025"
+        frameborder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen
+        style="position:absolute; top:0; left:0; width:100%; height:100%;"
+        loading="lazy">
+      </iframe>
+    </div>
+    """, unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center; color:#aaaaaa; font-size:0.95rem; margin-top:1rem;'>Backtest only – trading involves high risk. Past performance is not indicative of future results.</p>", unsafe_allow_html=True)
+
+# Premium tab styling
 st.markdown("""
-<div class="video-container">
-  <iframe
-    src="https://www.youtube.com/embed/K7Ao_U0fuhk?rel=0&modestbranding=1&showinfo=0&controls=1"
-    title="KMFX EA Backtest 2025 – Gold Strategy Test"
-    frameborder="0"
-    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-    allowfullscreen
-    loading="lazy">
-  </iframe>
-</div>
+<style>
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 1.5rem;
+        justify-content: center;
+        border-bottom: 1px solid rgba(255,215,0,0.15);
+        margin-bottom: 1.5rem;
+    }
+    .stTabs [data-baseweb="tab"] {
+        height: 48px;
+        white-space: nowrap;
+        background: rgba(255,215,0,0.05);
+        border-radius: 10px 10px 0 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #ffd700;
+        padding: 0 2.5rem;
+        transition: all 0.3s;
+    }
+    .stTabs [aria-selected="true"] {
+        background: rgba(255,215,0,0.18) !important;
+        border-bottom: 4px solid #ffd700 !important;
+        color: #ffffff !important;
+    }
+    .video-container {
+        margin: 1.5rem auto;
+        max-width: 900px;
+    }
+    @media (max-width: 768px) {
+        .stTabs [data-baseweb="tab"] { padding: 0 1.5rem; font-size: 1rem; }
+    }
+</style>
 """, unsafe_allow_html=True)
-
-st.markdown("<p style='text-align:center; color:#aaaaaa; font-size:0.95rem; margin-top:1rem;'>Backtest only – trading involves high risk. Past performance is not indicative of future results. Always do your own research.</p>", unsafe_allow_html=True)
 
 st.markdown("<div style='height:3rem;'></div>", unsafe_allow_html=True)
 
