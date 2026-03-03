@@ -1192,65 +1192,50 @@ with col_mid:
     """, unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# IMPROVED PREMIUM FOOTER
+# SIMPLE & CLEAN PREMIUM FOOTER
 # ────────────────────────────────────────────────
 
 st.markdown("""
-<div class="footer" style="
+<div style="
     background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    position: relative;
-    overflow: hidden;
-    padding: 3rem 1rem 2rem;
+    padding: 2.5rem 1rem 2rem;
     text-align: center;
     color: #f1f5f9;
-    border-top: 1px solid rgba(255,215,0,0.15);
+    border-top: 1px solid rgba(255,215,0,0.12);
     margin-top: 4rem;
 ">
-    <!-- Subtle glowing lines background with logo colors -->
-    <div style="
-        position: absolute;
-        inset: 0;
-        background: 
-            radial-gradient(circle at 20% 30%, rgba(255,215,0,0.08) 0%, transparent 40%),
-            radial-gradient(circle at 80% 70%, rgba(0,255,170,0.06) 0%, transparent 50%),
-            linear-gradient(45deg, transparent 40%, rgba(255,215,0,0.03) 50%, transparent 60%),
-            linear-gradient(-45deg, transparent 40%, rgba(0,255,170,0.03) 50%, transparent 60%);
-        pointer-events: none;
-        opacity: 0.7;
-    "></div>
-
     <!-- Tagline -->
     <h3 style="
-        font-size: 1.8rem;
-        font-weight: 800;
+        font-size: 1.5rem;
+        font-weight: 700;
         background: linear-gradient(90deg, #ffd700, #00ffaa);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.8rem;
     ">KMFX Elite Empire</h3>
-    <p style="font-size: 1rem; color: #94a3b8; margin-bottom: 2rem;">
+    <p style="font-size: 0.95rem; color: #94a3b8; margin-bottom: 1.8rem;">
         Built by Faith • Shared for Generations • 2026 👑
     </p>
 
-    <!-- Main Navigation Links -->
+    <!-- Main Links -->
     <div style="
         display: flex;
         flex-wrap: wrap;
         justify-content: center;
-        gap: 1.5rem 2rem;
+        gap: 1.2rem 1.8rem;
         margin-bottom: 1.5rem;
-        font-size: 0.95rem;
+        font-size: 0.9rem;
     ">
-        <a href="/" style="color:#94a3b8; text-decoration:none; transition:0.3s;">Home</a>
-        <a href="#about" style="color:#94a3b8; text-decoration:none; transition:0.3s;">About</a>
-        <a href="#leaderboard" style="color:#94a3b8; text-decoration:none; transition:0.3s;">Leaderboard</a>
-        <a href="#waitlist_form" style="color:#94a3b8; text-decoration:none; transition:0.3s;">Join Waitlist</a>
-        <a href="#contact" style="color:#94a3b8; text-decoration:none; transition:0.3s;">Contact</a>
+        <a href="/" style="color:#94a3b8; text-decoration:none;">Home</a>
+        <a href="#about" style="color:#94a3b8; text-decoration:none;">About</a>
+        <a href="#leaderboard" style="color:#94a3b8; text-decoration:none;">Leaderboard</a>
+        <a href="#waitlist_form" style="color:#94a3b8; text-decoration:none;">Join Waitlist</a>
+        <a href="#contact" style="color:#94a3b8; text-decoration:none;">Contact</a>
     </div>
 
     <!-- Social Subscribe & Follow -->
-    <p style="font-size: 1.05rem; color: #ffd700; margin: 1.5rem 0 0.8rem; font-weight: 600;">
-        Join the Community • Subscribe & Follow
+    <p style="font-size: 1rem; color: #ffd700; margin: 1.2rem 0 0.6rem;">
+        Join the Community
     </p>
     <div style="
         display: flex;
@@ -1259,31 +1244,29 @@ st.markdown("""
         margin-bottom: 1.5rem;
         flex-wrap: wrap;
     ">
-        <!-- YouTube Subscribe -->
-        <a href="https://www.youtube.com/@kingminted-2014" target="_blank" style="
+        <!-- YouTube -->
+        <a href="https://www.youtube.com/@kingminted-2014?sub_confirmation=1" target="_blank" style="
             display: flex;
             align-items: center;
-            gap: 0.6rem;
+            gap: 0.5rem;
             color: #ff0000;
             text-decoration: none;
-            font-size: 1rem;
-            transition: all 0.3s;
+            font-size: 0.95rem;
         ">
-            <span style="font-size: 1.8rem;">▶️</span> 
-            <span>Subscribe on YouTube</span>
+            <span style="font-size: 1.6rem;">▶️</span> 
+            <span>Subscribe</span>
         </a>
 
         <!-- Telegram -->
         <a href="https://t.me/YOUR_TELEGRAM_GROUP" target="_blank" style="
             display: flex;
             align-items: center;
-            gap: 0.6rem;
+            gap: 0.5rem;
             color: #0088cc;
             text-decoration: none;
-            font-size: 1rem;
-            transition: all 0.3s;
+            font-size: 0.95rem;
         ">
-            <span style="font-size: 1.8rem;">✈️</span> 
+            <span style="font-size: 1.6rem;">✈️</span> 
             <span>Telegram</span>
         </a>
     </div>
@@ -1293,9 +1276,9 @@ st.markdown("""
         display: flex;
         flex-wrap: wrap;
         justify-content: center;
-        gap: 1.2rem;
-        margin-bottom: 1.5rem;
-        font-size: 0.9rem;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        font-size: 0.85rem;
         color: #94a3b8;
     ">
         <a href="/terms" style="color:inherit; text-decoration:none;">Terms of Service</a>
@@ -1304,19 +1287,9 @@ st.markdown("""
     </div>
 
     <!-- Copyright -->
-    <p style="font-size: 0.85rem; color: #64748b; margin: 0;">
-        © 2026 KMFX Pro • Mark Jeff Blando • Philippines <br>
-        All Rights Reserved. Trading involves high risk. Past performance is not indicative of future results.
+    <p style="font-size: 0.8rem; color: #64748b; margin: 0;">
+        © 2026 KMFX Pro • Mark Jeff Blando • Philippines<br>
+        All Rights Reserved. Trading involves high risk.
     </p>
 </div>
-
-<!-- Hover glow effect -->
-<style>
-    .footer a:hover {
-        color: #ffd700 !important;
-        text-shadow: 0 0 10px rgba(255,215,0,0.6);
-        transform: scale(1.05);
-        transition: all 0.3s ease;
-    }
-</style>
 """, unsafe_allow_html=True)
