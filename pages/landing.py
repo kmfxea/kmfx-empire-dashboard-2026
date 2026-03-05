@@ -250,13 +250,12 @@ st.components.v1.html("""
 """, height=420)
 
 # ────────────────────────────────────────────────
-# BACKTEST VIDEOS – TABBED MODE (1-Year & 3-Year)
+# BACKTEST VIDEOS – TABBED MODE (1-Year, 3-Year, 5-Year)
 # ────────────────────────────────────────────────
-
 st.markdown("<h2 class='gold-text' style='text-align:center; margin:3rem 0 1.5rem;'>Backtest Results – Proven Performance</h2>", unsafe_allow_html=True)
 st.markdown("<p style='text-align:center; color:#cccccc; font-size:1.1rem; margin-bottom:1rem;'>See how KMFX EA performed across different timeframes on Gold (XAUUSD)</p>", unsafe_allow_html=True)
 
-tab1, tab2 = st.tabs(["1-Year Backtest", "3-Year Backtest"])
+tab1, tab2, tab3 = st.tabs(["1-Year Backtest", "3-Year Backtest", "5-Year Backtest"])
 
 with tab1:
     st.markdown("<p style='text-align:center; color:#aaaaaa; font-size:1rem; margin:1rem 0;'>$500 → $3,906 (781% return) in 1 Year (2025)</p>", unsafe_allow_html=True)
@@ -292,7 +291,24 @@ with tab2:
     """, unsafe_allow_html=True)
     st.markdown("<p style='text-align:center; color:#aaaaaa; font-size:0.95rem; margin-top:1rem;'>Backtest only – trading involves high risk. Past performance is not indicative of future results.</p>", unsafe_allow_html=True)
 
-# Premium tab styling
+with tab3:
+    st.markdown("<p style='text-align:center; color:#aaaaaa; font-size:1rem; margin:1rem 0;'>$500 → ~$250,000 net profit in 5 Years (2021-2025) – 65.78% win rate</p>", unsafe_allow_html=True)
+    st.markdown("""
+    <div class="video-container" style="position:relative; padding-bottom:56.25%; height:0; overflow:hidden; max-width:100%; background:#000; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.5);">
+      <iframe
+        src="https://www.youtube.com/embed/aoe89mXiwp0?rel=0&modestbranding=1&showinfo=0&controls=1"
+        title="KMFX EA 5-Year Backtest: $500 to $250K on Gold XAUUSD – Real Results 2021-2025"
+        frameborder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen
+        style="position:absolute; top:0; left:0; width:100%; height:100%;"
+        loading="lazy">
+      </iframe>
+    </div>
+    """, unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center; color:#aaaaaa; font-size:0.95rem; margin-top:1rem;'>Backtest only – trading involves high risk. Past performance is not indicative of future results.</p>", unsafe_allow_html=True)
+
+# Premium tab styling (unchanged)
 st.markdown("""
 <style>
     .stTabs [data-baseweb="tab-list"] {
