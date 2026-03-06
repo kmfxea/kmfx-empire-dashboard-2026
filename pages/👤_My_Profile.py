@@ -9,7 +9,7 @@ import uuid
 import pandas as pd
 
 # ────────────────────────────────────────────────
-# AUTH + SIDEBAR + REQUIRE AUTH (must be first)
+# IMPORTS & INITIAL SETUP
 # ────────────────────────────────────────────────
 from utils.auth import require_auth
 from utils.sidebar import render_sidebar
@@ -17,15 +17,15 @@ from utils.supabase_client import supabase
 from utils.helpers import upload_to_supabase, log_action
 
 render_sidebar()
-require_auth(min_role="client")  # Clients see full profile, owner/admin see admin view
+require_auth(min_role="client")
 
-# ─── THEME COLORS (consistent with Dashboard) ───
+# ─── THEME COLORS ───
 accent_primary = "#00ffaa"
 accent_gold    = "#ffd700"
 accent_glow    = "#00ffaa40"
 accent_hover   = "#00ffcc"
 
-# ─── SCROLL-TO-TOP (same as Dashboard) ───
+# ─── FORCE SCROLL TO TOP ───
 st.markdown("""
 <script>
 function forceScrollToTop() {
@@ -47,65 +47,62 @@ setTimeout(forceScrollToTop, 2000);
 </script>
 """, unsafe_allow_html=True)
 
-# ─── WELCOME + BALLOONS ───
+# ─── WELCOME MESSAGE ON FRESH LOGIN ───
 if st.session_state.get("just_logged_in", False):
     st.balloons()
     st.success(f"Welcome back, {st.session_state.get('full_name', 'Leader')}! 👑")
     st.session_state.pop("just_logged_in", None)
 
-st.header("👤 My Profile")
+# ─── HEADER WITH ROLE BADGE ───
+role = st.session_state.get("role", "client").lower()
+role_emoji = {"client": "👤", "admin": "🛡️", "owner": "👑"}.get(role, "❓")
+st.header(f"{role_emoji} My Profile • {role.title()} View")
 
 my_name     = st.session_state.full_name
 my_username = st.session_state.username
-current_role = st.session_state.get("role", "guest").lower()
 
-# Navigation state (for safe page switching)
+# Navigation helper
 if "navigate_to" not in st.session_state:
     st.session_state.navigate_to = None
 
-# ─── CLIENT PROFILE ───
-if current_role == "client":
-    st.markdown("**Your KMFX EA Elite Membership** • Realtime flip card, earnings, participation, withdrawals • Full transparency")
+# ─── FETCH CURRENT USER DATA ───
+@st.cache_data(ttl=60)
+def fetch_user_data():
+    try:
+        resp = supabase.table("users").select("*").eq("username", my_username).maybe_single().execute()
+        return resp.data or {}
+    except Exception as e:
+        st.error(f"User fetch error: {str(e)}")
+        return {}
 
-    @st.cache_data(ttl=10)
-    def fetch_client_data():
-        try:
-            user_resp = supabase.table("users").select("*").eq("username", my_username).single().execute()
-            user = user_resp.data or {}
+user = fetch_user_data()
+balance   = user.get("balance", 0.0)
+my_title  = user.get("title", "Member").upper()
+qr_token  = user.get("qr_token")
 
-            # Your shared accounts
-            accs_resp = supabase.table("ftmo_accounts").select("*").execute()
-            accounts = accs_resp.data or []
-            my_accs = []
-            uid = str(user.get("id", ""))
-            for a in accounts:
-                p_v2 = a.get("participants_v2", []) or []
-                p_old = a.get("participants", []) or []
-                if any(
-                    p.get("display_name") == my_name or
-                    str(p.get("user_id")) == uid or
-                    p.get("name") == my_name
-                    for p in p_v2 + p_old
-                ):
-                    my_accs.append(a)
+# ─── COMMON PERSONAL CARD (shown to ALL roles) ───
+st.subheader("Personal Information")
+cols = st.columns([1, 3])
+with cols[0]:
+    st.image("https://via.placeholder.com/180x180/111/eee?text=Avatar", use_column_width=True)
+with cols[1]:
+    st.markdown(f"**Name:** {my_name}")
+    st.markdown(f"**Username:** @{my_username}")
+    st.markdown(f"**Title:** {my_title}")
+    st.markdown(f"**Email:** {user.get('email', '—')}")
+    st.markdown(f"**Contact:** {user.get('contact_no') or user.get('phone', '—')}")
+    st.markdown(f"**Address:** {user.get('address', '—')}")
+    st.metric("Available Balance", f"${balance:,.2f}")
 
-            # Withdrawals
-            wds = supabase.table("withdrawals").select("*").eq("client_name", my_name).order("date_requested", desc=True).execute().data or []
+st.markdown("---")
 
-            # Proofs
-            proofs = supabase.table("client_files").select("*").eq("assigned_client", my_name).order("upload_date", desc=True).execute().data or []
+# ─── ROLE-SPECIFIC CONTENT ───
+if role == "client":
+    # ── CLIENT VIEW ────────────────────────────────────────────────
 
-            return user, my_accs, wds, proofs
-        except Exception as e:
-            st.error(f"Profile data fetch error: {str(e)}")
-            return {}, [], [], []
-
-    user, my_accounts, my_withdrawals, my_proofs = fetch_client_data()
-
-    # ─── PREMIUM FLIP CARD ───
-    my_title = user.get("title", "Member").upper()
+    # Premium Flip Card
+    st.subheader("Your KMFX EA Elite Membership Card")
     card_title = f"{my_title} CARD" if my_title != "NONE" else "MEMBER CARD"
-    balance = user.get("balance", 0.0)
 
     st.markdown(f"""
     <div style="perspective: 1500px; max-width: 620px; margin: 2.5rem auto; width: 100%;">
@@ -142,7 +139,6 @@ if current_role == "client":
                 <strong style="color:{accent_gold};">Contact:</strong> {user.get('contact_no') or user.get('phone','—')}<br>
                 <strong style="color:{accent_gold};">Address:</strong> {user.get('address','—')}<br>
                 <strong style="color:{accent_gold};">Balance:</strong> <span style="color:{accent_primary};">${balance:,.2f}</span><br>
-                <strong style="color:{accent_gold};">Shared Accounts:</strong> {len(my_accounts)} active
               </div>
               <p style="text-align:center; margin-top:1.8rem; opacity:0.75;">KMFX Elite Access • 2026</p>
             </div>
@@ -161,11 +157,9 @@ if current_role == "client":
     <p style="text-align:center; opacity:0.8; margin-top:1rem;">Hover or tap card to flip ↺</p>
     """, unsafe_allow_html=True)
 
-    # ─── QUICK LOGIN QR ───
+    # Quick Login QR
     st.subheader("🔑 Quick Login QR Code")
-    qr_token = user.get("qr_token")
     app_url = "https://kmfxea.streamlit.app"
-
     if qr_token:
         qr_content = f"{app_url}/?qr={qr_token}"
         qr = qrcode.QRCode(version=1, box_size=10, border=4)
@@ -185,24 +179,50 @@ if current_role == "client":
 
         st.markdown("---")
         st.warning("**Regenerate if QR is exposed/shared/lost** — old QR will stop working")
-        col_regen, col_revoke = st.columns(2)
-        with col_regen:
+        col1, col2 = st.columns(2)
+        with col1:
             if st.button("🔄 Regenerate QR Code", type="primary", use_container_width=True):
                 new_token = str(uuid.uuid4())
-                supabase.table("users").update({"qr_token": new_token}).eq("id", user["id"]).execute()
+                supabase.table("users").update({"qr_token": new_token}).eq("username", my_username).execute()
                 log_action("QR Regenerated", f"User: {my_name}")
                 st.success("New QR created! Refreshing...")
                 st.rerun()
-        with col_revoke:
+        with col2:
             if st.button("❌ Revoke QR Code", type="secondary", use_container_width=True):
-                supabase.table("users").update({"qr_token": None}).eq("id", user["id"]).execute()
+                supabase.table("users").update({"qr_token": None}).eq("username", my_username).execute()
                 log_action("QR Revoked", f"User: {my_name}")
                 st.success("QR revoked • Login code disabled")
                 st.rerun()
     else:
         st.info("No Quick Login QR yet. Contact admin/owner to generate one.")
 
-    # ─── SHARED ACCOUNTS ───
+    # Shared Accounts
+    @st.cache_data(ttl=30)
+    def fetch_client_data():
+        try:
+            accs_resp = supabase.table("ftmo_accounts").select("*").execute()
+            accounts = accs_resp.data or []
+            my_accs = []
+            uid = str(user.get("id", ""))
+            for a in accounts:
+                p_v2 = a.get("participants_v2", []) or []
+                p_old = a.get("participants", []) or []
+                if any(
+                    p.get("display_name") == my_name or
+                    str(p.get("user_id")) == uid or
+                    p.get("name") == my_name
+                    for p in p_v2 + p_old
+                ):
+                    my_accs.append(a)
+            wds = supabase.table("withdrawals").select("*").eq("client_name", my_name).order("date_requested", desc=True).execute().data or []
+            proofs = supabase.table("client_files").select("*").eq("assigned_client", my_name).order("upload_date", desc=True).execute().data or []
+            return my_accs, wds, proofs
+        except Exception as e:
+            st.error(f"Client data fetch error: {str(e)}")
+            return [], [], []
+
+    my_accounts, my_withdrawals, my_proofs = fetch_client_data()
+
     st.subheader(f"Your Shared Accounts ({len(my_accounts)} active)")
     if my_accounts:
         for acc in my_accounts:
@@ -210,13 +230,11 @@ if current_role == "client":
             my_part = next((p for p in participants if p.get("display_name") == my_name or str(p.get("user_id")) == str(user.get("id")) or p.get("name") == my_name), None)
             my_pct = my_part.get("percentage", 0) if my_part else 0
             projected = acc.get("current_equity", 0) * my_pct / 100
-
             with st.expander(f"🌟 {acc.get('name')} • Your share: {my_pct:.1f}% • {acc.get('current_phase')}"):
-                cols = st.columns(2)
-                cols[0].metric("Equity", f"${acc.get('current_equity',0):,.0f}")
-                cols[0].metric("Your Projected", f"${projected:,.2f}")
-                cols[1].metric("Withdrawable", f"${acc.get('withdrawable_balance',0):,.0f}")
-
+                c1, c2 = st.columns(2)
+                c1.metric("Equity", f"${acc.get('current_equity',0):,.0f}")
+                c1.metric("Your Projected", f"${projected:,.2f}")
+                c2.metric("Withdrawable", f"${acc.get('withdrawable_balance',0):,.0f}")
                 labels = ["Profits"]
                 vals = []
                 for p in participants:
@@ -224,7 +242,6 @@ if current_role == "client":
                     pct = p.get("percentage", 0)
                     labels.append(f"{name} ({pct:.1f}%)")
                     vals.append(pct)
-
                 if vals:
                     fig = go.Figure(go.Sankey(
                         node=dict(pad=15, thickness=20, label=labels, color=[accent_primary] + [accent_gold]*len(vals)),
@@ -235,15 +252,15 @@ if current_role == "client":
     else:
         st.info("No shared accounts yet.")
 
-    # ─── WITHDRAWAL HISTORY & REQUEST ───
+    # Withdrawal History & Request
     st.subheader("💳 Withdrawal History & Requests")
     if my_withdrawals:
         for w in my_withdrawals:
-            color = {"Pending":"#ffa502", "Approved":accent_primary, "Paid":"#2ed573", "Rejected":"#ff4757"}.get(w["status"], "#666")
+            color = {"Pending":"#ffa502", "Approved":accent_primary, "Paid":"#2ed573", "Rejected":"#ff4757"}.get(w.get("status","Pending"), "#666")
             st.markdown(f"""
             <div style="padding:1.4rem; border-left:5px solid {color}; background:rgba(255,255,255,0.05); border-radius:8px; margin-bottom:1rem;">
-                <h4 style="margin:0;">${w['amount']:,.0f} — {w['status']}</h4>
-                <small>Method: {w['method']} • Requested: {w['date_requested']}</small>
+                <h4 style="margin:0;">${w.get('amount',0):,.0f} — {w.get('status','Pending')}</h4>
+                <small>Method: {w.get('method','—')} • Requested: {w.get('date_requested','—')}</small>
             </div>
             """, unsafe_allow_html=True)
     else:
@@ -259,31 +276,25 @@ if current_role == "client":
                 details = st.text_area("Details (wallet/address/bank info)")
                 proof = st.file_uploader("Proof (required – permanent)", type=["png","jpg","jpeg","pdf","gif"])
                 submitted = st.form_submit_button("Submit Request", type="primary")
-
                 if submitted:
                     if amt > balance:
                         st.error("Amount exceeds your balance")
                     elif not proof:
                         st.error("Proof document is required")
                     else:
-                        with st.spinner("Submitting withdrawal request..."):
+                        with st.spinner("Submitting..."):
                             try:
-                                url, storage_path = upload_to_supabase(
-                                    file=proof,
-                                    bucket="client_files",
-                                    folder="withdrawals"
-                                )
+                                url, path = upload_to_supabase(proof, "client_files", "withdrawals")
                                 supabase.table("client_files").insert({
                                     "original_name": proof.name,
                                     "file_url": url,
-                                    "storage_path": storage_path,
+                                    "storage_path": path,
                                     "upload_date": datetime.now().date().isoformat(),
                                     "sent_by": my_name,
                                     "category": "Withdrawal Proof",
                                     "assigned_client": my_name,
-                                    "notes": f"Proof for ${amt:,.2f} withdrawal request"
+                                    "notes": f"Proof for ${amt:,.2f} withdrawal"
                                 }).execute()
-
                                 supabase.table("withdrawals").insert({
                                     "client_name": my_name,
                                     "client_user_id": user.get("id"),
@@ -293,55 +304,45 @@ if current_role == "client":
                                     "status": "Pending",
                                     "date_requested": datetime.now().date().isoformat()
                                 }).execute()
-
-                                st.success("Withdrawal request submitted! Proof permanently stored.")
+                                st.success("Request submitted! Proof stored permanently.")
                                 st.rerun()
                             except Exception as e:
                                 st.error(f"Submission failed: {str(e)}")
 
-    # ─── PROOF VAULT ───
+    # Proof Vault
     st.subheader("📁 Proof Vault")
     if my_proofs:
-        proof_cols = st.columns(4)
-        for idx, p in enumerate(my_proofs):
-            with proof_cols[idx % 4]:
+        cols = st.columns(4)
+        for i, p in enumerate(my_proofs):
+            with cols[i % 4]:
                 file_url = p.get("file_url")
                 if p.get("storage_path"):
                     try:
-                        signed = supabase.storage.from_("client_files").create_signed_url(p["storage_path"], expires_in=7200)
-                        file_url = signed.signed_url
+                        signed = supabase.storage.from_("client_files").create_signed_url(p["storage_path"], 7200)
+                        file_url = signed.get("signedURL")
                     except:
                         pass
-
                 if file_url:
                     if p["original_name"].lower().endswith(('.png','.jpg','.jpeg','.gif')):
                         st.image(file_url, caption=p["original_name"], use_column_width=True)
                     else:
-                        st.markdown(f"**{p['original_name']}** • {p.get('upload_date', '—')}")
+                        st.markdown(f"**{p['original_name']}** • {p.get('upload_date','—')}")
                         try:
                             r = requests.get(file_url, timeout=10)
                             if r.status_code == 200:
-                                st.download_button(
-                                    "⬇ Download",
-                                    data=r.content,
-                                    file_name=p["original_name"],
-                                    mime="application/octet-stream",
-                                    use_container_width=True,
-                                    key=f"dl_proof_{p['id']}"
-                                )
+                                st.download_button("⬇ Download", r.content, p["original_name"], use_container_width=True, key=f"dl_{p['id']}")
                         except:
                             st.caption("Download unavailable")
-                else:
-                    st.caption("File unavailable")
     else:
-        st.info("No proofs uploaded yet")
+        st.info("No proofs uploaded yet.")
 
-# ─── OWNER / ADMIN OVERVIEW ───
-else:
-    st.markdown("**Empire Owner / Admin Overview** • Realtime totals & quick controls")
+elif role in ("admin", "owner"):
+    # ── ADMIN & OWNER VIEW ─────────────────────────────────────────
+
+    st.subheader("Empire Overview & Quick Controls")
 
     @st.cache_data(ttl=30)
-    def fetch_owner_overview():
+    def fetch_empire_overview():
         try:
             gf = supabase.table("mv_growth_fund_balance").select("balance").execute().data
             gf_balance = gf[0]["balance"] if gf else 0.0
@@ -356,69 +357,67 @@ else:
 
             return gf_balance, emp_data, cl_data, recent
         except Exception as e:
-            st.error(f"Owner overview fetch error: {str(e)}")
+            st.error(f"Overview fetch error: {str(e)}")
             return 0.0, {}, {}, []
 
-    gf_balance, empire, clients, recent_profits = fetch_owner_overview()
+    gf_balance, empire, clients, recent_profits = fetch_empire_overview()
 
-    st.markdown(f"""
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.2rem; margin: 2rem 0;">
-        <div class="glass-card" style="text-align:center; padding:1.5rem; border-radius:12px;">
-            <h4 style="opacity:0.8; margin:0; font-size:1rem;">Active Accounts</h4>
-            <h2 style="margin:0.5rem 0 0; font-size:2.6rem; color:{accent_primary};">{empire.get('total_accounts', 0)}</h2>
-        </div>
-        <div class="glass-card" style="text-align:center; padding:1.5rem; border-radius:12px;">
-            <h4 style="opacity:0.8; margin:0; font-size:1rem;">Total Equity</h4>
-            <h2 style="margin:0.5rem 0 0; font-size:2.6rem; color:{accent_primary};">${empire.get('total_equity', 0):,.0f}</h2>
-        </div>
-        <div class="glass-card" style="text-align:center; padding:1.5rem; border-radius:12px;">
-            <h4 style="opacity:0.8; margin:0; font-size:1rem;">Withdrawable</h4>
-            <h2 style="margin:0.5rem 0 0; font-size:2.6rem; color:#ff6b6b;">${empire.get('total_withdrawable', 0):,.0f}</h2>
-        </div>
-        <div class="glass-card" style="text-align:center; padding:1.5rem; border-radius:12px;">
-            <h4 style="opacity:0.8; margin:0; font-size:1rem;">Growth Fund</h4>
-            <h2 style="margin:0.5rem 0 0; font-size:2.8rem; color:{accent_gold};">${gf_balance:,.0f}</h2>
-        </div>
-        <div class="glass-card" style="text-align:center; padding:1.5rem; border-radius:12px;">
-            <h4 style="opacity:0.8; margin:0; font-size:1rem;">Client Balances</h4>
-            <h2 style="margin:0.5rem 0 0; font-size:2.6rem; color:{accent_gold};">${clients.get('total_client_balances', 0):,.0f}</h2>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    # Metrics grid
+    cols = st.columns(4)
+    cols[0].metric("Active Accounts", empire.get("total_accounts", 0))
+    cols[1].metric("Total Equity", f"${empire.get('total_equity', 0):,.0f}")
+    cols[2].metric("Withdrawable", f"${empire.get('total_withdrawable', 0):,.0f}")
+    cols[3].metric("Growth Fund", f"${gf_balance:,.0f}")
 
-    # ─── FIXED QUICK ACTIONS (session state navigation) ───
-    st.subheader("⚡ Quick Actions")
+    if role == "owner":
+        extra = st.columns(2)
+        extra[0].metric("Total Clients", clients.get("total_clients", 0))
+        extra[1].metric("Client Balances", f"${clients.get('total_client_balances', 0):,.0f}")
 
-    cols = st.columns(3)
-
-    with cols[0]:
-        if st.button("Manage FTMO Accounts", type="primary", use_container_width=True):
-            st.session_state.navigate_to = "pages/📊_FTMO_Accounts.py"
-            st.rerun()
-
-    with cols[1]:
-        if st.button("Record Profit", type="primary", use_container_width=True):
-            st.session_state.navigate_to = "pages/💰_Profit_Sharing.py"
-            st.rerun()
-
-    with cols[2]:
-        if st.button("Growth Fund", type="primary", use_container_width=True):
-            st.session_state.navigate_to = "pages/🌱_Growth_Fund.py"
-            st.rerun()
-
-    # Execute navigation AFTER buttons (outside callback)
-    if st.session_state.navigate_to:
-        page = st.session_state.navigate_to
-        st.session_state.navigate_to = None  # Reset
-        st.switch_page(page)
-
-    # Recent profits
+    # Recent Profits
     st.subheader("Recent Profits (Last 5)")
     if recent_profits:
         for p in recent_profits:
-            st.markdown(f"**{p.get('record_date', '—')}** — Gross: **${p.get('gross_profit', 0):,.2f}**")
+            st.markdown(f"**{p.get('record_date', '—')}** — Gross Profit: **${p.get('gross_profit', 0):,.2f}**")
     else:
-        st.info("No recent profits recorded yet.")
+        st.info("No recent profit records.")
+
+    # Quick Actions
+    st.subheader("⚡ Quick Actions")
+    cols = st.columns(3 if role == "admin" else 4)
+
+    cols[0].button(
+        "Manage FTMO Accounts",
+        type="primary",
+        use_container_width=True,
+        on_click=lambda: st.session_state.update({"navigate_to": "pages/📊_FTMO_Accounts.py"})
+    )
+    cols[1].button(
+        "Record Profit",
+        type="primary",
+        use_container_width=True,
+        on_click=lambda: st.session_state.update({"navigate_to": "pages/💰_Profit_Sharing.py"})
+    )
+    cols[2].button(
+        "Growth Fund",
+        type="primary",
+        use_container_width=True,
+        on_click=lambda: st.session_state.update({"navigate_to": "pages/🌱_Growth_Fund.py"})
+    )
+
+    if role == "owner":
+        cols[3].button(
+            "Admin Management",
+            type="primary",
+            use_container_width=True,
+            on_click=lambda: st.session_state.update({"navigate_to": "pages/👤_Admin_Management.py"})
+        )
+
+    # Navigation execution
+    if st.session_state.navigate_to:
+        target = st.session_state.navigate_to
+        st.session_state.navigate_to = None
+        st.switch_page(target)
 
 # ─── MOTIVATIONAL FOOTER ───
 st.markdown(f"""
