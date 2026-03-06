@@ -6,7 +6,6 @@ import qrcode
 from io import BytesIO
 import requests
 import uuid
-import pandas as pd
 
 # ────────────────────────────────────────────────
 # IMPORTS & INITIAL SETUP
@@ -79,21 +78,127 @@ user = fetch_user_data()
 balance   = user.get("balance", 0.0)
 my_title  = user.get("title", "Member").upper()
 qr_token  = user.get("qr_token")
+avatar_url = user.get("avatar_url")
 
-# ─── COMMON PERSONAL CARD (shown to ALL roles) ───
+# ─── CIRCULAR PROFILE PICTURE WITH UPLOAD ───
 st.subheader("Personal Information")
-cols = st.columns([1, 3])
-with cols[0]:
-    st.image("https://via.placeholder.com/180x180/111/eee?text=Avatar", use_column_width=True)
-with cols[1]:
-    st.markdown(f"**Name:** {my_name}")
-    st.markdown(f"**Username:** @{my_username}")
-    st.markdown(f"**Title:** {my_title}")
-    st.markdown(f"**Email:** {user.get('email', '—')}")
-    st.markdown(f"**Contact:** {user.get('contact_no') or user.get('phone', '—')}")
-    st.markdown(f"**Address:** {user.get('address', '—')}")
-    st.metric("Available Balance", f"${balance:,.2f}")
 
+# Default placeholder: first letter of name
+default_avatar = f"https://via.placeholder.com/180/111/eee?text={my_name[0].upper()}"
+
+# Circular avatar with hover overlay
+st.markdown(
+    f"""
+    <style>
+        .avatar-container {{
+            position: relative;
+            width: 180px;
+            height: 180px;
+            margin: 0 auto 1.2rem auto;
+        }}
+        .avatar-img {{
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid {accent_gold};
+            box-shadow: 0 8px 25px rgba(0,255,170,0.3);
+            transition: all 0.3s ease;
+        }}
+        .avatar-img:hover {{
+            transform: scale(1.05);
+            box-shadow: 0 12px 35px rgba(0,255,170,0.5);
+        }}
+        .upload-overlay {{
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.55);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            cursor: pointer;
+        }}
+        .avatar-container:hover .upload-overlay {{
+            opacity: 1;
+        }}
+        .upload-icon {{
+            font-size: 3rem;
+            color: {accent_gold};
+        }}
+    </style>
+
+    <div class="avatar-container">
+        <img src="{avatar_url or default_avatar}" class="avatar-img" alt="Profile Picture" />
+        <label for="avatar-upload-hidden" class="upload-overlay">
+            <div class="upload-icon">📷</div>
+        </label>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+# Hidden uploader (triggered by clicking overlay)
+uploaded_file = st.file_uploader(
+    "Change Profile Picture",
+    type=["jpg", "jpeg", "png"],
+    accept_multiple_files=False,
+    label_visibility="collapsed",
+    key="avatar_uploader"
+)
+
+if uploaded_file is not None:
+    if uploaded_file.size > 3 * 1024 * 1024:  # 3MB limit
+        st.error("File too large (max 3MB)")
+    else:
+        with st.spinner("Uploading profile picture..."):
+            try:
+                # Upload to Supabase
+                file_url, storage_path = upload_to_supabase(
+                    file=uploaded_file,
+                    bucket="avatars",                # ← change if your bucket name is different
+                    folder="profiles",
+                    use_signed_url=False             # public URL for easy display
+                )
+
+                if file_url:
+                    # Update user record
+                    supabase.table("users").update({
+                        "avatar_url": file_url
+                    }).eq("username", my_username).execute()
+
+                    log_action("Profile Picture Updated", f"User: {my_name} | Path: {storage_path}")
+
+                    st.success("Profile picture updated!")
+                    st.rerun()
+                else:
+                    st.error("Upload failed – please try again.")
+            except Exception as e:
+                st.error(f"Upload error: {str(e)}")
+
+# Personal details below avatar
+cols = st.columns([2, 5])
+with cols[0]:
+    st.markdown("**Name**")
+    st.markdown("**Username**")
+    st.markdown("**Title**")
+    st.markdown("**Email**")
+    st.markdown("**Contact**")
+    st.markdown("**Address**")
+with cols[1]:
+    st.markdown(f"{my_name}")
+    st.markdown(f"@{my_username}")
+    st.markdown(f"{my_title}")
+    st.markdown(f"{user.get('email', '—')}")
+    st.markdown(f"{user.get('contact_no') or user.get('phone', '—')}")
+    st.markdown(f"{user.get('address', '—')}")
+
+st.metric("Available Balance", f"${balance:,.2f}")
 st.markdown("---")
 
 # ─── ROLE-SPECIFIC CONTENT ───
@@ -196,7 +301,7 @@ if role == "client":
     else:
         st.info("No Quick Login QR yet. Contact admin/owner to generate one.")
 
-    # Shared Accounts
+    # Shared Accounts + Withdrawals + Proofs (same as before)
     @st.cache_data(ttl=30)
     def fetch_client_data():
         try:
@@ -252,7 +357,6 @@ if role == "client":
     else:
         st.info("No shared accounts yet.")
 
-    # Withdrawal History & Request
     st.subheader("💳 Withdrawal History & Requests")
     if my_withdrawals:
         for w in my_withdrawals:
@@ -309,7 +413,6 @@ if role == "client":
                             except Exception as e:
                                 st.error(f"Submission failed: {str(e)}")
 
-    # Proof Vault
     st.subheader("📁 Proof Vault")
     if my_proofs:
         cols = st.columns(4)
@@ -362,7 +465,6 @@ elif role in ("admin", "owner"):
 
     gf_balance, empire, clients, recent_profits = fetch_empire_overview()
 
-    # Metrics grid
     cols = st.columns(4)
     cols[0].metric("Active Accounts", empire.get("total_accounts", 0))
     cols[1].metric("Total Equity", f"${empire.get('total_equity', 0):,.0f}")
@@ -374,7 +476,6 @@ elif role in ("admin", "owner"):
         extra[0].metric("Total Clients", clients.get("total_clients", 0))
         extra[1].metric("Client Balances", f"${clients.get('total_client_balances', 0):,.0f}")
 
-    # Recent Profits
     st.subheader("Recent Profits (Last 5)")
     if recent_profits:
         for p in recent_profits:
@@ -382,7 +483,6 @@ elif role in ("admin", "owner"):
     else:
         st.info("No recent profit records.")
 
-    # Quick Actions
     st.subheader("⚡ Quick Actions")
     cols = st.columns(3 if role == "admin" else 4)
 
@@ -413,7 +513,6 @@ elif role in ("admin", "owner"):
             on_click=lambda: st.session_state.update({"navigate_to": "pages/👤_Admin_Management.py"})
         )
 
-    # Navigation execution
     if st.session_state.navigate_to:
         target = st.session_state.navigate_to
         st.session_state.navigate_to = None
