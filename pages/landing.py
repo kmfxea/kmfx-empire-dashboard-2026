@@ -346,7 +346,7 @@ st.markdown("""
 st.markdown("<div style='height:3rem;'></div>", unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# EMPIRE HEROES LEADERBOARD – WITH REAL PROFILE PICS
+# EMPIRE HEROES LEADERBOARD – RESTORED ORIGINAL STYLE + REAL PROFILE PICS
 # ────────────────────────────────────────────────
 st.markdown(
     "<h2 style='text-align:center; color:#ffd700; margin:1.5rem 0 0.8rem; font-weight:800; font-size:1.8rem;'>Empire Heroes Leaderboard</h2>",
@@ -358,7 +358,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-@st.cache_data(ttl=10)
+@st.cache_data(ttl=120)
 def get_featured_heroes(limit=999):
     try:
         response = supabase.table("client_badges") \
@@ -487,16 +487,6 @@ if heroes:
             object-fit: cover;
             border-radius: 50%;
         }
-        .rank-avatar .fallback-emoji {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.8rem;
-            background: rgba(255,215,0,0.12);
-            border-radius: 50%;
-        }
         .rank-name {
             font-size: 1.15rem;
             font-weight: 700;
@@ -539,10 +529,6 @@ if heroes:
             font-size: 0.82rem;
             text-align: center;
         }
-        @media (max-width: 768px) {
-            .rank-avatar { width: 60px; height: 60px; }
-            .rank-position { font-size: 2.5rem; }
-        }
     </style>
     """, unsafe_allow_html=True)
 
@@ -557,10 +543,19 @@ if heroes:
     for i, hero in enumerate(heroes, 1):
         rank_class = "rank-1" if i == 1 else "rank-2" if i == 2 else "rank-3" if i == 3 else ""
         
-        # Avatar logic: use uploaded pic if available, fallback to emoji
+        # Avatar: real pic if available, fallback to emoji
         avatar_url = hero.get("avatar_url")
         avatar_emoji = badge_emojis.get(hero["badges"][0] if hero["badges"] else None, "🏆")
         
+        avatar_html = f"""
+            <img src="{avatar_url}" alt="{hero['first_name']}" 
+                 style="width:100%; height:100%; object-fit:cover; border-radius:50%;" 
+                 onerror="this.style.display='none'; this.nextSibling.style.display='flex';" />
+            <div style="display:flex; align-items:center; justify-content:center; width:100%; height:100%; font-size:1.8rem;">
+                {avatar_emoji}
+            </div>
+        """
+
         badge_tags_html = "".join(
             f"<span class='badge-tag'>{badge_emojis.get(b, '🏆')} {b}</span>"
             for b in hero["badges"]
@@ -569,13 +564,6 @@ if heroes:
         earnings_class = "positive" if hero["earnings_raw"] > 0 else "negative" if hero["earnings_raw"] < 0 else "zero"
         joined_text = f"Joined {hero['joined']}" if hero["joined"] else "Joined —"
         details_text = f"{hero['title']} • {joined_text} • {hero['badge_count']} badges"
-
-        avatar_html = f"""
-            <img src="{avatar_url}" alt="{hero['first_name']}" 
-                 style="width:100%; height:100%; object-fit:cover; border-radius:50%;" 
-                 onerror="this.style.display='none'; this.nextSibling.style.display='flex';" />
-            <div class="fallback-emoji">{avatar_emoji}</div>
-        """
 
         st.markdown(f"""
         <div class='rank-row'>
