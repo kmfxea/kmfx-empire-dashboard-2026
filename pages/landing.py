@@ -358,7 +358,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-@st.cache_data(ttl=120)
+@st.cache_data(ttl=10)
 def get_featured_heroes(limit=999):
     try:
         response = supabase.table("client_badges") \
@@ -373,7 +373,7 @@ def get_featured_heroes(limit=999):
                     title,
                     created_at,
                     balance,
-                    avatar_url           # ← IMPORTANT: this pulls the uploaded profile pic
+                    avatar_url
                 )
             """) \
             .eq("is_public", True) \
@@ -398,7 +398,7 @@ def get_featured_heroes(limit=999):
                         "joined": joined_date,
                         "earnings_raw": earnings_raw,
                         "earnings_display": f"+${earnings_raw:,.2f}" if earnings_raw > 0 else f"-${abs(earnings_raw):,.2f}" if earnings_raw < 0 else "$0.00",
-                        "avatar_url": user.get("avatar_url")  # ← store avatar_url here
+                        "avatar_url": user.get("avatar_url")
                     }
 
         heroes = []
@@ -415,10 +415,9 @@ def get_featured_heroes(limit=999):
                 "badge_count": len(badges),
                 "earnings_raw": info["earnings_raw"],
                 "earnings_display": info["earnings_display"],
-                "avatar_url": info.get("avatar_url")  # ← passed to rendering
+                "avatar_url": info.get("avatar_url")
             })
 
-        # Sort: highest earnings → most badges → newest join
         heroes.sort(key=lambda x: (-x["earnings_raw"], -x["badge_count"], x["joined"]))
         return heroes[:limit]
     except Exception as e:
@@ -540,7 +539,6 @@ if heroes:
             font-size: 0.82rem;
             text-align: center;
         }
-        /* Responsive adjustments */
         @media (max-width: 768px) {
             .rank-avatar { width: 60px; height: 60px; }
             .rank-position { font-size: 2.5rem; }
@@ -559,7 +557,7 @@ if heroes:
     for i, hero in enumerate(heroes, 1):
         rank_class = "rank-1" if i == 1 else "rank-2" if i == 2 else "rank-3" if i == 3 else ""
         
-        # Use real avatar if available, else fallback to emoji
+        # Avatar logic: use uploaded pic if available, fallback to emoji
         avatar_url = hero.get("avatar_url")
         avatar_emoji = badge_emojis.get(hero["badges"][0] if hero["badges"] else None, "🏆")
         
@@ -572,13 +570,19 @@ if heroes:
         joined_text = f"Joined {hero['joined']}" if hero["joined"] else "Joined —"
         details_text = f"{hero['title']} • {joined_text} • {hero['badge_count']} badges"
 
+        avatar_html = f"""
+            <img src="{avatar_url}" alt="{hero['first_name']}" 
+                 style="width:100%; height:100%; object-fit:cover; border-radius:50%;" 
+                 onerror="this.style.display='none'; this.nextSibling.style.display='flex';" />
+            <div class="fallback-emoji">{avatar_emoji}</div>
+        """
+
         st.markdown(f"""
         <div class='rank-row'>
             <div class='rank-position {rank_class}'>{i}</div>
             <div class='rank-hero'>
                 <div class='rank-avatar'>
-                    {f'<img src="{avatar_url}" alt="{hero["first_name"]}" />' if avatar_url else ''}
-                    <div class='fallback-emoji' style="display:{'none' if avatar_url else 'flex'};">{avatar_emoji}</div>
+                    {avatar_html}
                 </div>
                 <div class='rank-name'>
                     {hero["first_name"]} <small>({hero["anon"]})</small>
