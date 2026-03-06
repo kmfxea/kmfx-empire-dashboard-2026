@@ -161,8 +161,8 @@ if uploaded_file is not None:
                 # Upload to Supabase
                 file_url, storage_path = upload_to_supabase(
                     file=uploaded_file,
-                    bucket="avatars",                # ← change if your bucket name is different
-                    folder="profiles",
+                    bucket="client_files",                # ← change if your bucket name is different
+                    folder="profiles/avatars",
                     use_signed_url=False             # public URL for easy display
                 )
 
