@@ -12,7 +12,7 @@ from utils.qr_login import handle_qr_login
 from collections import defaultdict
 
 # ────────────────────────────────────────────────
-# PAGE CONFIG & GLOBAL STYLES (must be first)
+# PAGE CONFIG & GLOBAL STYLES
 # ────────────────────────────────────────────────
 st.set_page_config(
     page_title="KMFX EA - Elite Empire",
@@ -25,18 +25,50 @@ apply_global_styles(public=True)
 st.markdown("""
 <style>
     section[data-testid="stSidebar"] { visibility: hidden !important; width: 0 !important; min-width: 0 !important; }
-    .main .block-container { max-width: 1320px !important; margin: 0 auto !important; padding: 2rem 1.5rem !important; }
+    .main .block-container { max-width: 1320px !important; margin: 0 auto !important; padding: 2rem 1rem !important; }
+
+    /* Mobile fixes */
+    @media (max-width: 768px) {
+        .stTabs [data-baseweb="tab-list"] {
+            flex-wrap: nowrap !important;
+            overflow-x: auto !important;
+            justify-content: flex-start !important;
+            gap: 0.5rem !important;
+            padding: 0 0.5rem !important;
+            scrollbar-width: none !important;
+            -ms-overflow-style: none !important;
+        }
+        .stTabs [data-baseweb="tab-list"]::-webkit-scrollbar { display: none !important; }
+        .stTabs [data-baseweb="tab"] {
+            flex: 0 0 auto !important;
+            min-width: 120px !important;
+            padding: 0.6rem 1rem !important;
+            font-size: 0.95rem !important;
+            white-space: nowrap !important;
+        }
+        .stTabs [aria-selected="true"] {
+            border-bottom: 3px solid #ffd700 !important;
+        }
+        /* Stats cards - center & no left/right gap */
+        .stMetric { text-align: center !important; margin: 0 auto !important; }
+        .block-container > div > div > div { justify-content: center !important; }
+        /* Video fix - no overflow */
+        .video-container { max-width: 100% !important; margin: 1rem auto !important; }
+        iframe { width: 100% !important; height: 100% !important; }
+    }
+
+    /* Hide tab arrows on mobile */
+    @media (max-width: 768px) {
+        .stTabs [data-baseweb="tab-list"] .stTabs-arrow { display: none !important; }
+    }
 </style>
 """, unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# QR LOGIN (early)
+# QR LOGIN & AUTH REDIRECT
 # ────────────────────────────────────────────────
 handle_qr_login()
 
-# ────────────────────────────────────────────────
-# Redirect if already logged in
-# ────────────────────────────────────────────────
 if is_authenticated():
     role = st.session_state.get("role", "client").lower()
     if role in ["owner", "admin"]:
@@ -46,7 +78,7 @@ if is_authenticated():
     st.stop()
 
 # ────────────────────────────────────────────────
-# CACHED DATA FUNCTIONS
+# CACHED DATA
 # ────────────────────────────────────────────────
 @st.cache_data(ttl=60)
 def get_realtime_stats():
@@ -58,7 +90,7 @@ def get_realtime_stats():
         gf_balance = sum(t["amount"] if t["type"] == "In" else -t["amount"] for t in gf_data)
         members_count = supabase.table("users").select("id", count="exact").eq("role", "client").execute().count or 0
         return accounts_count, total_equity, gf_balance, members_count
-    except Exception:
+    except:
         return 0, 0, 0, 0
 
 @st.cache_data(ttl=300)
@@ -80,11 +112,11 @@ def get_gold_price():
                 prev = hist['Close'][-2] if len(hist) > 1 else price
                 ch = ((price - prev) / prev * 100) if prev else 0.0
         return round(price, 1) if price else None, round(ch, 2)
-    except Exception:
+    except:
         return None, 0.0
 
 # ────────────────────────────────────────────────
-# LANGUAGE SUPPORT
+# LANGUAGE TOGGLE
 # ────────────────────────────────────────────────
 if "language" not in st.session_state:
     st.session_state.language = "en"
@@ -107,84 +139,32 @@ texts = {
         "success": "Tagumpay! Nasa listahan ka na. Check mo ang email mo soon 🚀",
     }
 }
-
 def txt(key):
     return texts.get(st.session_state.language, texts["en"]).get(key, key)
 
-# ── Small Golden Sliding Toggle ──
+# ── Golden Toggle ──
 st.markdown("""
-    <style>
-        .lang-toggle-wrapper {
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            margin: 1rem 0 1.5rem auto;
-            font-family: 'Poppins', sans-serif;
-        }
-        .lang-toggle {
-            position: relative;
-            display: inline-block;
-            width: 54px;
-            height: 28px;
-        }
-        .lang-toggle input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(255,215,0,0.18);
-            border: 1px solid #d4a01780;
-            border-radius: 34px;
-            transition: .4s;
-        }
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 20px;
-            width: 20px;
-            left: 3px;
-            bottom: 3px;
-            background: #ffd700;
-            border-radius: 50%;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-            transition: .4s;
-        }
-        input:checked + .slider {
-            background: linear-gradient(135deg, #ffd700 0%, #b8860b 100%);
-            border-color: #ffd700;
-        }
-        input:checked + .slider:before {
-            transform: translateX(26px);
-            background: #000000;
-        }
-        .lang-indicator {
-            font-size: 0.78rem;
-            font-weight: 600;
-            color: #ffd700;
-            opacity: 0.6;
-            margin: 0 6px;
-            transition: opacity 0.3s;
-        }
-        input:checked ~ .lang-indicator-en { opacity: 0.6; }
-        input:checked ~ .lang-indicator-tl { opacity: 1.0; font-weight: 700; }
-        input:not(:checked) ~ .lang-indicator-en { opacity: 1.0; font-weight: 700; }
-        input:not(:checked) ~ .lang-indicator-tl { opacity: 0.6; }
-    </style>
+<style>
+    .lang-toggle-wrapper { display:flex; justify-content:flex-end; align-items:center; margin:1rem 0 1.5rem auto; }
+    .lang-toggle { position:relative; display:inline-block; width:54px; height:28px; }
+    .lang-toggle input { opacity:0; width:0; height:0; }
+    .slider { position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background:rgba(255,215,0,0.18); border:1px solid #d4a01780; border-radius:34px; transition:.4s; }
+    .slider:before { position:absolute; content:""; height:20px; width:20px; left:3px; bottom:3px; background:#ffd700; border-radius:50%; box-shadow:0 2px 6px rgba(0,0,0,0.3); transition:.4s; }
+    input:checked + .slider { background:linear-gradient(135deg,#ffd700 0%,#b8860b 100%); border-color:#ffd700; }
+    input:checked + .slider:before { transform:translateX(26px); background:#000000; }
+    .lang-indicator { font-size:0.78rem; font-weight:600; color:#ffd700; opacity:0.6; margin:0 6px; transition:opacity 0.3s; }
+    input:checked ~ .lang-indicator-en { opacity:0.6; }
+    input:checked ~ .lang-indicator-tl { opacity:1.0; font-weight:700; }
+    input:not(:checked) ~ .lang-indicator-en { opacity:1.0; font-weight:700; }
+    input:not(:checked) ~ .lang-indicator-tl { opacity:0.6; }
+</style>
 """, unsafe_allow_html=True)
 
 st.markdown('<div class="lang-toggle-wrapper">', unsafe_allow_html=True)
 is_tl = st.session_state.language == "tl"
 st.markdown(f"""
     <label class="lang-toggle">
-        <input type="checkbox" {'checked' if is_tl else ''}
-               onchange="parent.document.querySelector('form').submit();">
+        <input type="checkbox" {'checked' if is_tl else ''} onchange="parent.document.querySelector('form').submit();">
         <span class="slider"></span>
     </label>
     <span class="lang-indicator lang-indicator-en">EN</span>
@@ -212,7 +192,7 @@ st.markdown("<p style='text-align:center; font-size:1.4rem; color:#aaaaaa;'>Pass
 st.markdown("<p style='text-align:center; font-size:1.2rem;'>Mark Jeff Blando – Founder & Developer • since 2014</p>", unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
-# REALTIME STATS
+# REALTIME STATS – FIXED MOBILE CENTERING
 # ────────────────────────────────────────────────
 accounts_count, total_equity, gf_balance, members_count = get_realtime_stats()
 stat_cols = st.columns(4)
@@ -250,11 +230,12 @@ st.components.v1.html("""
 """, height=420)
 
 # ────────────────────────────────────────────────
-# BACKTEST VIDEOS – TABBED MODE (1-Year, 3-Year, 5-Year)
+# BACKTEST VIDEOS – FIXED MOBILE TABS (NO ARROWS, ALWAYS VISIBLE)
 # ────────────────────────────────────────────────
 st.markdown("<h2 class='gold-text' style='text-align:center; margin:3rem 0 1.5rem;'>Backtest Results – Proven Performance</h2>", unsafe_allow_html=True)
 st.markdown("<p style='text-align:center; color:#cccccc; font-size:1.1rem; margin-bottom:1rem;'>See how KMFX EA performed across different timeframes on Gold (XAUUSD)</p>", unsafe_allow_html=True)
 
+# Tabs – no arrows on mobile, always visible
 tab1, tab2, tab3 = st.tabs(["1-Year Backtest", "3-Year Backtest", "5-Year Backtest"])
 
 with tab1:
@@ -307,43 +288,6 @@ with tab3:
     </div>
     """, unsafe_allow_html=True)
     st.markdown("<p style='text-align:center; color:#aaaaaa; font-size:0.95rem; margin-top:1rem;'>Backtest only – trading involves high risk. Past performance is not indicative of future results.</p>", unsafe_allow_html=True)
-
-# Premium tab styling (unchanged)
-st.markdown("""
-<style>
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 1.5rem;
-        justify-content: center;
-        border-bottom: 1px solid rgba(255,215,0,0.15);
-        margin-bottom: 1.5rem;
-    }
-    .stTabs [data-baseweb="tab"] {
-        height: 48px;
-        white-space: nowrap;
-        background: rgba(255,215,0,0.05);
-        border-radius: 10px 10px 0 0;
-        font-size: 1.1rem;
-        font-weight: 600;
-        color: #ffd700;
-        padding: 0 2.5rem;
-        transition: all 0.3s;
-    }
-    .stTabs [aria-selected="true"] {
-        background: rgba(255,215,0,0.18) !important;
-        border-bottom: 4px solid #ffd700 !important;
-        color: #ffffff !important;
-    }
-    .video-container {
-        margin: 1.5rem auto;
-        max-width: 900px;
-    }
-    @media (max-width: 768px) {
-        .stTabs [data-baseweb="tab"] { padding: 0 1.5rem; font-size: 1rem; }
-    }
-</style>
-""", unsafe_allow_html=True)
-
-st.markdown("<div style='height:3rem;'></div>", unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
 # EMPIRE HEROES – PREMIUM LEADERBOARD STYLE (TIGHT SPACING + LIMIT 999 + BADGE COUNT)
