@@ -75,9 +75,16 @@ def fetch_user_data():
         return {}
 
 user = fetch_user_data()
-balance   = user.get("balance", 0.0)
-my_title  = user.get("title", "Member").upper()
-qr_token  = user.get("qr_token")
+
+# ─── SAFETY CHECK: If user not found in DB ───
+if not user:
+    st.error("User profile not found in database. Please contact support.")
+    st.stop()
+
+# Now safely extract values with defaults
+balance    = user.get("balance", 0.0)
+my_title   = user.get("title", "Member").upper() if user.get("title") else "Member"
+qr_token   = user.get("qr_token")
 avatar_url = user.get("avatar_url")
 
 # ─── CIRCULAR PROFILE PICTURE WITH UPLOAD ───
@@ -301,7 +308,7 @@ if role == "client":
     else:
         st.info("No Quick Login QR yet. Contact admin/owner to generate one.")
 
-    # Shared Accounts + Withdrawals + Proofs (same as before)
+    # Shared Accounts + Withdrawals + Proofs
     @st.cache_data(ttl=30)
     def fetch_client_data():
         try:
