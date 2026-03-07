@@ -230,13 +230,60 @@ st.components.v1.html("""
 """, height=420)
 
 # ────────────────────────────────────────────────
-# BACKTEST VIDEOS – FIXED MOBILE TABS (NO ARROWS, ALWAYS VISIBLE)
+# BACKTEST VIDEOS – MOBILE FIXED: TABS ALWAYS VISIBLE, NO ARROWS
 # ────────────────────────────────────────────────
 st.markdown("<h2 class='gold-text' style='text-align:center; margin:3rem 0 1.5rem;'>Backtest Results – Proven Performance</h2>", unsafe_allow_html=True)
 st.markdown("<p style='text-align:center; color:#cccccc; font-size:1.1rem; margin-bottom:1rem;'>See how KMFX EA performed across different timeframes on Gold (XAUUSD)</p>", unsafe_allow_html=True)
 
-# Tabs – no arrows on mobile, always visible
+# Tabs with mobile-friendly CSS override
 tab1, tab2, tab3 = st.tabs(["1-Year Backtest", "3-Year Backtest", "5-Year Backtest"])
+
+# Additional mobile CSS to force tabs visible & no arrows
+st.markdown("""
+<style>
+    @media (max-width: 768px) {
+        /* Force tabs to fit screen – no scroll, no arrows */
+        .stTabs [data-baseweb="tab-list"] {
+            flex-wrap: nowrap !important;
+            overflow-x: hidden !important;
+            justify-content: space-between !important;
+            gap: 0.4rem !important;
+            padding: 0 0.5rem !important;
+            scrollbar-width: none !important;
+            -ms-overflow-style: none !important;
+        }
+        .stTabs [data-baseweb="tab-list"]::-webkit-scrollbar { display: none !important; }
+        
+        /* Hide left/right arrows completely on mobile */
+        .stTabs [data-baseweb="tab-list"] .stTabs-arrow { display: none !important; }
+        
+        /* Make tabs smaller & fit 3 in one row */
+        .stTabs [data-baseweb="tab"] {
+            flex: 1 1 auto !important;
+            min-width: 0 !important;
+            max-width: 33% !important;
+            padding: 0.5rem 0.8rem !important;
+            font-size: 0.9rem !important;
+            white-space: nowrap !important;
+            text-overflow: ellipsis !important;
+            overflow: hidden !important;
+        }
+        
+        /* Selected tab highlight */
+        .stTabs [aria-selected="true"] {
+            border-bottom: 3px solid #ffd700 !important;
+            background: rgba(255,215,0,0.12) !important;
+        }
+        
+        /* Video container – perfect fit on mobile */
+        .video-container {
+            max-width: 100% !important;
+            margin: 1rem auto !important;
+            padding-bottom: 56.25% !important;
+        }
+    }
+</style>
+""", unsafe_allow_html=True)
 
 with tab1:
     st.markdown("<p style='text-align:center; color:#aaaaaa; font-size:1rem; margin:1rem 0;'>$500 → $3,906 (781% return) in 1 Year (2025)</p>", unsafe_allow_html=True)
@@ -288,7 +335,6 @@ with tab3:
     </div>
     """, unsafe_allow_html=True)
     st.markdown("<p style='text-align:center; color:#aaaaaa; font-size:0.95rem; margin-top:1rem;'>Backtest only – trading involves high risk. Past performance is not indicative of future results.</p>", unsafe_allow_html=True)
-
 # ────────────────────────────────────────────────
 # EMPIRE HEROES – PREMIUM LEADERBOARD STYLE (TIGHT SPACING + LIMIT 999 + BADGE COUNT)
 # ────────────────────────────────────────────────
