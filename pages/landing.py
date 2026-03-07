@@ -230,19 +230,24 @@ st.components.v1.html("""
 """, height=420)
 
 # ────────────────────────────────────────────────
-# BACKTEST VIDEOS – MOBILE FIXED: TABS ALWAYS VISIBLE, NO ARROWS
+# BACKTEST VIDEOS – MOBILE PERFECT: 3 TABS ALWAYS VISIBLE, NO ARROWS/EVER
 # ────────────────────────────────────────────────
 st.markdown("<h2 class='gold-text' style='text-align:center; margin:3rem 0 1.5rem;'>Backtest Results – Proven Performance</h2>", unsafe_allow_html=True)
 st.markdown("<p style='text-align:center; color:#cccccc; font-size:1.1rem; margin-bottom:1rem;'>See how KMFX EA performed across different timeframes on Gold (XAUUSD)</p>", unsafe_allow_html=True)
 
-# Tabs with mobile-friendly CSS override
+# Create tabs
 tab1, tab2, tab3 = st.tabs(["1-Year Backtest", "3-Year Backtest", "5-Year Backtest"])
 
-# Additional mobile CSS to force tabs visible & no arrows
+# Force-fix mobile: tabs fit screen, hide arrows, preserve original colors
 st.markdown("""
 <style>
     @media (max-width: 768px) {
-        /* Force tabs to fit screen – no scroll, no arrows */
+        /* Remove arrows completely on mobile */
+        .stTabs [data-baseweb="tab-list"] .stTabs-arrow {
+            display: none !important;
+        }
+        
+        /* Force tabs to fit full width – no scroll */
         .stTabs [data-baseweb="tab-list"] {
             flex-wrap: nowrap !important;
             overflow-x: hidden !important;
@@ -252,30 +257,37 @@ st.markdown("""
             scrollbar-width: none !important;
             -ms-overflow-style: none !important;
         }
-        .stTabs [data-baseweb="tab-list"]::-webkit-scrollbar { display: none !important; }
+        .stTabs [data-baseweb="tab-list"]::-webkit-scrollbar {
+            display: none !important;
+        }
         
-        /* Hide left/right arrows completely on mobile */
-        .stTabs [data-baseweb="tab-list"] .stTabs-arrow { display: none !important; }
-        
-        /* Make tabs smaller & fit 3 in one row */
+        /* Make tabs compact but readable – fit 3 tabs perfectly */
         .stTabs [data-baseweb="tab"] {
             flex: 1 1 auto !important;
             min-width: 0 !important;
-            max-width: 33% !important;
-            padding: 0.5rem 0.8rem !important;
-            font-size: 0.9rem !important;
+            max-width: 33.33% !important;
+            padding: 0.6rem 0.4rem !important;
+            font-size: 0.92rem !important;
             white-space: nowrap !important;
             text-overflow: ellipsis !important;
             overflow: hidden !important;
+            background: rgba(255,215,0,0.05) !important;
+            border-radius: 10px 10px 0 0 !important;
         }
         
-        /* Selected tab highlight */
+        /* Preserve original selected tab color – gold border + light bg */
         .stTabs [aria-selected="true"] {
-            border-bottom: 3px solid #ffd700 !important;
+            background: rgba(255,215,0,0.18) !important;
+            border-bottom: 4px solid #ffd700 !important;
+            color: #ffffff !important;
+        }
+        
+        /* Hover keeps gold feel */
+        .stTabs [data-baseweb="tab"]:hover {
             background: rgba(255,215,0,0.12) !important;
         }
         
-        /* Video container – perfect fit on mobile */
+        /* Video – full width, no side gaps */
         .video-container {
             max-width: 100% !important;
             margin: 1rem auto !important;
