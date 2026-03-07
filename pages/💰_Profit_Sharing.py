@@ -52,6 +52,25 @@ st.markdown("**Empire engine** • Record FTMO profit → Auto-split via stored 
 
 current_role = st.session_state.get("role", "guest").lower()
 
+my_username = st.session_state.get("username", "")
+
+# ─── FETCH CURRENT USER DATA (needed for client UUID) ───
+@st.cache_data(ttl=60)
+def fetch_user_data():
+    try:
+        resp = supabase.table("users").select("*").eq("username", my_username).maybe_single().execute()
+        return resp.data or {}
+    except Exception as e:
+        st.error(f"User fetch error: {str(e)}")
+        return {}
+
+user = fetch_user_data()
+
+# Safety check
+if not user:
+    st.error("User profile not found. Please contact support.")
+    st.stop()
+
 # ─── DATA FETCH ───
 @st.cache_data(ttl=60, show_spinner="Syncing accounts & users...")
 def fetch_profit_data():
@@ -60,17 +79,16 @@ def fetch_profit_data():
             "id, name, current_phase, current_equity, "
             "participants_v2, contributors_v2, contributor_share_pct"
         ).execute().data or []
-        users = supabase.table("users").select("id, full_name, email, balance, username").execute().data or []
+        users = supabase.table("users").select("id, full_name, email, balance").execute().data or []
         uid_to_display = {str(u["id"]): u["full_name"] for u in users}
         uid_to_email = {str(u["id"]): u.get("email") for u in users}
         uid_to_balance = {str(u["id"]): u.get("balance", 0.0) for u in users}
-        uid_to_username = {str(u["id"]): u.get("username") for u in users}  # Added for debug
-        return accounts, uid_to_display, uid_to_email, uid_to_balance, uid_to_username
+        return accounts, uid_to_display, uid_to_email, uid_to_balance
     except Exception as e:
         st.error(f"Data sync failed: {str(e)}")
-        return [], {}, {}, {}, {}
+        return [], {}, {}, {}
 
-accounts, uid_to_display, uid_to_email, uid_to_balance, uid_to_username = fetch_profit_data()
+accounts, uid_to_display, uid_to_email, uid_to_balance = fetch_profit_data()
 
 if not accounts:
     st.info("No accounts yet • Launch one in FTMO Accounts first")
@@ -81,8 +99,8 @@ if current_role == "client":
     # ── CLIENT VIEW: My Earnings Dashboard ───────────────────────────────────
     st.subheader(f"👤 My Earnings – {st.session_state.get('full_name', 'User')}")
 
-    # Get actual user UUID (this is the fix!)
-    my_user_id = user.get("id")  # ← UUID from users table
+    # Use the correct UUID
+    my_user_id = user.get("id")
     if not my_user_id:
         st.error("Cannot load earnings – user ID not found. Contact support.")
         st.stop()
@@ -365,7 +383,7 @@ elif current_role in ["admin", "owner"]:
                     sent = 0
                     involved_user_ids = set()
 
-                    # Debug: Show who should receive emails
+                    # Debug to help troubleshoot emails
                     st.write("DEBUG - Involved user IDs:", list(involved_user_ids))
                     st.write("DEBUG - Emails mapped:", {uid: uid_to_email.get(uid) for uid in involved_user_ids})
 
@@ -387,7 +405,7 @@ elif current_role in ["admin", "owner"]:
                             server.quit()
                             st.success(f"Emails sent to {sent} recipients 🚀")
                         except Exception as e:
-                            st.error(f"Email sending failed: {str(e)} • Check secrets / App Password")
+                            st.error(f"Email sending failed: {str(e)} • Check secrets / App Password / Gmail security")
                     else:
                         st.warning("No valid recipients or email credentials — emails not sent")
 
@@ -398,7 +416,7 @@ elif current_role in ["admin", "owner"]:
                 except Exception as e:
                     st.error(f"Operation failed: {str(e)}")
 
-# ─── FOOTER (same style as Dashboard) ───
+# ─── FOOTER ───
 st.markdown(f"""
 <div style="padding:4rem 2rem; text-align:center; margin:5rem auto; max-width:1100px;
     border-radius:24px; border:2px solid {accent_primary}40;
