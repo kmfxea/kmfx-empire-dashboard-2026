@@ -28,7 +28,7 @@ current_role = st.session_state.get("role", "guest").lower()
 def fetch_ftmo_data():
     accs = supabase.table("ftmo_accounts").select("*").order("created_date", desc=True).execute().data or []
     users = supabase.table("users").select("id, full_name, role, title").execute().data or []
-  
+
     uid_to_display = {}
     display_to_uid = {}
     uid_to_name = {}
@@ -41,16 +41,16 @@ def fetch_ftmo_data():
             uid_to_display[uid] = display
             display_to_uid[display] = uid
             uid_to_name[uid] = u["full_name"]
-  
-    special = ["Contributor Pool", "Manual Payout (Temporary)"]  # Removed "Growth Fund" (auto only)
+
+    special = ["Contributor Pool", "Manual Payout (Temporary)"]
     for s in special:
         display_to_uid[s] = None
-  
+
     part_options = special + list(display_to_uid.keys())
     contrib_options = list(uid_to_display.values())
-  
+
     owner_display = next((d for d, uid in display_to_uid.items() if uid and any(uu["role"] == "owner" for uu in users if str(uu["id"]) == uid)), "King Minted")
-  
+
     return accs, uid_to_display, display_to_uid, uid_to_name, part_options, contrib_options, owner_display
 
 accounts, uid_to_display, display_to_uid, uid_to_name, part_options, contrib_options, owner_display = fetch_ftmo_data()
@@ -59,8 +59,16 @@ accounts, uid_to_display, display_to_uid, uid_to_name, part_options, contrib_opt
 # OWNER / ADMIN FULL MANAGEMENT
 # ────────────────────────────────────────────────
 if current_role in ["owner", "admin"]:
-    # ─── CREATE NEW ACCOUNT ───
+    # ─── CREATE NEW ACCOUNT – REAL-TIME PREVIEW FIXED ───
     with st.expander("➕ Launch New FTMO Account", expanded=True):
+        # Initialize session state for live tracking
+        if "create_tree_data" not in st.session_state:
+            st.session_state.create_tree_data = pd.DataFrame([
+                {"display_name": owner_display, "role": "Founder/Owner", "percentage": 100.0}
+            ])
+        if "create_gf_pct" not in st.session_state:
+            st.session_state.create_gf_pct = 0.0
+
         with st.form("create_ftmo", clear_on_submit=True):
             c1, c2 = st.columns(2)
             with c1:
@@ -73,51 +81,57 @@ if current_role in ["owner", "admin"]:
             notes = st.text_area("Notes (Optional)")
 
             st.subheader("🌱 Growth Fund Allocation (Optional)")
-            gf_pct = st.number_input("Growth Fund % from Gross Profit", 0.0, 50.0, 0.0, 0.5)
-            if gf_pct > 0:
-                st.success(f"✅ {gf_pct:.1f}% auto-allocated to Growth Fund")
-            else:
-                st.info("ℹ️ No Growth Fund – perfect for fixed shares")
+            gf_pct = st.number_input(
+                "Growth Fund % from Gross Profit",
+                0.0, 50.0, value=st.session_state.create_gf_pct, step=0.5,
+                key="gf_pct_input_create"
+            )
+            st.session_state.create_gf_pct = gf_pct  # Update live
 
             st.subheader("🌳 Unified Profit Distribution Tree (%)")
             st.info("Flexible: Optional 'Contributor Pool' (0 or 1 row) • Fixed shares (50/50 etc.) or pro-rata • Total + GF = exactly 100%")
-           
-            default_rows = [
-                {"display_name": owner_display, "role": "Founder/Owner", "percentage": max(100.0 - gf_pct, 0.0)}
-            ]
-            tree_df = pd.DataFrame(default_rows)
+
             edited_tree = st.data_editor(
-                tree_df,
+                st.session_state.create_tree_data,
                 num_rows="dynamic",
                 use_container_width=True,
                 column_config={
                     "display_name": st.column_config.SelectboxColumn("Name *", options=part_options, required=True),
                     "role": st.column_config.TextColumn("Role"),
-                    "percentage": st.column_config.NumberColumn("% *", min_value=0.0, max_value=100.0, step=0.1, format="%.2f")
+                    "percentage": st.column_config.NumberColumn("% *", min_value=0.0, max_value=100.0, step=0.01, format="%.2f")
                 },
-                key="tree_create"
+                key="tree_editor_create"
             )
 
+            # Save edits back to session state for persistence & live update
+            st.session_state.create_tree_data = edited_tree
+
+            # ─── REAL-TIME CALCULATION & FEEDBACK ───
             total_tree_sum = edited_tree["percentage"].sum() if not edited_tree.empty else 0.0
             total_with_gf = total_tree_sum + gf_pct
-            st.progress(min(total_with_gf / 100.0, 1.0))
-            st.caption(f"Current Total: {total_with_gf:.2f}% (must be exactly 100.00%)")
 
+            # Live progress & status
+            st.progress(min(total_with_gf / 100.0, 1.0))
+            total_text = f"Current Total: {total_with_gf:.2f}%"
             contrib_rows = edited_tree[edited_tree["display_name"] == "Contributor Pool"]
+
             if len(contrib_rows) > 1:
                 st.error("❌ At most one 'Contributor Pool' row allowed")
                 contrib_pct = 0.0
-            elif abs(total_with_gf - 100.0) > 0.01:
-                st.error(f"❌ Total must be exactly 100.00% (current: {total_with_gf:.2f}%)")
+            elif abs(total_with_gf - 100.0) <= 0.01:
+                st.success(f"✅ {total_text} (Valid & Ready to Launch!)")
+                contrib_pct = contrib_rows.iloc[0]["percentage"] if not contrib_rows.empty else 0.0
+            elif total_with_gf < 100.0:
+                st.warning(f"⚠️ {total_text} (Short by {100 - total_with_gf:.2f}%)")
                 contrib_pct = 0.0
             else:
-                st.success("✅ Valid distribution")
-                contrib_pct = contrib_rows.iloc[0]["percentage"] if not contrib_rows.empty else 0.0
+                st.error(f"❌ {total_text} (Over by {total_with_gf - 100:.2f}%) – Please adjust")
+                contrib_pct = 0.0
 
             manual_inputs = []
             for idx, row in edited_tree.iterrows():
                 if row["display_name"] == "Manual Payout (Temporary)":
-                    custom = st.text_input(f"Custom name for row {idx+1}", key=f"manual_{idx}")
+                    custom = st.text_input(f"Custom name for row {idx+1}", key=f"manual_create_{idx}")
                     if custom.strip():
                         manual_inputs.append((idx, custom.strip()))
 
@@ -230,6 +244,10 @@ if current_role in ["owner", "admin"]:
                         }).execute()
                         st.success("Account launched successfully! 🎉")
                         st.balloons()
+                        # Clear session state after success
+                        for key in ["create_tree_data", "create_gf_pct"]:
+                            if key in st.session_state:
+                                del st.session_state[key]
                         st.cache_data.clear()
                         st.rerun()
                     except Exception as e:
@@ -309,14 +327,11 @@ if current_role in ["owner", "admin"]:
                         new_equity = st.number_input("Current Equity (USD)", value=float(cur.get("current_equity", 0)), step=1000.0)
                         new_withdrawable = st.number_input("Current Withdrawable (USD)", value=float(cur.get("withdrawable_balance", 0)), step=500.0)
                     new_notes = st.text_area("Notes", value=cur.get("notes") or "")
-
                     use_v2 = bool(cur.get("participants_v2"))
                     current_part = pd.DataFrame(cur["participants_v2"] if use_v2 else cur.get("participants", []))
                     current_gf_pct = sum(row.get("percentage", 0.0) for _, row in current_part.iterrows() if "growth fund" in row.get("display_name", "").lower())
-
                     st.subheader("🌱 Growth Fund Allocation (Optional per Account)")
                     gf_pct = st.number_input("Growth Fund % from Gross Profit", min_value=0.0, max_value=50.0, value=current_gf_pct, step=0.5)
-
                     st.subheader("🌳 Unified Profit Tree (%)")
                     if use_v2:
                         current_part = current_part[["display_name", "role", "percentage"]]
@@ -328,9 +343,7 @@ if current_role in ["owner", "admin"]:
                             "percentage": p["percentage"]
                         } for p in legacy])
                         st.info("🔄 Legacy → Saving will migrate to v2")
-
                     current_part = current_part[~current_part["display_name"].str.lower().str.contains("growth fund", na=False)]
-
                     edited_tree = st.data_editor(
                         current_part,
                         num_rows="dynamic",
@@ -342,12 +355,10 @@ if current_role in ["owner", "admin"]:
                             "percentage": st.column_config.NumberColumn("% *", min_value=0.0, max_value=100.0, step=0.1, format="%.2f")
                         }
                     )
-
                     total_tree_sum = edited_tree["percentage"].sum() if not edited_tree.empty else 0.0
                     total_with_gf = total_tree_sum + gf_pct
                     st.progress(min(total_with_gf / 100.0, 1.0))
                     st.caption(f"Current Total: {total_with_gf:.2f}% (must be exactly 100.00%)")
-
                     contrib_rows = edited_tree[edited_tree["display_name"] == "Contributor Pool"]
                     if len(contrib_rows) > 1:
                         st.error("❌ At most one 'Contributor Pool' row allowed")
@@ -356,14 +367,12 @@ if current_role in ["owner", "admin"]:
                     else:
                         st.success("✅ Valid distribution")
                         contrib_pct = contrib_rows.iloc[0]["percentage"] if not contrib_rows.empty else 0.0
-
                     manual_inputs = []
                     for idx, row in edited_tree.iterrows():
                         if row["display_name"] == "Manual Payout (Temporary)":
                             custom = st.text_input(f"Custom name for row {idx+1}", key=f"manual_edit_{eid}_{idx}")
                             if custom.strip():
                                 manual_inputs.append((idx, custom.strip()))
-
                     st.subheader("🌳 Contributors Tree")
                     if use_v2:
                         current_contrib = pd.DataFrame(cur.get("contributors_v2", []))
@@ -376,7 +385,6 @@ if current_role in ["owner", "admin"]:
                             "php_per_unit": c.get("php_per_unit", 0)
                         } for c in legacy_contrib])
                         st.info("🔄 Legacy contributors → Saving migrates to v2")
-
                     edited_contrib = st.data_editor(
                         current_contrib[["display_name", "units", "php_per_unit"]],
                         num_rows="dynamic",
@@ -388,11 +396,9 @@ if current_role in ["owner", "admin"]:
                             "php_per_unit": st.column_config.NumberColumn("PHP/Unit", min_value=100.0, step=100.0)
                         }
                     )
-
                     if not edited_contrib.empty:
                         total_php = (edited_contrib["units"] * edited_contrib["php_per_unit"]).sum()
                         st.metric("Total Funded (PHP)", f"₱{total_php:,.0f}")
-
                     tab_prev1, tab_prev2 = st.tabs(["Profit Tree Preview", "Funding Tree Preview"])
                     with tab_prev1:
                         labels = ["Gross Profit"]
@@ -411,7 +417,6 @@ if current_role in ["owner", "admin"]:
                             link=dict(source=[0]*len(values), target=list(range(1, len(labels))), value=values)
                         )])
                         st.plotly_chart(fig, use_container_width=True)
-
                     with tab_prev2:
                         if not edited_contrib.empty:
                             labels = ["Funded (PHP)"]
@@ -422,7 +427,6 @@ if current_role in ["owner", "admin"]:
                                 link=dict(source=[0]*len(values), target=list(range(1, len(values))), value=values)
                             )])
                             st.plotly_chart(fig, use_container_width=True)
-
                     col_save, col_cancel = st.columns(2)
                     with col_save:
                         if st.form_submit_button("💾 Save Changes", type="primary", use_container_width=True):
@@ -549,7 +553,6 @@ else:
                         st.plotly_chart(fig, use_container_width=True)
     else:
         st.info("You are not participating in any FTMO accounts yet.")
-
     st.subheader("All Empire Accounts Overview")
     for acc in accounts:
         total_funded = sum(c.get("units", 0) * c.get("php_per_unit", 0) for c in (acc.get("contributors_v2") or acc.get("contributors", [])))
@@ -583,7 +586,6 @@ else:
                     link=dict(source=[0]*len(values), target=list(range(1, len(values))), value=values)
                 )])
                 st.plotly_chart(fig, use_container_width=True)
-
     if not accounts:
         st.info("No accounts yet • Owner launches empire growth")
 
