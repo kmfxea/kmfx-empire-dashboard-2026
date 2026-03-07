@@ -60,16 +60,17 @@ def fetch_profit_data():
             "id, name, current_phase, current_equity, "
             "participants_v2, contributors_v2, contributor_share_pct"
         ).execute().data or []
-        users = supabase.table("users").select("id, full_name, email, balance").execute().data or []
+        users = supabase.table("users").select("id, full_name, email, balance, username").execute().data or []
         uid_to_display = {str(u["id"]): u["full_name"] for u in users}
         uid_to_email = {str(u["id"]): u.get("email") for u in users}
         uid_to_balance = {str(u["id"]): u.get("balance", 0.0) for u in users}
-        return accounts, uid_to_display, uid_to_email, uid_to_balance
+        uid_to_username = {str(u["id"]): u.get("username") for u in users}  # Added for debug
+        return accounts, uid_to_display, uid_to_email, uid_to_balance, uid_to_username
     except Exception as e:
         st.error(f"Data sync failed: {str(e)}")
-        return [], {}, {}, {}
+        return [], {}, {}, {}, {}
 
-accounts, uid_to_display, uid_to_email, uid_to_balance = fetch_profit_data()
+accounts, uid_to_display, uid_to_email, uid_to_balance, uid_to_username = fetch_profit_data()
 
 if not accounts:
     st.info("No accounts yet • Launch one in FTMO Accounts first")
@@ -79,49 +80,56 @@ if not accounts:
 if current_role == "client":
     # ── CLIENT VIEW: My Earnings Dashboard ───────────────────────────────────
     st.subheader(f"👤 My Earnings – {st.session_state.get('full_name', 'User')}")
-    
-    # Fetch personal distributions (example – adjust table/columns as needed)
+
+    # Get actual user UUID (this is the fix!)
+    my_user_id = user.get("id")  # ← UUID from users table
+    if not my_user_id:
+        st.error("Cannot load earnings – user ID not found. Contact support.")
+        st.stop()
+
     @st.cache_data(ttl=30)
     def fetch_my_earnings():
         try:
             dists = supabase.table("profit_distributions").select(
-                "share_amount, created_at, description, status"
-            ).eq("participant_user_id", my_username).order("created_at", desc=True).execute().data or []
-            total_earned = sum(d.get("share_amount", 0) for d in dists)
-            pending = sum(d.get("share_amount", 0) for d in dists if d.get("status") == "Pending")
+                "share_amount, created_at, description, status, participant_name"
+            ).eq("participant_user_id", my_user_id).order("created_at", desc=True).execute().data or []
+
+            total_earned = sum(float(d.get("share_amount", 0)) for d in dists)
+            pending = sum(float(d.get("share_amount", 0)) for d in dists if d.get("status") == "Pending")
             return dists, total_earned, pending
-        except:
+        except Exception as e:
+            st.error(f"Earnings fetch error: {str(e)}")
             return [], 0.0, 0.0
-    
+
     my_dists, total_earned, pending = fetch_my_earnings()
-    
+
     cols = st.columns(3)
     cols[0].metric("Total Earned", f"${total_earned:,.2f}")
     cols[1].metric("Pending Payout", f"${pending:,.2f}")
     cols[2].metric("Last Activity", my_dists[0]["created_at"][:10] if my_dists else "—")
-    
+
     if my_dists:
         df_my = pd.DataFrame(my_dists)
         df_my["date"] = pd.to_datetime(df_my["created_at"]).dt.strftime("%b %d, %Y")
-        df_my["amount"] = df_my["share_amount"].apply(lambda x: f"${x:,.2f}")
-        st.dataframe(df_my[["date", "amount", "description", "status"]], use_container_width=True, hide_index=True)
+        df_my["amount"] = df_my["share_amount"].apply(lambda x: f"${float(x):,.2f}")
+        st.dataframe(df_my[["date", "amount", "description", "status", "participant_name"]], use_container_width=True, hide_index=True)
     else:
         st.info("No earnings recorded yet. Your share grows with every profit! 🚀")
-    
-    # Simple monthly trend (example)
+
+    # Monthly trend chart
     st.subheader("Earnings Trend")
     if my_dists:
         df_trend = pd.DataFrame(my_dists)
         df_trend["month"] = pd.to_datetime(df_trend["created_at"]).dt.strftime("%Y-%m")
         monthly = df_trend.groupby("month")["share_amount"].sum().reset_index()
         fig = go.Figure(go.Bar(x=monthly["month"], y=monthly["share_amount"], marker_color=accent_gold))
-        fig.update_layout(height=350, template="plotly_dark")
+        fig.update_layout(height=350, template="plotly_dark", title="Monthly Earnings")
         st.plotly_chart(fig, use_container_width=True)
 
 elif current_role in ["admin", "owner"]:
     # ── ADMIN / OWNER VIEW: Record + Management ───────────────────────────────
     st.subheader("Empire Profit Engine – Record & Distribute")
-    
+
     # Account selection
     account_options = {
         f"{a['name']} • Phase: {a['current_phase']} • Equity ${a.get('current_equity', 0):,.0f} • Pool {a.get('contributor_share_pct', 0):.1f}%": a
@@ -134,13 +142,13 @@ elif current_role in ["admin", "owner"]:
     participants = acc.get("participants_v2", [])
     contributors = acc.get("contributors_v2", [])
     contributor_share_pct = acc.get("contributor_share_pct", 0.0)
-    
+
     if not participants:
         st.error("Missing v2 participants • Re-edit account in FTMO Accounts page")
         st.stop()
-    
+
     st.success(f"**Recording profit for:** {acc_name} • Contributor Pool: **{contributor_share_pct:.1f}%** • v2 tree active")
-    
+
     # ─── FORM ───
     with st.form("profit_form", clear_on_submit=True):
         col1, col2 = st.columns([3, 2])
@@ -153,6 +161,7 @@ elif current_role in ["admin", "owner"]:
             )
         with col2:
             record_date = st.date_input("Record Date", value=date.today())
+
         st.subheader("Stored Unified Tree (edit in FTMO Accounts)")
         part_df = pd.DataFrame([
             {
@@ -162,7 +171,7 @@ elif current_role in ["admin", "owner"]:
             } for p in participants
         ])
         st.dataframe(part_df, use_container_width=True, hide_index=True)
-        
+
         # ─── CALCULATIONS & PREVIEWS ───
         if gross_profit > 0:
             involved_user_ids = set()
@@ -171,6 +180,7 @@ elif current_role in ["admin", "owner"]:
             gf_add = 0.0
             total_funded_php = sum(c.get("units", 0) * c.get("php_per_unit", 0) for c in contributors)
             contributor_pool = gross_profit * (contributor_share_pct / 100)
+
             # Contributors
             if total_funded_php > 0 and contributor_share_pct > 0:
                 for c in contributors:
@@ -182,6 +192,7 @@ elif current_role in ["admin", "owner"]:
                     share = contributor_pool * (funded / total_funded_php)
                     display = uid_to_display.get(user_id, "Unknown")
                     contrib_preview.append({"Name": display, "Funded PHP": f"₱{funded:,.0f}", "Share": f"${share:,.2f}"})
+
             # Participants (incl Growth Fund & manual)
             for p in participants:
                 user_id = p.get("user_id")
@@ -196,6 +207,7 @@ elif current_role in ["admin", "owner"]:
                 })
                 if user_id:
                     involved_user_ids.add(user_id)
+
             # Previews
             col_prev1, col_prev2 = st.columns(2)
             with col_prev1:
@@ -207,11 +219,13 @@ elif current_role in ["admin", "owner"]:
             with col_prev2:
                 st.subheader("Participants Preview (incl. Growth Fund)")
                 st.dataframe(pd.DataFrame(part_preview), use_container_width=True, hide_index=True)
+
             # Metrics
             col_m1, col_m2, col_m3 = st.columns(3)
             col_m1.metric("Gross Profit", f"${gross_profit:,.2f}")
             col_m2.metric("Contributor Pool", f"${contributor_pool:,.2f}")
             col_m3.metric("Growth Fund Add", f"${gf_add:,.2f}")
+
             # Sankey
             labels = [f"Gross ${gross_profit:,.0f}"]
             values = []
@@ -250,7 +264,7 @@ elif current_role in ["admin", "owner"]:
             )])
             fig.update_layout(title="Distribution Flow Preview (incl. Growth Fund)", height=600)
             st.plotly_chart(fig, use_container_width=True)
-        
+
         submitted = st.form_submit_button("🚀 Record & Distribute Profit", type="primary", use_container_width=True)
         if submitted:
             if gross_profit <= 0:
@@ -320,6 +334,7 @@ elif current_role in ["admin", "owner"]:
                             "account_source": acc_name,
                             "recorded_by": st.session_state.get("full_name", "System")
                         }).execute()
+
                     # ─── EMAIL ───
                     date_str = record_date.strftime("%B %d, %Y")
                     html_breakdown = f"""
@@ -344,11 +359,16 @@ elif current_role in ["admin", "owner"]:
                     """
                     st.subheader("Auto-Email Preview")
                     st.markdown(html_breakdown, unsafe_allow_html=True)
+
                     sender_email = os.getenv("EMAIL_SENDER")
                     sender_password = os.getenv("EMAIL_PASSWORD")
                     sent = 0
                     involved_user_ids = set()
-                    # (your original email logic here – kept intact)
+
+                    # Debug: Show who should receive emails
+                    st.write("DEBUG - Involved user IDs:", list(involved_user_ids))
+                    st.write("DEBUG - Emails mapped:", {uid: uid_to_email.get(uid) for uid in involved_user_ids})
+
                     if sender_email and sender_password and involved_user_ids:
                         try:
                             server = smtplib.SMTP("smtp.gmail.com", 587)
@@ -368,6 +388,9 @@ elif current_role in ["admin", "owner"]:
                             st.success(f"Emails sent to {sent} recipients 🚀")
                         except Exception as e:
                             st.error(f"Email sending failed: {str(e)} • Check secrets / App Password")
+                    else:
+                        st.warning("No valid recipients or email credentials — emails not sent")
+
                     st.success("Profit recorded & distributed! Balances + Growth Fund updated.")
                     st.balloons()
                     st.cache_data.clear()
