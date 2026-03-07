@@ -18,14 +18,14 @@ from utils.supabase_client import supabase
 from utils.helpers import log_action
 
 render_sidebar()
-require_auth(min_role="client")  # All roles can access, but content is role-specific
+require_auth(min_role="client")  # All roles can access, content role-specific
 
-# ─── THEME (sync with Dashboard & FTMO Accounts) ───
+# ─── THEME ───
 accent_primary = "#00ffaa"
 accent_gold = "#ffd700"
 accent_glow = "#00ffaa40"
 
-# ─── SCROLL TO TOP (same as Dashboard) ───
+# ─── SCROLL TO TOP ───
 st.markdown("""
 <script>
 function forceScrollToTop() {
@@ -51,14 +51,13 @@ st.header("💰 Profit Sharing & Auto-Distribution")
 st.markdown("**Empire engine** • Record FTMO profit → Auto-split via stored v2 tree • Bulletproof balance updates • Premium HTML emails (incl. Growth Fund) • Realtime previews • Instant sync across pages")
 
 current_role = st.session_state.get("role", "guest").lower()
-
 my_username = st.session_state.get("username", "")
 
-# ─── FETCH CURRENT USER DATA (needed for client UUID) ───
+# ─── FETCH CURRENT USER DATA (for UUID) ───
 @st.cache_data(ttl=60)
 def fetch_user_data():
     try:
-        resp = supabase.table("users").select("*").eq("username", my_username).maybe_single().execute()
+        resp = supabase.table("users").select("id, full_name, email, balance").eq("username", my_username).maybe_single().execute()
         return resp.data or {}
     except Exception as e:
         st.error(f"User fetch error: {str(e)}")
@@ -66,9 +65,8 @@ def fetch_user_data():
 
 user = fetch_user_data()
 
-# Safety check
 if not user:
-    st.error("User profile not found. Please contact support.")
+    st.error("User profile not found. Contact support.")
     st.stop()
 
 # ─── DATA FETCH ───
@@ -79,10 +77,10 @@ def fetch_profit_data():
             "id, name, current_phase, current_equity, "
             "participants_v2, contributors_v2, contributor_share_pct"
         ).execute().data or []
-        users = supabase.table("users").select("id, full_name, email, balance").execute().data or []
-        uid_to_display = {str(u["id"]): u["full_name"] for u in users}
-        uid_to_email = {str(u["id"]): u.get("email") for u in users}
-        uid_to_balance = {str(u["id"]): u.get("balance", 0.0) for u in users}
+        users_list = supabase.table("users").select("id, full_name, email, balance").execute().data or []
+        uid_to_display = {str(u["id"]): u["full_name"] for u in users_list}
+        uid_to_email = {str(u["id"]): u.get("email") for u in users_list}
+        uid_to_balance = {str(u["id"]): u.get("balance", 0.0) for u in users_list}
         return accounts, uid_to_display, uid_to_email, uid_to_balance
     except Exception as e:
         st.error(f"Data sync failed: {str(e)}")
@@ -99,18 +97,18 @@ if current_role == "client":
     # ── CLIENT VIEW: My Earnings Dashboard ───────────────────────────────────
     st.subheader(f"👤 My Earnings – {st.session_state.get('full_name', 'User')}")
 
-    # Use the correct UUID
     my_user_id = user.get("id")
     if not my_user_id:
-        st.error("Cannot load earnings – user ID not found. Contact support.")
+        st.error("Cannot load earnings – user ID not found.")
         st.stop()
 
     @st.cache_data(ttl=30)
     def fetch_my_earnings():
         try:
+            # Use 'timestamp' column (from your schema)
             dists = supabase.table("profit_distributions").select(
-                "share_amount, created_at, description, status, participant_name"
-            ).eq("participant_user_id", my_user_id).order("created_at", desc=True).execute().data or []
+                "share_amount, timestamp, description, status, participant_name"
+            ).eq("participant_user_id", my_user_id).order("timestamp", desc=True).execute().data or []
 
             total_earned = sum(float(d.get("share_amount", 0)) for d in dists)
             pending = sum(float(d.get("share_amount", 0)) for d in dists if d.get("status") == "Pending")
@@ -124,21 +122,20 @@ if current_role == "client":
     cols = st.columns(3)
     cols[0].metric("Total Earned", f"${total_earned:,.2f}")
     cols[1].metric("Pending Payout", f"${pending:,.2f}")
-    cols[2].metric("Last Activity", my_dists[0]["created_at"][:10] if my_dists else "—")
+    cols[2].metric("Last Activity", my_dists[0]["timestamp"][:10] if my_dists else "—")
 
     if my_dists:
         df_my = pd.DataFrame(my_dists)
-        df_my["date"] = pd.to_datetime(df_my["created_at"]).dt.strftime("%b %d, %Y")
+        df_my["date"] = pd.to_datetime(df_my["timestamp"]).dt.strftime("%b %d, %Y")
         df_my["amount"] = df_my["share_amount"].apply(lambda x: f"${float(x):,.2f}")
         st.dataframe(df_my[["date", "amount", "description", "status", "participant_name"]], use_container_width=True, hide_index=True)
     else:
         st.info("No earnings recorded yet. Your share grows with every profit! 🚀")
 
-    # Monthly trend chart
     st.subheader("Earnings Trend")
     if my_dists:
         df_trend = pd.DataFrame(my_dists)
-        df_trend["month"] = pd.to_datetime(df_trend["created_at"]).dt.strftime("%Y-%m")
+        df_trend["month"] = pd.to_datetime(df_trend["timestamp"]).dt.strftime("%Y-%m")
         monthly = df_trend.groupby("month")["share_amount"].sum().reset_index()
         fig = go.Figure(go.Bar(x=monthly["month"], y=monthly["share_amount"], marker_color=accent_gold))
         fig.update_layout(height=350, template="plotly_dark", title="Monthly Earnings")
@@ -148,7 +145,6 @@ elif current_role in ["admin", "owner"]:
     # ── ADMIN / OWNER VIEW: Record + Management ───────────────────────────────
     st.subheader("Empire Profit Engine – Record & Distribute")
 
-    # Account selection
     account_options = {
         f"{a['name']} • Phase: {a['current_phase']} • Equity ${a.get('current_equity', 0):,.0f} • Pool {a.get('contributor_share_pct', 0):.1f}%": a
         for a in accounts
@@ -167,7 +163,6 @@ elif current_role in ["admin", "owner"]:
 
     st.success(f"**Recording profit for:** {acc_name} • Contributor Pool: **{contributor_share_pct:.1f}%** • v2 tree active")
 
-    # ─── FORM ───
     with st.form("profit_form", clear_on_submit=True):
         col1, col2 = st.columns([3, 2])
         with col1:
@@ -190,7 +185,6 @@ elif current_role in ["admin", "owner"]:
         ])
         st.dataframe(part_df, use_container_width=True, hide_index=True)
 
-        # ─── CALCULATIONS & PREVIEWS ───
         if gross_profit > 0:
             involved_user_ids = set()
             contrib_preview = []
@@ -199,7 +193,6 @@ elif current_role in ["admin", "owner"]:
             total_funded_php = sum(c.get("units", 0) * c.get("php_per_unit", 0) for c in contributors)
             contributor_pool = gross_profit * (contributor_share_pct / 100)
 
-            # Contributors
             if total_funded_php > 0 and contributor_share_pct > 0:
                 for c in contributors:
                     user_id = c.get("user_id")
@@ -211,7 +204,6 @@ elif current_role in ["admin", "owner"]:
                     display = uid_to_display.get(user_id, "Unknown")
                     contrib_preview.append({"Name": display, "Funded PHP": f"₱{funded:,.0f}", "Share": f"${share:,.2f}"})
 
-            # Participants (incl Growth Fund & manual)
             for p in participants:
                 user_id = p.get("user_id")
                 display = uid_to_display.get(user_id, p.get("display_name", "Unknown")) if user_id else p.get("display_name", "Unknown")
@@ -226,7 +218,6 @@ elif current_role in ["admin", "owner"]:
                 if user_id:
                     involved_user_ids.add(user_id)
 
-            # Previews
             col_prev1, col_prev2 = st.columns(2)
             with col_prev1:
                 st.subheader("Contributor Pool Preview")
@@ -238,13 +229,11 @@ elif current_role in ["admin", "owner"]:
                 st.subheader("Participants Preview (incl. Growth Fund)")
                 st.dataframe(pd.DataFrame(part_preview), use_container_width=True, hide_index=True)
 
-            # Metrics
             col_m1, col_m2, col_m3 = st.columns(3)
             col_m1.metric("Gross Profit", f"${gross_profit:,.2f}")
             col_m2.metric("Contributor Pool", f"${contributor_pool:,.2f}")
             col_m3.metric("Growth Fund Add", f"${gf_add:,.2f}")
 
-            # Sankey
             labels = [f"Gross ${gross_profit:,.0f}"]
             values = []
             source = []
@@ -289,7 +278,6 @@ elif current_role in ["admin", "owner"]:
                 st.error("Gross profit must be greater than 0")
             else:
                 try:
-                    # ─── Supabase operations ───
                     profit_resp = supabase.table("profits").insert({
                         "account_id": acc_id,
                         "gross_profit": gross_profit,
@@ -301,7 +289,7 @@ elif current_role in ["admin", "owner"]:
                     profit_id = profit_resp.data[0]["id"]
                     distributions = []
                     balance_updates = []
-                    # Contributors
+
                     if contributor_pool > 0 and total_funded_php > 0:
                         for c in contributors:
                             user_id = c.get("user_id")
@@ -321,7 +309,7 @@ elif current_role in ["admin", "owner"]:
                             })
                             new_bal = uid_to_balance.get(user_id, 0) + share
                             balance_updates.append((user_id, new_bal))
-                    # Participants
+
                     for p in participants:
                         user_id = p.get("user_id")
                         display = uid_to_display.get(user_id, p.get("display_name", "Unknown")) if user_id else p.get("display_name", "Unknown")
@@ -339,10 +327,13 @@ elif current_role in ["admin", "owner"]:
                         if user_id and not is_gf:
                             new_bal = uid_to_balance.get(user_id, 0) + share
                             balance_updates.append((user_id, new_bal))
+
                     if distributions:
                         supabase.table("profit_distributions").insert(distributions).execute()
+
                     for uid, new_bal in balance_updates:
                         supabase.table("users").update({"balance": new_bal}).eq("id", uid).execute()
+
                     if gf_add > 0:
                         supabase.table("growth_fund_transactions").insert({
                             "date": str(record_date),
@@ -383,9 +374,9 @@ elif current_role in ["admin", "owner"]:
                     sent = 0
                     involved_user_ids = set()
 
-                    # Debug to help troubleshoot emails
+                    # Debug for email issues
                     st.write("DEBUG - Involved user IDs:", list(involved_user_ids))
-                    st.write("DEBUG - Emails mapped:", {uid: uid_to_email.get(uid) for uid in involved_user_ids})
+                    st.write("DEBUG - Emails found:", {uid: uid_to_email.get(uid) for uid in involved_user_ids})
 
                     if sender_email and sender_password and involved_user_ids:
                         try:
